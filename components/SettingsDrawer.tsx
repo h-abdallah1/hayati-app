@@ -3,11 +3,58 @@
 import { useState, useEffect, KeyboardEvent } from "react";
 import { useTheme } from "@/lib/theme";
 import { useSettings } from "@/lib/settings";
+import type { LocationCoords } from "@/lib/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
+
+// ── Location resolution helpers ──────────────────────────────────────────────
+
+async function detectLocation(): Promise<LocationCoords> {
+  const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+  );
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const r = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+    { headers: { "Accept-Language": "en" } }
+  );
+  const d = await r.json();
+  const city = d.address?.city || d.address?.town || d.address?.village || d.address?.county || d.name || "";
+  const country = d.address?.country_code?.toUpperCase() || "";
+  const label = [city, country].filter(Boolean).join(", ") || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+
+  return { lat, lon, tz, label };
+}
+
+async function searchLocation(query: string): Promise<LocationCoords> {
+  const r = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1`,
+    { headers: { "Accept-Language": "en" } }
+  );
+  const results = await r.json();
+  if (!results[0]) throw new Error("Location not found");
+
+  const { lat: latStr, lon: lonStr, address } = results[0];
+  const lat = parseFloat(latStr);
+  const lon = parseFloat(lonStr);
+  const city = address?.city || address?.town || address?.village || address?.state || query;
+  const country = address?.country_code?.toUpperCase() || "";
+  const label = [city, country].filter(Boolean).join(", ");
+
+  const tzR = await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`);
+  const tzD = await tzR.json();
+  const tz: string = tzD.timeZone || "UTC";
+
+  return { lat, lon, tz, label };
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function SettingsDrawer({ open, onClose }: Props) {
   const C = useTheme();
@@ -15,44 +62,72 @@ export function SettingsDrawer({ open, onClose }: Props) {
 
   // General
   const [nameVal, setNameVal] = useState(settings.name);
-  const [locLabel, setLocLabel] = useState(settings.location.label);
-  const [locLat, setLocLat] = useState(String(settings.location.lat));
-  const [locLon, setLocLon] = useState(String(settings.location.lon));
-  const [locTz, setLocTz] = useState(settings.location.tz);
 
-  // New feed inputs
+  // Location
+  const [locSearch, setLocSearch] = useState("");
+  const [locLoading, setLocLoading] = useState(false);
+  const [locError, setLocError] = useState("");
+
+  // News feeds
   const [newsFeedUrl, setNewsFeedUrl] = useState("");
   const [newsFeedLabel, setNewsFeedLabel] = useState("");
+
+  // Calendar feeds
   const [calFeedInput, setCalFeedInput] = useState("");
 
-  // Inline edit state — keyed by the original URL
+  // Inline edit state for news feeds
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editUrl, setEditUrl] = useState("");
 
-  // Sync general fields when drawer opens
+  // Sync when drawer opens
   useEffect(() => {
     if (open) {
       setNameVal(settings.name);
-      setLocLabel(settings.location.label);
-      setLocLat(String(settings.location.lat));
-      setLocLon(String(settings.location.lon));
-      setLocTz(settings.location.tz);
+      setLocSearch("");
+      setLocError("");
       setEditingUrl(null);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── General handlers ─────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
   const saveName = () => { const v = nameVal.trim(); if (v) updateSettings({ name: v }); };
 
-  const saveLocation = () => {
-    const lat = parseFloat(locLat), lon = parseFloat(locLon);
-    const tz = locTz.trim(), label = locLabel.trim();
-    if (isNaN(lat) || isNaN(lon) || !tz || !label) return;
-    updateSettings({ location: { lat, lon, tz, label } });
+  const applyLocation = (loc: LocationCoords) => {
+    updateSettings({ location: loc });
+    setLocSearch("");
+    setLocError("");
   };
 
-  // ── News feed handlers ────────────────────────────────────────────
+  const handleAutodetect = async () => {
+    setLocLoading(true);
+    setLocError("");
+    try {
+      applyLocation(await detectLocation());
+    } catch (e) {
+      setLocError(e instanceof GeolocationPositionError
+        ? "Location permission denied"
+        : "Could not detect location");
+    } finally {
+      setLocLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    const q = locSearch.trim();
+    if (!q) return;
+    setLocLoading(true);
+    setLocError("");
+    try {
+      applyLocation(await searchLocation(q));
+    } catch {
+      setLocError("Location not found");
+    } finally {
+      setLocLoading(false);
+    }
+  };
+
   const addNewsFeed = () => {
     const url = newsFeedUrl.trim();
     if (!url) return;
@@ -67,28 +142,16 @@ export function SettingsDrawer({ open, onClose }: Props) {
     updateSettings({ newsFeeds: settings.newsFeeds.filter(f => f.url !== url) });
   };
 
-  const startEdit = (url: string, label: string) => {
-    setEditingUrl(url);
-    setEditUrl(url);
-    setEditLabel(label);
-  };
-
+  const startEdit = (url: string, label: string) => { setEditingUrl(url); setEditUrl(url); setEditLabel(label); };
   const cancelEdit = () => setEditingUrl(null);
-
   const saveEdit = () => {
     const newUrl = editUrl.trim();
     if (!newUrl || !editingUrl) return;
-    // If URL changed, make sure it doesn't clash with another feed
     if (newUrl !== editingUrl && settings.newsFeeds.some(f => f.url === newUrl)) return;
-    updateSettings({
-      newsFeeds: settings.newsFeeds.map(f =>
-        f.url === editingUrl ? { url: newUrl, label: editLabel.trim() } : f
-      ),
-    });
+    updateSettings({ newsFeeds: settings.newsFeeds.map(f => f.url === editingUrl ? { url: newUrl, label: editLabel.trim() } : f) });
     setEditingUrl(null);
   };
 
-  // ── Calendar feed handlers ────────────────────────────────────────
   const addCalFeed = () => {
     const v = calFeedInput.trim();
     if (!v) return;
@@ -101,7 +164,8 @@ export function SettingsDrawer({ open, onClose }: Props) {
     updateSettings({ calendarFeeds: settings.calendarFeeds.filter(f => f !== url) });
   };
 
-  // ── Shared styles ─────────────────────────────────────────────────
+  // ── Styles ────────────────────────────────────────────────────────────────
+
   const inputStyle: React.CSSProperties = {
     background: C.surfaceHi, border: `1px solid ${C.border}`, borderRadius: 6,
     padding: "6px 10px", fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
@@ -130,13 +194,17 @@ export function SettingsDrawer({ open, onClose }: Props) {
     padding: "5px 10px", flexShrink: 0,
   };
 
-  const saveBtn: React.CSSProperties = {
-    ...addBtn, color: C.accent,
+  const saveBtn: React.CSSProperties = { ...addBtn, color: C.accent };
+  const cancelBtn: React.CSSProperties = { ...addBtn, color: C.textFaint };
+
+  const ghostBtn: React.CSSProperties = {
+    background: "none", border: `1px solid ${C.border}`, borderRadius: 5, cursor: "pointer",
+    fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textMuted,
+    padding: "5px 10px", flexShrink: 0,
+    opacity: locLoading ? 0.5 : 1,
   };
 
-  const cancelBtn: React.CSSProperties = {
-    ...addBtn, color: C.textFaint,
-  };
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -173,33 +241,58 @@ export function SettingsDrawer({ open, onClose }: Props) {
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <span style={fieldLabel}>Location label</span>
-            <input value={locLabel} onChange={e => setLocLabel(e.target.value)}
-              onBlur={saveLocation} onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLocation()}
-              style={inputStyle} />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-            <div>
-              <span style={fieldLabel}>Latitude</span>
-              <input value={locLat} onChange={e => setLocLat(e.target.value)}
-                onBlur={saveLocation} onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLocation()}
-                style={inputStyle} />
-            </div>
-            <div>
-              <span style={fieldLabel}>Longitude</span>
-              <input value={locLon} onChange={e => setLocLon(e.target.value)}
-                onBlur={saveLocation} onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLocation()}
-                style={inputStyle} />
+            <span style={fieldLabel}>Time format</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["12h", "24h"] as const).map(fmt => (
+                <button key={fmt} onClick={() => updateSettings({ timeFormat: fmt })} style={{
+                  flex: 1, padding: "6px 0", borderRadius: 6, cursor: "pointer",
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+                  border: `1px solid ${settings.timeFormat === fmt ? C.accent : C.border}`,
+                  background: settings.timeFormat === fmt ? C.accentDim : C.surfaceHi,
+                  color: settings.timeFormat === fmt ? C.accent : C.textMuted,
+                }}>
+                  {fmt}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div style={{ marginBottom: 12 }}>
-            <span style={fieldLabel}>Timezone (IANA)</span>
-            <input value={locTz} onChange={e => setLocTz(e.target.value)}
-              onBlur={saveLocation} onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLocation()}
-              placeholder="e.g. Asia/Dubai" style={inputStyle} />
+          {/* ── Location ── */}
+          <div style={sectionHead}>Location</div>
+
+          {/* Current location display */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, flex: 1 }}>
+              📍 {settings.location.label}
+            </span>
+            <button
+              onClick={handleAutodetect}
+              disabled={locLoading}
+              style={ghostBtn}
+              title="Use your current location"
+            >
+              {locLoading ? "…" : "autodetect"}
+            </button>
           </div>
+
+          {/* Search input */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+            <input
+              value={locSearch}
+              onChange={e => setLocSearch(e.target.value)}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && handleSearch()}
+              placeholder="Search city (e.g. Dubai)"
+              disabled={locLoading}
+              style={{ ...inputStyle, flex: 1, opacity: locLoading ? 0.5 : 1 }}
+            />
+            <button onClick={handleSearch} disabled={locLoading} style={addBtn}>→</button>
+          </div>
+
+          {locError && (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.red, marginBottom: 6 }}>
+              {locError}
+            </div>
+          )}
 
           {/* ── News RSS Feeds ── */}
           <div style={sectionHead}>News RSS Feeds</div>
@@ -212,36 +305,19 @@ export function SettingsDrawer({ open, onClose }: Props) {
             <div style={{ marginBottom: 10 }}>
               {settings.newsFeeds.map(f =>
                 editingUrl === f.url ? (
-                  /* ── Inline edit row ── */
                   <div key={f.url} style={{ padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                    <input
-                      value={editLabel}
-                      onChange={e => setEditLabel(e.target.value)}
-                      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === "Enter") saveEdit();
-                        if (e.key === "Escape") cancelEdit();
-                      }}
-                      placeholder="Label (e.g. TechCrunch)"
-                      style={{ ...inputStyle, marginBottom: 6 }}
-                      autoFocus
-                    />
-                    <input
-                      value={editUrl}
-                      onChange={e => setEditUrl(e.target.value)}
-                      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === "Enter") saveEdit();
-                        if (e.key === "Escape") cancelEdit();
-                      }}
-                      placeholder="https://example.com/rss"
-                      style={{ ...inputStyle, marginBottom: 6 }}
-                    />
+                    <input value={editLabel} onChange={e => setEditLabel(e.target.value)}
+                      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                      placeholder="Label (e.g. TechCrunch)" style={{ ...inputStyle, marginBottom: 6 }} autoFocus />
+                    <input value={editUrl} onChange={e => setEditUrl(e.target.value)}
+                      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                      placeholder="https://example.com/rss" style={{ ...inputStyle, marginBottom: 6 }} />
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={saveEdit} style={saveBtn}>save</button>
                       <button onClick={cancelEdit} style={cancelBtn}>cancel</button>
                     </div>
                   </div>
                 ) : (
-                  /* ── Display row ── */
                   <div key={f.url} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 0", borderBottom: `1px solid ${C.border}` }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {f.label && (
@@ -261,7 +337,6 @@ export function SettingsDrawer({ open, onClose }: Props) {
             </div>
           )}
 
-          {/* Add new feed */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <input value={newsFeedLabel} onChange={e => setNewsFeedLabel(e.target.value)}
               onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && addNewsFeed()}

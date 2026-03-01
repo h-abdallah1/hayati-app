@@ -3,19 +3,20 @@
 import { useSettings } from "@/lib/settings";
 import { getPrayerTimes, useWeather } from "@/lib/hooks";
 import { useTheme, useThemeToggle } from "@/lib/theme";
+import { formatClock, convertHHMM } from "@/lib/time";
 import { Dot, Sep, Stat, Tag } from "@/components/ui";
 
 export function HeaderBar({ time, onOpenSettings }: { time: Date; onOpenSettings: () => void }) {
   const C = useTheme();
   const { isDark, toggle } = useThemeToggle();
   const { settings } = useSettings();
-  const prayerTimes = getPrayerTimes(settings.location);
+  const prayerTimes = getPrayerTimes(settings.location, settings.timeFormat);
   const wx = useWeather(settings.location);
   const h=time.getHours(), m=time.getMinutes(), s=time.getSeconds();
   const greeting = h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<20?"Good evening":"Good night";
-  const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}`;
+  const timeStr = formatClock(time, settings.timeFormat);
   const curMins = h*60+m;
-  const nextPrayer = prayerTimes.find(p => { const [ph,pm]=p.time.split(":").map(Number); return ph*60+pm>curMins; });
+  const nextPrayer = prayerTimes.find(p => p.mins > curMins);
   const dayFrac = (h*3600+m*60+s)/86400;
   return (
     <div style={{ maxWidth:1280, margin:"0 auto 12px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:"14px 22px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:24 }}>
@@ -42,22 +43,18 @@ export function HeaderBar({ time, onOpenSettings }: { time: Date; onOpenSettings
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
         <Stat icon="&#9711;" label={timeStr} />
-        <Sep /><Stat icon="&#8593;" label={wx.sunrise} dim /><Stat icon="&#8595;" label={wx.sunset} dim />
+        <Sep />
+        <Stat icon="&#8593;" label={convertHHMM(wx.sunrise, settings.timeFormat)} dim />
+        <Stat icon="&#8595;" label={convertHHMM(wx.sunset, settings.timeFormat)} dim />
         <Sep /><Stat icon="&#9728;" label={wx.temp} color={C.amber} /><Stat label={wx.condition} dim />
         <Sep />{nextPrayer && <Stat icon="&#128332;" label={`${nextPrayer.name} ${nextPrayer.time}`} color={C.accent} />}
         <Sep />
-        <button
-          onClick={toggle}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}
-        >
+        <button onClick={toggle} title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}>
           {isDark ? "☀" : "☾"}
         </button>
-        <button
-          onClick={onOpenSettings}
-          title="Settings"
-          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}
-        >
+        <button onClick={onOpenSettings} title="Settings"
+          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}>
           ⚙
         </button>
       </div>

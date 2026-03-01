@@ -5,9 +5,11 @@ export type CalEvent = { date: number; label: string; color: string; url?: strin
 
 export type LocationCoords = { lat: number; lon: number; tz: string; label: string };
 export type NewsFeed = { url: string; label: string };
+export type TimeFormat = "12h" | "24h";
 export type AppSettings = {
   name: string;
   location: LocationCoords;
+  timeFormat: TimeFormat;
   newsFeeds: NewsFeed[];
   calendarFeeds: string[];
 };

@@ -3,6 +3,7 @@
 import { useTheme } from "@/lib/theme";
 import { useSettings } from "@/lib/settings";
 import { useWeather } from "@/lib/hooks";
+import { convertHHMM } from "@/lib/time";
 import { Panel, Tag } from "@/components/ui";
 
 function getTzOffset(tz: string): string {
@@ -42,8 +43,8 @@ export function StatusPanel({ time }: { time: Date }) {
         {([
           ["location", settings.location.label],
           ["timezone", tzOffset || settings.location.tz],
-          ["sunrise", wx.sunrise],
-          ["sunset", wx.sunset],
+          ["sunrise", convertHHMM(wx.sunrise, settings.timeFormat)],
+          ["sunset",  convertHHMM(wx.sunset,  settings.timeFormat)],
         ] as [string, string][]).map(([k,v]) => (
           <div key={k} style={{ display:"flex", justifyContent:"space-between" }}><Tag color={C.textFaint}>{k}</Tag><Tag color={C.textMuted}>{v}</Tag></div>
         ))}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useClock } from "@/lib/hooks";
 import { ThemeProvider, useTheme } from "@/lib/theme";
 import { SettingsProvider, useSettings } from "@/lib/settings";
+import { formatClock } from "@/lib/time";
 import {
   HeaderBar, FocusPanel, TasksPanel, StatusPanel, PrayerPanel,
   NewsPanel, HabitsPanel, QuranPanel, CurrentReadsPanel,
@@ -34,7 +35,7 @@ function HayatiInner() {
       <div style={{ maxWidth:1280, margin:"12px auto 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, letterSpacing:"1px" }}>HAYATI v2.0 · حياتي</span>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint }}>
-          {time.getHours().toString().padStart(2,"0")}:{time.getMinutes().toString().padStart(2,"0")} · {settings.location.label}
+          {formatClock(time, settings.timeFormat)} · {settings.location.label}
         </span>
       </div>
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { AppSettings, NewsFeed } from "./types";
+import type { AppSettings, NewsFeed, TimeFormat } from "./types";
 
 const DEFAULT_SETTINGS: AppSettings = {
   name: "Hussein",
   location: { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai", label: "Sharjah, UAE" },
+  timeFormat: "12h",
   newsFeeds: [],
   calendarFeeds: [],
 };
@@ -20,6 +21,7 @@ function readFromStorage(): AppSettings {
     return {
       name: parsed.name ?? DEFAULT_SETTINGS.name,
       location: { ...DEFAULT_SETTINGS.location, ...parsed.location },
+      timeFormat: (parsed.timeFormat === "12h" || parsed.timeFormat === "24h") ? parsed.timeFormat as TimeFormat : DEFAULT_SETTINGS.timeFormat,
       newsFeeds: Array.isArray(parsed.newsFeeds)
         ? parsed.newsFeeds.map((f: unknown): NewsFeed =>
             typeof f === "string" ? { url: f, label: "" } : (f as NewsFeed)
