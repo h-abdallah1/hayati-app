@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0c0c0c;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: #242424;
+  border-radius: 2px;
+}
+
+input::placeholder {
+  color: #3a3a3a;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+
+@keyframes colon-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hg > * {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hg > *:nth-child(1)  { animation-delay: 0.05s; }
+.hg > *:nth-child(2)  { animation-delay: 0.10s; }
+.hg > *:nth-child(3)  { animation-delay: 0.15s; }
+.hg > *:nth-child(4)  { animation-delay: 0.20s; }
+.hg > *:nth-child(5)  { animation-delay: 0.25s; }
+.hg > *:nth-child(6)  { animation-delay: 0.30s; }
+.hg > *:nth-child(7)  { animation-delay: 0.35s; }
+.hg > *:nth-child(8)  { animation-delay: 0.40s; }
+.hg > *:nth-child(9)  { animation-delay: 0.45s; }
+.hg > *:nth-child(10) { animation-delay: 0.50s; }
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  z-index: 9999;
 }
