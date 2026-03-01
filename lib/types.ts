@@ -15,3 +15,7 @@ export type AppSettings = {
 };
 export type NewsItem = { source: string; title: string; url: string; time: string };
 export type CalEventFull = { date: string; label: string; color: string; url?: string };
+
+export type Goal = { id: number; title: string; timeframe: "1mo" | "3mo" | "6mo" | "1yr" | "ongoing"; status: "todo" | "active" | "done"; description?: string; created: string };
+export type Note = { id: number; title: string; content: string; updated: string };
+export type Transaction = { id: number; amount: number; category: string; description: string; date: string; type: "in" | "out" };

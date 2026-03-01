@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useClock } from "@/lib/hooks";
-import { ThemeProvider, useTheme } from "@/lib/theme";
-import { SettingsProvider, useSettings } from "@/lib/settings";
+import { useTheme } from "@/lib/theme";
+import { useSettings } from "@/lib/settings";
 import { formatClock } from "@/lib/time";
 import {
   HeaderBar, FocusPanel, TasksPanel, StatusPanel, PrayerPanel,
@@ -44,11 +44,5 @@ function HayatiInner() {
 }
 
 export default function Hayati() {
-  return (
-    <SettingsProvider>
-      <ThemeProvider>
-        <HayatiInner />
-      </ThemeProvider>
-    </SettingsProvider>
-  );
+  return <HayatiInner />;
 }

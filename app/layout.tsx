@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
+import { Sidebar } from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "Hayati · حياتي",
@@ -21,7 +23,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <Sidebar />
+          <main style={{ marginLeft: 56 }}>
+            {children}
+          </main>
+        </Providers>
+      </body>
     </html>
   );
 }
