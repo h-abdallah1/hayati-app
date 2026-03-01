@@ -1,14 +1,15 @@
 "use client";
 
-import { C } from "@/lib/design";
 import { useClock } from "@/lib/hooks";
+import { ThemeProvider, useTheme } from "@/lib/theme";
 import {
   HeaderBar, FocusPanel, TasksPanel, StatusPanel, PrayerPanel,
   NewsPanel, HabitsPanel, QuranPanel, CurrentReadsPanel,
   ReadingListPanel, CalendarPanel,
 } from "@/components/panels";
 
-export default function Hayati() {
+function HayatiInner() {
+  const C = useTheme();
   const time = useClock();
   return (
     <div style={{ minHeight:"100vh", background:C.bg, padding:"24px 28px" }}>
@@ -32,5 +33,13 @@ export default function Hayati() {
         </span>
       </div>
     </div>
+  );
+}
+
+export default function Hayati() {
+  return (
+    <ThemeProvider>
+      <HayatiInner />
+    </ThemeProvider>
   );
 }

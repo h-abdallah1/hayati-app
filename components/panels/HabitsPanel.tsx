@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import { HABITS_DATA, D_SHORT } from "@/lib/data";
 import { Panel, Tag } from "@/components/ui";
 
 export function HabitsPanel({ time }: { time: Date }) {
+  const C = useTheme();
   const [habits, setHabits] = useState(HABITS_DATA);
   const today = time.getDay();
   const toggle = (hi: number, di: number) => setHabits(prev => prev.map((h,i) => i===hi ? {...h, done:h.done.map((d,j)=>j===di?(d?0:1):d)} : h));

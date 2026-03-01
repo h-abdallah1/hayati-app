@@ -1,8 +1,11 @@
-import { C } from "@/lib/design";
+"use client";
+
+import { useTheme } from "@/lib/theme";
 import { NEWS } from "@/lib/data";
 import { Panel, Tag, Dot } from "@/components/ui";
 
 export function NewsPanel() {
+  const C = useTheme();
   return (
     <Panel style={{ gridColumn:"span 2" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import { Panel, Tag } from "@/components/ui";
 
 export function FocusPanel() {
+  const C = useTheme();
   const [focus, setFocus] = useState("Ship the Hayati dashboard");
   const [editing, setEditing] = useState(false);
   const [done, setDone] = useState(false);

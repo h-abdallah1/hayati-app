@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import type { ReadingItem } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
 
 export function ReadingListPanel() {
+  const C = useTheme();
   const [items, setItems] = useState<ReadingItem[]>([
     { id:1, title:"The Pragmatic Programmer",              type:"book",    done:false },
     { id:2, title:"You and Your Research — Hamming",       type:"essay",   done:false },

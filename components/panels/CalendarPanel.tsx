@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import type { CalEvent } from "@/lib/types";
 import { CALENDAR_EVENTS, MONTHS_L, DAY_LABELS } from "@/lib/data";
 import { Panel, Tag } from "@/components/ui";
 
 export function CalendarPanel({ time }: { time: Date }) {
+  const C = useTheme();
   const today=time.getDate(), thisMonth=time.getMonth(), thisYear=time.getFullYear();
   const [viewing, setViewing] = useState({ month:thisMonth, year:thisYear });
   const [events, setEvents] = useState<CalEvent[]>(CALENDAR_EVENTS);

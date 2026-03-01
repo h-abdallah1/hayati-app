@@ -1,6 +1,9 @@
-import { C } from "@/lib/design";
+"use client";
+
+import { useTheme } from "@/lib/theme";
 
 export function Stat({ icon, label, color, dim }: { icon?: string; label: string; color?: string; dim?: boolean }) {
+  const C = useTheme();
   return (
     <div style={{ display:"flex", alignItems:"center", gap:4 }}>
       {icon && <span style={{ fontSize:11, opacity:0.7 }}>{icon}</span>}

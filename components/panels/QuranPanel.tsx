@@ -1,8 +1,11 @@
-import { C } from "@/lib/design";
+"use client";
+
+import { useTheme } from "@/lib/theme";
 import { QURAN_VERSES } from "@/lib/data";
 import { Panel, Tag } from "@/components/ui";
 
 export function QuranPanel() {
+  const C = useTheme();
   const verse = QURAN_VERSES[new Date().getDate() % QURAN_VERSES.length];
   return (
     <Panel style={{ gridColumn:"span 2" }}>

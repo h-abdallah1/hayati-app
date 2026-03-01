@@ -1,0 +1,28 @@
+"use client";
+
+import React, { createContext, useContext, useState } from "react";
+import { C_DARK, C_LIGHT } from "./design";
+
+const ThemeContext = createContext<typeof C_DARK>(C_DARK);
+const ToggleContext = createContext<{ isDark: boolean; toggle: () => void }>({ isDark: true, toggle: () => {} });
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [isDark, setIsDark] = useState(true);
+  const palette = isDark ? C_DARK : C_LIGHT;
+  const toggle = () => setIsDark(d => !d);
+  return (
+    <ToggleContext.Provider value={{ isDark, toggle }}>
+      <ThemeContext.Provider value={palette}>
+        {children}
+      </ThemeContext.Provider>
+    </ToggleContext.Provider>
+  );
+}
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+
+export function useThemeToggle() {
+  return useContext(ToggleContext);
+}

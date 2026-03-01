@@ -1,8 +1,12 @@
-import { C } from "@/lib/design";
+"use client";
+
 import { PRAYER_TIMES } from "@/lib/data";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { Dot, Sep, Stat, Tag } from "@/components/ui";
 
 export function HeaderBar({ time }: { time: Date }) {
+  const C = useTheme();
+  const { isDark, toggle } = useThemeToggle();
   const h=time.getHours(), m=time.getMinutes(), s=time.getSeconds();
   const greeting = h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<20?"Good evening":"Good night";
   const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}`;
@@ -37,6 +41,14 @@ export function HeaderBar({ time }: { time: Date }) {
         <Sep /><Stat icon="&#8593;" label="06:12" dim /><Stat icon="&#8595;" label="18:31" dim />
         <Sep /><Stat icon="&#9728;" label="28°" color={C.amber} /><Stat label="Sunny" dim />
         <Sep />{nextPrayer && <Stat icon="&#128332;" label={`${nextPrayer.name} ${nextPrayer.time}`} color={C.accent} />}
+        <Sep />
+        <button
+          onClick={toggle}
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}
+        >
+          {isDark ? "☀" : "☾"}
+        </button>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
-import React from "react";
-import { C } from "@/lib/design";
+"use client";
 
-export function Tag({ children, color = C.textFaint }: { children: React.ReactNode; color?: string }) {
-  return <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, fontWeight:400, letterSpacing:"1.5px", textTransform:"uppercase", color }}>{children}</span>;
+import React from "react";
+import { useTheme } from "@/lib/theme";
+
+export function Tag({ children, color }: { children: React.ReactNode; color?: string }) {
+  const C = useTheme();
+  return <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, fontWeight:400, letterSpacing:"1.5px", textTransform:"uppercase", color:color??C.textFaint }}>{children}</span>;
 }

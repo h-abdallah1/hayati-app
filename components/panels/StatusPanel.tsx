@@ -1,7 +1,10 @@
-import { C } from "@/lib/design";
+"use client";
+
+import { useTheme } from "@/lib/theme";
 import { Panel, Tag } from "@/components/ui";
 
 export function StatusPanel({ time }: { time: Date }) {
+  const C = useTheme();
   const dayFrac = (time.getHours()*3600+time.getMinutes()*60+time.getSeconds())/86400;
   const metrics = [
     { label:"day",   val:`${(dayFrac*100).toFixed(0)}%`,                         bar:dayFrac,                  color:C.accent },

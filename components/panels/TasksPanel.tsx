@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import type { Task } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
 
 export function TasksPanel() {
+  const C = useTheme();
   const [tasks, setTasks] = useState<Task[]>([
     { id:1, text:"Review pull requests",   done:false, p:"high" },
     { id:2, text:"Fix auth bug on mobile",  done:false, p:"high" },

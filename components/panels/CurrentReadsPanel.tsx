@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { C } from "@/lib/design";
+import { useTheme } from "@/lib/theme";
 import type { Book } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
 
 export function CurrentReadsPanel() {
+  const C = useTheme();
   const [books, setBooks] = useState<Book[]>([
-    { id:1, title:"The Almanack of Naval Ravikant", author:"Eric Jorgenson", progress:68, color:C.accent },
-    { id:2, title:"Clean Code", author:"Robert C. Martin", progress:34, color:C.teal },
+    { id:1, title:"The Almanack of Naval Ravikant", author:"Eric Jorgenson", progress:68, color:"#c8f135" },
+    { id:2, title:"Clean Code", author:"Robert C. Martin", progress:34, color:"#4ecdc4" },
   ]);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ title:"", author:"" });
