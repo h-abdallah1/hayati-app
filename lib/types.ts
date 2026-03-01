@@ -1,4 +1,15 @@
 export type Task = { id: number; text: string; done: boolean; p: "high" | "med" | "low" };
 export type Book = { id: number; title: string; author: string; progress: number; color: string };
 export type ReadingItem = { id: number; title: string; type: "book" | "essay" | "article"; done: boolean };
-export type CalEvent = { date: number; label: string; color: string };
+export type CalEvent = { date: number; label: string; color: string; url?: string };
+
+export type LocationCoords = { lat: number; lon: number; tz: string; label: string };
+export type NewsFeed = { url: string; label: string };
+export type AppSettings = {
+  name: string;
+  location: LocationCoords;
+  newsFeeds: NewsFeed[];
+  calendarFeeds: string[];
+};
+export type NewsItem = { source: string; title: string; url: string; time: string };
+export type CalEventFull = { date: string; label: string; color: string; url?: string };

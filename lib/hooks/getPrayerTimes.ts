@@ -1,13 +1,14 @@
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
 
-const COORDS = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
+type Coords = { lat: number; lon: number; tz: string };
+const DEFAULT_COORDS: Coords = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
 
-export function getPrayerTimes() {
-  const coords = new Coordinates(COORDS.lat, COORDS.lon);
+export function getPrayerTimes(coords: Coords = DEFAULT_COORDS) {
+  const c = new Coordinates(coords.lat, coords.lon);
   const params = CalculationMethod.Dubai();
-  const pt = new PrayerTimes(coords, new Date(), params);
+  const pt = new PrayerTimes(c, new Date(), params);
   const fmt = (d: Date) =>
-    d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: COORDS.tz });
+    d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: coords.tz });
   return [
     { name: "Fajr",    time: fmt(pt.fajr)    },
     { name: "Dhuhr",   time: fmt(pt.dhuhr)   },

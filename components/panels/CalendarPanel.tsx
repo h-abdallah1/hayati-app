@@ -1,18 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import type { CalEvent } from "@/lib/types";
+import { useSettings } from "@/lib/settings";
+import { useCalendarEvents } from "@/lib/hooks";
+import type { CalEvent, CalEventFull } from "@/lib/types";
 import { CALENDAR_EVENTS, MONTHS_L, DAY_LABELS } from "@/lib/data";
 import { Panel, Tag } from "@/components/ui";
 
+function convertToCalEvents(remote: CalEventFull[], month: number, year: number): CalEvent[] {
+  return remote
+    .filter(ev => {
+      const d = new Date(ev.date);
+      return d.getMonth() === month && d.getFullYear() === year;
+    })
+    .map(ev => ({
+      date: new Date(ev.date).getDate(),
+      label: ev.label,
+      color: ev.color,
+      ...(ev.url ? { url: ev.url } : {}),
+    }));
+}
+
 export function CalendarPanel({ time }: { time: Date }) {
   const C = useTheme();
+  const { settings } = useSettings();
   const today=time.getDate(), thisMonth=time.getMonth(), thisYear=time.getFullYear();
   const [viewing, setViewing] = useState({ month:thisMonth, year:thisYear });
   const [events, setEvents] = useState<CalEvent[]>(CALENDAR_EVENTS);
   const [selected, setSelected] = useState<number|null>(null);
   const [draft, setDraft] = useState("");
+
+  const { events: remoteEvents, loaded } = useCalendarEvents(settings.calendarFeeds);
+  const feedsKey = settings.calendarFeeds.join("|");
+
+  // Sync remote events into local state when loaded
+  useEffect(() => {
+    if (!loaded) return;
+    const base = settings.calendarFeeds.length > 0
+      ? convertToCalEvents(remoteEvents, viewing.month, viewing.year)
+      : CALENDAR_EVENTS;
+    setEvents(base);
+  }, [loaded, feedsKey, viewing.month, viewing.year]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const isCurMonth = viewing.month===thisMonth && viewing.year===thisYear;
   const firstDay=new Date(viewing.year,viewing.month,1).getDay();
   const daysInMonth=new Date(viewing.year,viewing.month+1,0).getDate();
@@ -61,7 +91,11 @@ export function CalendarPanel({ time }: { time: Date }) {
             {evForDay(selected).map((ev,i) => (
               <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <div style={{ width:4, height:4, borderRadius:"50%", background:ev.color }} />
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.textMuted, flex:1 }}>{ev.label}</span>
+                {ev.url ? (
+                  <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.textMuted, flex:1, textDecoration:"none" }}>{ev.label}</a>
+                ) : (
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.textMuted, flex:1 }}>{ev.label}</span>
+                )}
                 <button onClick={()=>setEvents(ev2=>ev2.filter(e=>!(e.date===selected&&e.label===ev.label)))} style={{ background:"none", border:"none", cursor:"pointer", color:C.textFaint, fontSize:11 }}>&#215;</button>
               </div>
             ))}

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 
+type Coords = { lat: number; lon: number; tz: string };
+const DEFAULT_COORDS: Coords = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
+
 const WX_MAP: Record<number, string> = {
   0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
   45: "Foggy", 48: "Foggy",
@@ -12,11 +15,13 @@ const WX_MAP: Record<number, string> = {
   95: "Thunderstorm",
 };
 
-export function useWeather() {
+export function useWeather(coords: Coords = DEFAULT_COORDS) {
   const [wx, setWx] = useState({ temp: "--", condition: "--", sunrise: "--:--", sunset: "--:--", loaded: false });
+  const coordsKey = `${coords.lat},${coords.lon},${coords.tz}`;
   useEffect(() => {
+    const tz = encodeURIComponent(coords.tz);
     fetch(
-      "https://api.open-meteo.com/v1/forecast?latitude=25.3573&longitude=55.4033&current=temperature_2m,weather_code&daily=sunrise,sunset&timezone=Asia%2FDubai&forecast_days=1"
+      `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,weather_code&daily=sunrise,sunset&timezone=${tz}&forecast_days=1`
     )
       .then(r => r.json())
       .then(data => {
@@ -30,6 +35,6 @@ export function useWeather() {
         });
       })
       .catch(() => {});
-  }, []);
+  }, [coordsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   return wx;
 }

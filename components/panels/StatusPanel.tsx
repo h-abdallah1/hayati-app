@@ -1,16 +1,31 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
+import { useSettings } from "@/lib/settings";
+import { useWeather } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
+
+function getTzOffset(tz: string): string {
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" })
+      .formatToParts(new Date())
+      .find(p => p.type === "timeZoneName")?.value ?? "";
+  } catch {
+    return "";
+  }
+}
 
 export function StatusPanel({ time }: { time: Date }) {
   const C = useTheme();
+  const { settings } = useSettings();
+  const wx = useWeather(settings.location);
   const dayFrac = (time.getHours()*3600+time.getMinutes()*60+time.getSeconds())/86400;
   const metrics = [
     { label:"day",   val:`${(dayFrac*100).toFixed(0)}%`,                         bar:dayFrac,                  color:C.accent },
     { label:"week",  val:`${(((time.getDay()||7)/7)*100).toFixed(0)}%`,           bar:(time.getDay()||7)/7,     color:C.teal   },
     { label:"month", val:`${((time.getDate()/30)*100).toFixed(0)}%`,              bar:time.getDate()/30,        color:C.blue   },
   ];
+  const tzOffset = getTzOffset(settings.location.tz);
   return (
     <Panel>
       <Tag color={C.textFaint}>Time status</Tag>
@@ -24,7 +39,12 @@ export function StatusPanel({ time }: { time: Date }) {
       </div>
       <div style={{ height:1, background:C.border, margin:"16px 0" }} />
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-        {[["location","Sharjah, AE"],["timezone","GMT+4"],["sunrise","06:12"],["sunset","18:31"]].map(([k,v]) => (
+        {([
+          ["location", settings.location.label],
+          ["timezone", tzOffset || settings.location.tz],
+          ["sunrise", wx.sunrise],
+          ["sunset", wx.sunset],
+        ] as [string, string][]).map(([k,v]) => (
           <div key={k} style={{ display:"flex", justifyContent:"space-between" }}><Tag color={C.textFaint}>{k}</Tag><Tag color={C.textMuted}>{v}</Tag></div>
         ))}
       </div>

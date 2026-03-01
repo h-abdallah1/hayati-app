@@ -1,14 +1,16 @@
 "use client";
 
+import { useSettings } from "@/lib/settings";
 import { getPrayerTimes, useWeather } from "@/lib/hooks";
 import { useTheme, useThemeToggle } from "@/lib/theme";
 import { Dot, Sep, Stat, Tag } from "@/components/ui";
 
-export function HeaderBar({ time }: { time: Date }) {
+export function HeaderBar({ time, onOpenSettings }: { time: Date; onOpenSettings: () => void }) {
   const C = useTheme();
   const { isDark, toggle } = useThemeToggle();
-  const prayerTimes = getPrayerTimes();
-  const wx = useWeather();
+  const { settings } = useSettings();
+  const prayerTimes = getPrayerTimes(settings.location);
+  const wx = useWeather(settings.location);
   const h=time.getHours(), m=time.getMinutes(), s=time.getSeconds();
   const greeting = h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<20?"Good evening":"Good night";
   const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}`;
@@ -25,7 +27,7 @@ export function HeaderBar({ time }: { time: Date }) {
         </div>
         <div style={{ width:1, height:20, background:C.border }} />
         <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.textMuted }}>
-          {greeting},&nbsp;<span style={{ color:C.text }}>Hussein</span>
+          {greeting},&nbsp;<span style={{ color:C.text }}>{settings.name}</span>
         </span>
       </div>
       <div style={{ flex:1, maxWidth:340 }}>
@@ -50,6 +52,13 @@ export function HeaderBar({ time }: { time: Date }) {
           style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}
         >
           {isDark ? "☀" : "☾"}
+        </button>
+        <button
+          onClick={onOpenSettings}
+          title="Settings"
+          style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:C.textMuted, padding:"1px 6px", lineHeight:1.6, display:"flex", alignItems:"center" }}
+        >
+          ⚙
         </button>
       </div>
     </div>

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "adhan": "^4.4.3",
+    "fast-xml-parser": "^5.4.1",
+    "ical.js": "^2.2.1",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
