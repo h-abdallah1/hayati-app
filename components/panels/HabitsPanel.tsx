@@ -20,7 +20,10 @@ export function HabitsPanel({ time }: { time: Date }) {
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {habits.map((h,hi) => {
-          const rev=[...h.done].reverse(), streak=rev.findIndex(d=>!d), realStreak=streak===-1?h.done.length:streak;
+          const daysToToday = h.done.slice(0, today + 1);
+          const rev = [...daysToToday].reverse();
+          const streak = rev.findIndex(d => !d);
+          const realStreak = streak === -1 ? daysToToday.length : streak;
           return (
             <div key={h.name} style={{ display:"flex", alignItems:"center", gap:12 }}>
               <div style={{ width:72, fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textMuted, flexShrink:0 }}>{h.name}</div>

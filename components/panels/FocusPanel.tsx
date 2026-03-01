@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
 import { Panel, Tag } from "@/components/ui";
 
@@ -9,6 +9,34 @@ export function FocusPanel() {
   const [focus, setFocus] = useState("Ship the Hayati dashboard");
   const [editing, setEditing] = useState(false);
   const [done, setDone] = useState(false);
+
+  const [phase, setPhase] = useState<"work" | "break">("work");
+  const [secs, setSecs] = useState(25 * 60);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setSecs(s => {
+        if (s <= 1) { setRunning(false); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running]);
+
+  useEffect(() => {
+    if (secs === 0 && !running) {
+      const next = phase === "work" ? "break" : "work";
+      setPhase(next);
+      setSecs(next === "work" ? 25 * 60 : 5 * 60);
+    }
+  }, [secs, running]);
+
+  const reset = () => { setRunning(false); setSecs(phase === "work" ? 25 * 60 : 5 * 60); };
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+
   return (
     <Panel style={{ borderColor:done?C.accent+"44":C.border, display:"flex", flexDirection:"column" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
@@ -21,9 +49,22 @@ export function FocusPanel() {
         ? <input autoFocus value={focus} onChange={e=>setFocus(e.target.value)} onBlur={()=>setEditing(false)} onKeyDown={e=>e.key==="Enter"&&setEditing(false)} style={{ width:"100%", background:"transparent", border:"none", outline:"none", fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:C.text }} />
         : <div onClick={()=>setEditing(true)} style={{ fontFamily:"'Syne',sans-serif", fontSize:18, fontWeight:700, color:done?C.textFaint:C.text, textDecoration:done?"line-through":"none", textDecorationColor:C.textFaint, cursor:"text", lineHeight:1.3 }}>{focus}</div>
       }
-      <div style={{ marginTop:"auto", paddingTop:14, display:"flex", alignItems:"center", gap:8 }}>
-        <div style={{ flex:1, height:1, background:C.border }} />
-        <Tag color={C.textFaint}>click to edit</Tag>
+      <div style={{ marginTop:"auto", paddingTop:14 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+          <div style={{ flex:1, height:1, background:C.border }} />
+          <Tag color={C.textFaint}>{phase}</Tag>
+        </div>
+        <div style={{ textAlign:"center", fontFamily:"'JetBrains Mono',monospace", fontSize:18, color:running?C.accent:C.text, marginBottom:10 }}>
+          {mm}:{ss}
+        </div>
+        <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+          <button onClick={() => setRunning(r=>!r)} style={{ border:`1px solid ${C.border}`, borderRadius:5, background:"transparent", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text, padding:"3px 10px" }}>
+            {running ? "⏸ pause" : "▶ start"}
+          </button>
+          <button onClick={reset} style={{ border:`1px solid ${C.border}`, borderRadius:5, background:"transparent", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.textMuted, padding:"3px 10px" }}>
+            ↺
+          </button>
+        </div>
       </div>
     </Panel>
   );

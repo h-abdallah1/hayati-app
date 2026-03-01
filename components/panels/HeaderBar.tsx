@@ -1,17 +1,19 @@
 "use client";
 
-import { PRAYER_TIMES } from "@/lib/data";
+import { getPrayerTimes, useWeather } from "@/lib/hooks";
 import { useTheme, useThemeToggle } from "@/lib/theme";
 import { Dot, Sep, Stat, Tag } from "@/components/ui";
 
 export function HeaderBar({ time }: { time: Date }) {
   const C = useTheme();
   const { isDark, toggle } = useThemeToggle();
+  const prayerTimes = getPrayerTimes();
+  const wx = useWeather();
   const h=time.getHours(), m=time.getMinutes(), s=time.getSeconds();
   const greeting = h<5?"Good night":h<12?"Good morning":h<17?"Good afternoon":h<20?"Good evening":"Good night";
   const timeStr = `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}`;
   const curMins = h*60+m;
-  const nextPrayer = PRAYER_TIMES.find(p => { const [ph,pm]=p.time.split(":").map(Number); return ph*60+pm>curMins; });
+  const nextPrayer = prayerTimes.find(p => { const [ph,pm]=p.time.split(":").map(Number); return ph*60+pm>curMins; });
   const dayFrac = (h*3600+m*60+s)/86400;
   return (
     <div style={{ maxWidth:1280, margin:"0 auto 12px", background:C.surface, border:`1px solid ${C.border}`, borderRadius:12, padding:"14px 22px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:24 }}>
@@ -38,8 +40,8 @@ export function HeaderBar({ time }: { time: Date }) {
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
         <Stat icon="&#9711;" label={timeStr} />
-        <Sep /><Stat icon="&#8593;" label="06:12" dim /><Stat icon="&#8595;" label="18:31" dim />
-        <Sep /><Stat icon="&#9728;" label="28°" color={C.amber} /><Stat label="Sunny" dim />
+        <Sep /><Stat icon="&#8593;" label={wx.sunrise} dim /><Stat icon="&#8595;" label={wx.sunset} dim />
+        <Sep /><Stat icon="&#9728;" label={wx.temp} color={C.amber} /><Stat label={wx.condition} dim />
         <Sep />{nextPrayer && <Stat icon="&#128332;" label={`${nextPrayer.name} ${nextPrayer.time}`} color={C.accent} />}
         <Sep />
         <button

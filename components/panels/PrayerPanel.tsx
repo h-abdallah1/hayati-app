@@ -1,11 +1,12 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
-import { PRAYER_TIMES } from "@/lib/data";
+import { getPrayerTimes } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
 export function PrayerPanel({ time }: { time: Date }) {
   const C = useTheme();
+  const PRAYER_TIMES = getPrayerTimes();
   const curMins = time.getHours()*60+time.getMinutes();
   const nextName = PRAYER_TIMES.find(p=>{ const [h,m]=p.time.split(":").map(Number); return h*60+m>curMins; })?.name;
   return (
