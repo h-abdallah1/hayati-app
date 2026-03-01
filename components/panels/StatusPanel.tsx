@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { useGlobalSettings } from "@/lib/settings";
 import { useWeather } from "@/lib/hooks";
 import { convertHHMM } from "@/lib/time";
 import { Panel, Tag } from "@/components/ui";
@@ -18,15 +18,15 @@ function getTzOffset(tz: string): string {
 
 export function StatusPanel({ time }: { time: Date }) {
   const C = useTheme();
-  const { settings } = useSettings();
-  const wx = useWeather(settings.location);
+  const { global } = useGlobalSettings();
+  const wx = useWeather(global.location);
   const dayFrac = (time.getHours()*3600+time.getMinutes()*60+time.getSeconds())/86400;
   const metrics = [
     { label:"day",   val:`${(dayFrac*100).toFixed(0)}%`,                         bar:dayFrac,                  color:C.accent },
     { label:"week",  val:`${(((time.getDay()||7)/7)*100).toFixed(0)}%`,           bar:(time.getDay()||7)/7,     color:C.teal   },
     { label:"month", val:`${((time.getDate()/30)*100).toFixed(0)}%`,              bar:time.getDate()/30,        color:C.blue   },
   ];
-  const tzOffset = getTzOffset(settings.location.tz);
+  const tzOffset = getTzOffset(global.location.tz);
   return (
     <Panel>
       <Tag color={C.textFaint}>Time status</Tag>
@@ -41,10 +41,10 @@ export function StatusPanel({ time }: { time: Date }) {
       <div style={{ height:1, background:C.border, margin:"16px 0" }} />
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
         {([
-          ["location", settings.location.label],
-          ["timezone", tzOffset || settings.location.tz],
-          ["sunrise", convertHHMM(wx.sunrise, settings.timeFormat)],
-          ["sunset",  convertHHMM(wx.sunset,  settings.timeFormat)],
+          ["location", global.location.label],
+          ["timezone", tzOffset || global.location.tz],
+          ["sunrise", convertHHMM(wx.sunrise, global.timeFormat)],
+          ["sunset",  convertHHMM(wx.sunset,  global.timeFormat)],
         ] as [string, string][]).map(([k,v]) => (
           <div key={k} style={{ display:"flex", justifyContent:"space-between" }}><Tag color={C.textFaint}>{k}</Tag><Tag color={C.textMuted}>{v}</Tag></div>
         ))}

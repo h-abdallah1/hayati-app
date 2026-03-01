@@ -1,14 +1,14 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { useGlobalSettings } from "@/lib/settings";
 import { getPrayerTimes } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
 export function PrayerPanel({ time }: { time: Date }) {
   const C = useTheme();
-  const { settings } = useSettings();
-  const PRAYER_TIMES = getPrayerTimes(settings.location, settings.timeFormat);
+  const { global } = useGlobalSettings();
+  const PRAYER_TIMES = getPrayerTimes(global.location, global.timeFormat);
   const curMins = time.getHours()*60+time.getMinutes();
   const nextName = PRAYER_TIMES.find(p => p.mins > curMins)?.name;
   return (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, KeyboardEvent } from "react";
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { usePanelSettings } from "@/lib/settings";
 import { inputStyle, sectionHead, btnSmall, addBtn, cancelBtn } from "./styles";
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 
 export function NewsFeedsSection({ open }: Props) {
   const C = useTheme();
-  const { settings, updateSettings } = useSettings();
+  const { panels, updatePanels } = usePanelSettings();
   const [newsFeedUrl, setNewsFeedUrl] = useState("");
   const [newsFeedLabel, setNewsFeedLabel] = useState("");
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
@@ -25,15 +25,15 @@ export function NewsFeedsSection({ open }: Props) {
   const addNewsFeed = () => {
     const url = newsFeedUrl.trim();
     if (!url) return;
-    if (settings.newsFeeds.some(f => f.url === url)) { setNewsFeedUrl(""); setNewsFeedLabel(""); return; }
-    updateSettings({ newsFeeds: [...settings.newsFeeds, { url, label: newsFeedLabel.trim() }] });
+    if (panels.newsFeeds.some(f => f.url === url)) { setNewsFeedUrl(""); setNewsFeedLabel(""); return; }
+    updatePanels({ newsFeeds: [...panels.newsFeeds, { url, label: newsFeedLabel.trim() }] });
     setNewsFeedUrl("");
     setNewsFeedLabel("");
   };
 
   const removeNewsFeed = (url: string) => {
     if (editingUrl === url) setEditingUrl(null);
-    updateSettings({ newsFeeds: settings.newsFeeds.filter(f => f.url !== url) });
+    updatePanels({ newsFeeds: panels.newsFeeds.filter(f => f.url !== url) });
   };
 
   const startEdit = (url: string, label: string) => { setEditingUrl(url); setEditUrl(url); setEditLabel(label); };
@@ -41,8 +41,8 @@ export function NewsFeedsSection({ open }: Props) {
   const saveEdit = () => {
     const newUrl = editUrl.trim();
     if (!newUrl || !editingUrl) return;
-    if (newUrl !== editingUrl && settings.newsFeeds.some(f => f.url === newUrl)) return;
-    updateSettings({ newsFeeds: settings.newsFeeds.map(f => f.url === editingUrl ? { url: newUrl, label: editLabel.trim() } : f) });
+    if (newUrl !== editingUrl && panels.newsFeeds.some(f => f.url === newUrl)) return;
+    updatePanels({ newsFeeds: panels.newsFeeds.map(f => f.url === editingUrl ? { url: newUrl, label: editLabel.trim() } : f) });
     setEditingUrl(null);
   };
 
@@ -50,13 +50,13 @@ export function NewsFeedsSection({ open }: Props) {
     <>
       <div style={sectionHead(C)}>News RSS Feeds</div>
 
-      {settings.newsFeeds.length === 0 ? (
+      {panels.newsFeeds.length === 0 ? (
         <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginBottom: 10 }}>
           No feeds added — using built-in news
         </div>
       ) : (
         <div style={{ marginBottom: 10 }}>
-          {settings.newsFeeds.map(f =>
+          {panels.newsFeeds.map(f =>
             editingUrl === f.url ? (
               <div key={f.url} style={{ padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <input value={editLabel} onChange={e => setEditLabel(e.target.value)}

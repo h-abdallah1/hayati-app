@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useClock } from "@/lib/hooks";
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { useGlobalSettings } from "@/lib/settings";
 import { formatClock } from "@/lib/time";
 import {
   HeaderBar, FocusPanel, TasksPanel, StatusPanel, PrayerPanel,
@@ -14,7 +14,7 @@ import { SettingsDrawer } from "@/components/SettingsDrawer";
 
 function HayatiInner() {
   const C = useTheme();
-  const { settings } = useSettings();
+  const { global } = useGlobalSettings();
   const time = useClock();
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
@@ -35,7 +35,7 @@ function HayatiInner() {
       <div style={{ maxWidth:1280, margin:"12px auto 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, letterSpacing:"1px" }}>HAYATI v2.0 · حياتي</span>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint }}>
-          {formatClock(time, settings.timeFormat)} · {settings.location.label}
+          {formatClock(time, global.timeFormat)} · {global.location.label}
         </span>
       </div>
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />

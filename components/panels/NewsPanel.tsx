@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { usePanelSettings } from "@/lib/settings";
 import { useNews } from "@/lib/hooks";
 import { NEWS } from "@/lib/data";
 import { Panel, Tag, Dot } from "@/components/ui";
@@ -11,11 +11,11 @@ const PAGE_SIZE = 5;
 
 export function NewsPanel() {
   const C = useTheme();
-  const { settings } = useSettings();
-  const { items: liveItems, loaded } = useNews(settings.newsFeeds);
+  const { panels } = usePanelSettings();
+  const { items: liveItems, loaded } = useNews(panels.newsFeeds);
   const [page, setPage] = useState(0);
 
-  const displayItems: Array<{ source: string; title: string; time: string; url?: string }> = settings.newsFeeds.length === 0
+  const displayItems: Array<{ source: string; title: string; time: string; url?: string }> = panels.newsFeeds.length === 0
     ? NEWS
     : (loaded ? liveItems : NEWS);
 
@@ -23,7 +23,7 @@ export function NewsPanel() {
   const pageItems = displayItems.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // Reset to first page when the item list changes
-  const feedsKey = settings.newsFeeds.map(f => f.url).join("|");
+  const feedsKey = panels.newsFeeds.map(f => f.url).join("|");
   useEffect(() => { setPage(0); }, [displayItems.length, feedsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const btnStyle = (disabled: boolean): React.CSSProperties => ({
@@ -46,7 +46,7 @@ export function NewsPanel() {
           <Tag color={C.textFaint}>Latest news</Tag>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <Dot size={4} />
-            <Tag color={C.textMuted}>{settings.newsFeeds.length > 0 ? "live" : "static"}</Tag>
+            <Tag color={C.textMuted}>{panels.newsFeeds.length > 0 ? "live" : "static"}</Tag>
           </div>
         </div>
         {totalPages > 1 && (

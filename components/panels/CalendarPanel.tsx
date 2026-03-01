@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { usePanelSettings } from "@/lib/settings";
 import { useCalendarEvents } from "@/lib/hooks";
 import type { CalEvent, CalEventFull } from "@/lib/types";
 import { CALENDAR_EVENTS, MONTHS_L, DAY_LABELS } from "@/lib/data";
@@ -24,20 +24,20 @@ function convertToCalEvents(remote: CalEventFull[], month: number, year: number)
 
 export function CalendarPanel({ time }: { time: Date }) {
   const C = useTheme();
-  const { settings } = useSettings();
+  const { panels } = usePanelSettings();
   const today=time.getDate(), thisMonth=time.getMonth(), thisYear=time.getFullYear();
   const [viewing, setViewing] = useState({ month:thisMonth, year:thisYear });
   const [events, setEvents] = useState<CalEvent[]>(CALENDAR_EVENTS);
   const [selected, setSelected] = useState<number|null>(null);
   const [draft, setDraft] = useState("");
 
-  const { events: remoteEvents, loaded } = useCalendarEvents(settings.calendarFeeds);
-  const feedsKey = settings.calendarFeeds.join("|");
+  const { events: remoteEvents, loaded } = useCalendarEvents(panels.calendarFeeds);
+  const feedsKey = panels.calendarFeeds.join("|");
 
   // Sync remote events into local state when loaded
   useEffect(() => {
     if (!loaded) return;
-    const base = settings.calendarFeeds.length > 0
+    const base = panels.calendarFeeds.length > 0
       ? convertToCalEvents(remoteEvents, viewing.month, viewing.year)
       : CALENDAR_EVENTS;
     setEvents(base);

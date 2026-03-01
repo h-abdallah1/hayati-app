@@ -2,7 +2,7 @@
 
 import { useState, useEffect, KeyboardEvent } from "react";
 import { useTheme } from "@/lib/theme";
-import { useSettings } from "@/lib/settings";
+import { useGlobalSettings } from "@/lib/settings";
 import type { LocationCoords } from "@/lib/types";
 import { detectLocation, searchLocation } from "@/lib/location";
 import { inputStyle, sectionHead, addBtn, ghostBtn } from "./styles";
@@ -13,7 +13,7 @@ interface Props {
 
 export function LocationSection({ open }: Props) {
   const C = useTheme();
-  const { settings, updateSettings } = useSettings();
+  const { global, updateGlobal } = useGlobalSettings();
   const [locSearch, setLocSearch] = useState("");
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState("");
@@ -26,7 +26,7 @@ export function LocationSection({ open }: Props) {
   }, [open]);
 
   const applyLocation = (loc: LocationCoords) => {
-    updateSettings({ location: loc });
+    updateGlobal({ location: loc });
     setLocSearch("");
     setLocError("");
   };
@@ -65,7 +65,7 @@ export function LocationSection({ open }: Props) {
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, flex: 1 }}>
-          📍 {settings.location.label}
+          📍 {global.location.label}
         </span>
         <button
           onClick={handleAutodetect}

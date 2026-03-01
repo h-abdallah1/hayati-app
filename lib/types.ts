@@ -6,10 +6,12 @@ export type CalEvent = { date: number; label: string; color: string; url?: strin
 export type LocationCoords = { lat: number; lon: number; tz: string; label: string };
 export type NewsFeed = { url: string; label: string };
 export type TimeFormat = "12h" | "24h";
-export type AppSettings = {
+export type GlobalSettings = {
   name: string;
   location: LocationCoords;
   timeFormat: TimeFormat;
+};
+export type PanelSettings = {
   newsFeeds: NewsFeed[];
   calendarFeeds: string[];
 };
