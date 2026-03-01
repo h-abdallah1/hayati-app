@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, KeyboardEvent } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { inputStyle, fieldLabel, sectionHead, addBtn } from "./styles";
 
@@ -11,6 +11,7 @@ interface Props {
 
 export function GeneralSection({ open }: Props) {
   const C = useTheme();
+  const { isDark, toggle } = useThemeToggle();
   const { global, updateGlobal } = useGlobalSettings();
   const [nameVal, setNameVal] = useState(global.name);
 
@@ -33,6 +34,23 @@ export function GeneralSection({ open }: Props) {
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveName()}
           style={inputStyle(C)}
         />
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Appearance</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {([["Light", false], ["Dark", true]] as const).map(([label, dark]) => (
+            <button key={label} onClick={() => { if (isDark !== dark) toggle(); }} style={{
+              flex: 1, padding: "6px 0", borderRadius: 6, cursor: "pointer",
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+              border: `1px solid ${isDark === dark ? C.accent : C.border}`,
+              background: isDark === dark ? C.accentDim : C.surfaceHi,
+              color: isDark === dark ? C.accent : C.textMuted,
+            }}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div style={{ marginBottom: 12 }}>

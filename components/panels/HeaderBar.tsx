@@ -2,7 +2,7 @@
 
 import { useGlobalSettings } from '@/lib/settings';
 import { useWeather } from '@/lib/hooks';
-import { useTheme, useThemeToggle } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 import { formatClock } from '@/lib/time';
 import { Dot, Sep, Stat, Tag } from '@/components/ui';
 
@@ -14,7 +14,6 @@ export function HeaderBar({
   onOpenSettings: () => void;
 }) {
   const C = useTheme();
-  const { isDark, toggle } = useThemeToggle();
   const { global } = useGlobalSettings();
   const wx = useWeather(global.location);
   const h = time.getHours(),
@@ -141,25 +140,6 @@ export function HeaderBar({
         <Stat icon="&#9711;" label={timeStr} />
         <Stat label={dateStr} dim />
         <Sep />
-        <button
-          onClick={toggle}
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          style={{
-            background: 'none',
-            border: `1px solid ${C.border}`,
-            borderRadius: 5,
-            cursor: 'pointer',
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 13,
-            color: C.textMuted,
-            padding: '1px 6px',
-            lineHeight: 1.6,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          {isDark ? '☀' : '☾'}
-        </button>
         <button
           onClick={onOpenSettings}
           title="Settings"
