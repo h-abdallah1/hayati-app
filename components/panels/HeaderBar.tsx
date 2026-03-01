@@ -1,9 +1,9 @@
 'use client';
 
 import { useGlobalSettings } from '@/lib/settings';
-import { getPrayerTimes, useWeather } from '@/lib/hooks';
+import { useWeather } from '@/lib/hooks';
 import { useTheme, useThemeToggle } from '@/lib/theme';
-import { formatClock, convertHHMM } from '@/lib/time';
+import { formatClock } from '@/lib/time';
 import { Dot, Sep, Stat, Tag } from '@/components/ui';
 
 export function HeaderBar({
@@ -16,7 +16,6 @@ export function HeaderBar({
   const C = useTheme();
   const { isDark, toggle } = useThemeToggle();
   const { global } = useGlobalSettings();
-  const prayerTimes = getPrayerTimes(global.location, global.timeFormat);
   const wx = useWeather(global.location);
   const h = time.getHours(),
     m = time.getMinutes(),
@@ -32,9 +31,10 @@ export function HeaderBar({
             ? 'Good evening'
             : 'Good night';
   const timeStr = formatClock(time, global.timeFormat);
-  const curMins = h * 60 + m;
-  const nextPrayer = prayerTimes.find((p) => p.mins > curMins);
   const dayFrac = (h * 3600 + m * 60 + s) / 86400;
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${DAYS[time.getDay()]} · ${MONTHS[time.getMonth()]} ${time.getDate()}`;
   return (
     <div
       style={{
@@ -136,10 +136,10 @@ export function HeaderBar({
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
       >
-        <Stat icon="&#9728;" label={wx.temp} color={C.amber} />
-        <Stat label={wx.condition} dim />
+        <Stat label={`${wx.temp} · ${wx.condition}`} color={C.amber} />
         <Sep />
         <Stat icon="&#9711;" label={timeStr} />
+        <Stat label={dateStr} dim />
         <Sep />
         <button
           onClick={toggle}
