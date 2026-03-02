@@ -18,7 +18,16 @@ export type PanelSettings = {
   pomodoroWork: number;
   pomodoroBreak: number;
 };
-export type NewsItem = { source: string; title: string; url: string; time: string };
+export type NewsItem = {
+  source: string;
+  title: string;
+  url?: string;
+  time: string;
+  description?: string;
+  author?: string;
+  categories?: string[];
+  image?: string;
+};
 export type CalEventFull = { date: string; label: string; color: string; url?: string };
 
 export type Goal = { id: number; title: string; optional?: boolean; status: "todo" | "active" | "done"; description?: string; created: string; year?: number };
