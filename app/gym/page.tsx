@@ -160,7 +160,7 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
 
 // ── Tab: Exercises ──────────────────────────────────────────────────────────
 
-const EX_PAGE = 15;
+const EX_PAGE = 10;
 
 function ExercisesTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
   const [page, setPage] = useState(1);
@@ -278,7 +278,7 @@ function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType
 
 // ── Tab: PRs ────────────────────────────────────────────────────────────────
 
-const PR_PAGE = 15;
+const PR_PAGE = 10;
 
 function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
   const [page, setPage] = useState(1);
