@@ -55,10 +55,13 @@ function monthStartCols(jan1DOW: number, leap: boolean): number[] {
 
 // ── Heatmap ────────────────────────────────────────────────────────────────
 
-function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: number }) {
+function GymHeatmap({ workouts, year }: { workouts: HevyWorkoutFull[]; year: number }) {
   const C = useTheme();
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [sq, setSq] = useState(10);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const wrapRef  = useRef<HTMLDivElement>(null);
+  const [sq, setSq]           = useState(10);
+  const [hovDate, setHovDate] = useState<string | null>(null);
+  const [mouse,   setMouse]   = useState({ x: 0, y: 0 });
   const GAP = 3; const DL_W = 10; const DL_G = 6;
 
   useEffect(() => {
@@ -71,7 +74,16 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
     return () => ro.disconnect();
   }, []);
 
+  const workoutMap = useMemo(() => {
+    const map = new Map<string, HevyWorkoutFull>();
+    for (const w of workouts) if (!map.has(w.date)) map.set(w.date, w);
+    return map;
+  }, [workouts]);
+
+  const workoutDates = useMemo(() => new Set(workouts.map(w => w.date)), [workouts]);
+
   const now      = new Date();
+  const today    = now.toISOString().split("T")[0];
   const curYear  = now.getFullYear();
   const leap     = isLeapYear(year);
   const total    = leap ? 366 : 365;
@@ -83,8 +95,16 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
   const pulse    = Math.max(2, Math.round(sq * 0.35));
   const toStr    = (d: number) => new Date(year, 0, d).toISOString().split("T")[0];
 
+  const hovWorkout = hovDate ? workoutMap.get(hovDate) ?? null : null;
+  const outerW     = outerRef.current?.offsetWidth ?? 600;
+
   return (
-    <div style={{ marginBottom: 28 }}>
+    <div ref={outerRef} style={{ marginBottom: 28, position: "relative" }}
+      onMouseMove={e => {
+        const rect = outerRef.current?.getBoundingClientRect();
+        if (rect) setMouse({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }}
+      onMouseLeave={() => setHovDate(null)}>
       <style>{`
         @keyframes gymPulse{0%,100%{box-shadow:0 0 0 0px ${C.accent}60;}55%{box-shadow:0 0 0 ${pulse}px ${C.accent}1e;}}
         .gym-today{animation:gymPulse 2.6s ease-in-out infinite;}
@@ -106,19 +126,71 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
           <div style={{ display: "grid", gridTemplateRows: `repeat(7,${sq}px)`, gridAutoColumns: `${sq}px`, gridAutoFlow: "column", gap: GAP }}>
             {Array.from({ length: jan1DOW }).map((_, i) => <div key={`o${i}`} style={{ width: sq, height: sq }} />)}
             {Array.from({ length: total }).map((_, i) => {
-              const d = i + 1;
+              const d       = i + 1;
+              const dateStr = toStr(d);
               const isToday = d === todayDOY;
-              const trained = workoutDates.has(toStr(d));
+              const trained = workoutDates.has(dateStr);
+              const isPast  = d < todayDOY;
+              const isHov   = hovDate === dateStr;
               return (
-                <div key={d} title={toStr(d)} className={isToday ? "gym-today" : undefined} style={{
-                  width: sq, height: sq, borderRadius: BR,
-                  background: isToday ? (trained ? C.accent : C.borderHi) : trained ? `${C.accent}80` : d < todayDOY ? C.border : `${C.border}55`,
-                }} />
+                <div
+                  key={d}
+                  className={isToday ? "gym-today" : undefined}
+                  onMouseEnter={() => (isPast || isToday) && setHovDate(dateStr)}
+                  style={{
+                    width: sq, height: sq, borderRadius: BR,
+                    cursor: (isPast || isToday) ? "pointer" : "default",
+                    background: isToday
+                      ? (trained ? C.accent : C.borderHi)
+                      : trained
+                        ? `${C.accent}80`
+                        : isPast ? C.border : `${C.border}55`,
+                    outline: isHov ? `2px solid ${C.accent}` : "none",
+                    outlineOffset: 1,
+                    transition: "outline 0.1s",
+                  }}
+                />
               );
             })}
           </div>
         </div>
       </div>
+
+      {/* Tooltip */}
+      {hovDate && (
+        <div style={{
+          position: "absolute",
+          left: mouse.x > outerW - 180 ? mouse.x - 170 : mouse.x + 14,
+          top: mouse.y - 10,
+          background: C.surface,
+          border: `1px solid ${C.borderHi}`,
+          borderRadius: 8,
+          padding: "10px 14px",
+          pointerEvents: "none",
+          zIndex: 50,
+          minWidth: 160,
+          boxShadow: `0 4px 20px ${C.bg}99`,
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            {new Date(hovDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+          </div>
+          {hovWorkout ? (
+            <>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>{hovWorkout.title}</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textMuted }}>
+                {hovWorkout.duration} min
+                <span style={{ color: C.textFaint, margin: "0 5px" }}>·</span>
+                {hovWorkout.exercises.length} exercise{hovWorkout.exercises.length !== 1 ? "s" : ""}
+              </div>
+              {hovDate === today && (
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.accent, marginTop: 5 }}>✓ trained today</div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>rest day</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -615,7 +687,7 @@ export default function GymPage() {
               </div>
             )}
 
-            {!loading && <GymHeatmap workoutDates={workoutSet} year={selectedYear} />}
+            {!loading && <GymHeatmap workouts={workouts} year={selectedYear} />}
 
             {/* Tab bar */}
             <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
