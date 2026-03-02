@@ -9,28 +9,39 @@ import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 function isLeapYear(y: number) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
 function dayOfYear(d: Date)    { return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000) + 1; }
 
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function calcStreak(dates: string[]): number {
+  const set   = new Set(dates);
+  const today = new Date().toISOString().split("T")[0];
+  let streak  = 0;
+  const d     = new Date();
+  if (!set.has(today)) d.setDate(d.getDate() - 1);
+  while (true) {
+    const s = d.toISOString().split("T")[0];
+    if (!set.has(s)) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+const MONTH_NAMES  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAY_INITIALS = ["S","M","T","W","T","F","S"];
-const SHOW_DAY = new Set([1, 3, 5]);
+const SHOW_DAY     = new Set([1, 3, 5]);
 
 function monthStartCols(jan1DOW: number, leap: boolean): number[] {
   const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const cols: number[] = [];
-  let idx = jan1DOW;
+  const cols: number[] = []; let idx = jan1DOW;
   for (const d of days) { cols.push(Math.floor(idx / 7)); idx += d; }
   return cols;
 }
 
 // ── Heatmap ────────────────────────────────────────────────────────────────
 
-function GymHeatmap({ workoutDates }: { workoutDates: Set<string> }) {
+function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: number }) {
   const C       = useTheme();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [sq, setSq] = useState(10);
-
-  const GAP  = 3;
-  const DL_W = 10;
-  const DL_G = 6;
+  const GAP = 3; const DL_W = 10; const DL_G = 6;
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -43,11 +54,11 @@ function GymHeatmap({ workoutDates }: { workoutDates: Set<string> }) {
     return () => ro.disconnect();
   }, []);
 
-  const now   = new Date();
-  const year  = now.getFullYear();
-  const leap  = isLeapYear(year);
-  const total = leap ? 366 : 365;
-  const today = dayOfYear(now);
+  const now      = new Date();
+  const curYear  = now.getFullYear();
+  const leap     = isLeapYear(year);
+  const total    = leap ? 366 : 365;
+  const todayDOY = year === curYear ? dayOfYear(now) : year < curYear ? total + 1 : 0;
 
   const jan1DOW = new Date(year, 0, 1).getDay();
   const mCols   = monthStartCols(jan1DOW, leap);
@@ -55,21 +66,17 @@ function GymHeatmap({ workoutDates }: { workoutDates: Set<string> }) {
   const BR      = Math.max(1, Math.round(sq * 0.2));
   const pulse   = Math.max(2, Math.round(sq * 0.35));
 
-  const toDateStr = (d: number) => {
-    const date = new Date(year, 0, d);
-    return date.toISOString().split("T")[0];
-  };
+  const toDateStr = (d: number) => new Date(year, 0, d).toISOString().split("T")[0];
 
   return (
     <div style={{ marginBottom: 28 }}>
       <style>{`
         @keyframes gymPulse {
-          0%, 100% { box-shadow: 0 0 0 0px ${C.accent}60; }
-          55%       { box-shadow: 0 0 0 ${pulse}px ${C.accent}1e; }
+          0%,100%{box-shadow:0 0 0 0px ${C.accent}60;}
+          55%{box-shadow:0 0 0 ${pulse}px ${C.accent}1e;}
         }
-        .gym-today { animation: gymPulse 2.6s ease-in-out infinite; }
+        .gym-today{animation:gymPulse 2.6s ease-in-out infinite;}
       `}</style>
-
       <div ref={wrapRef} style={{ width: "100%" }}>
         <div style={{ paddingLeft: DL_W + DL_G, position: "relative", height: 14, marginBottom: 5 }}>
           {mCols.map((col, m) => (
@@ -78,38 +85,27 @@ function GymHeatmap({ workoutDates }: { workoutDates: Set<string> }) {
             </span>
           ))}
         </div>
-
         <div style={{ display: "flex", gap: DL_G, alignItems: "flex-start" }}>
-          <div style={{ display: "grid", gridTemplateRows: `repeat(7, ${sq}px)`, gap: GAP, width: DL_W, flexShrink: 0 }}>
+          <div style={{ display: "grid", gridTemplateRows: `repeat(7,${sq}px)`, gap: GAP, width: DL_W, flexShrink: 0 }}>
             {DAY_INITIALS.map((l, i) => (
-              <div key={i} style={{ height: sq, display: "flex", alignItems: "center", fontFamily: "'JetBrains Mono',monospace", fontSize: Math.min(9, Math.max(7, Math.round(sq * 0.65))), color: SHOW_DAY.has(i) ? C.textFaint : "transparent", userSelect: "none" }}>
-                {l}
-              </div>
+              <div key={i} style={{ height: sq, display: "flex", alignItems: "center", fontFamily: "'JetBrains Mono',monospace", fontSize: Math.min(9, Math.max(7, Math.round(sq * 0.65))), color: SHOW_DAY.has(i) ? C.textFaint : "transparent", userSelect: "none" }}>{l}</div>
             ))}
           </div>
-
-          <div style={{ display: "grid", gridTemplateRows: `repeat(7, ${sq}px)`, gridAutoColumns: `${sq}px`, gridAutoFlow: "column", gap: GAP }}>
+          <div style={{ display: "grid", gridTemplateRows: `repeat(7,${sq}px)`, gridAutoColumns: `${sq}px`, gridAutoFlow: "column", gap: GAP }}>
             {Array.from({ length: jan1DOW }).map((_, i) => <div key={`o${i}`} style={{ width: sq, height: sq }} />)}
             {Array.from({ length: total }).map((_, i) => {
               const d       = i + 1;
-              const isToday = d === today;
-              const past    = d < today;
-              const dateStr = toDateStr(d);
-              const trained = workoutDates.has(dateStr);
+              const isToday = d === todayDOY;
+              const past    = d < todayDOY;
+              const trained = workoutDates.has(toDateStr(d));
               return (
-                <div
-                  key={d}
-                  title={dateStr}
-                  className={isToday ? "gym-today" : undefined}
-                  style={{
-                    width: sq, height: sq, borderRadius: BR,
-                    background: isToday
-                      ? (trained ? C.accent : C.borderHi)
-                      : trained
-                      ? `${C.accent}80`
-                      : past ? C.border : `${C.border}55`,
-                  }}
-                />
+                <div key={d} title={toDateStr(d)} className={isToday ? "gym-today" : undefined} style={{
+                  width: sq, height: sq, borderRadius: BR,
+                  background: isToday
+                    ? (trained ? C.accent : C.borderHi)
+                    : trained ? `${C.accent}80`
+                    : past ? C.border : `${C.border}55`,
+                }} />
               );
             })}
           </div>
@@ -127,23 +123,19 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
 
   return (
     <div style={{ borderBottom: `1px solid ${C.border}` }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
-      >
+      <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, width: 96, flexShrink: 0 }}>{dateLabel}</span>
         <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text, flex: 1 }}>{w.title}</span>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{w.duration} min</span>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0, width: 20, textAlign: "right" }}>{open ? "▲" : "▼"}</span>
       </button>
-
       {open && (
         <div style={{ paddingBottom: 12, paddingLeft: 108, display: "flex", flexDirection: "column", gap: 6 }}>
           {w.exercises.map((ex, i) => {
             const setsStr = ex.sets.map(s => {
-              if (s.weight_kg && s.reps)    return `${s.weight_kg}kg × ${s.reps}`;
-              if (s.reps)                   return `${s.reps} reps`;
-              if (s.duration_seconds)       return `${Math.round(s.duration_seconds / 60)}min`;
+              if (s.weight_kg && s.reps)  return `${s.weight_kg}kg × ${s.reps}`;
+              if (s.reps)                 return `${s.reps} reps`;
+              if (s.duration_seconds)     return `${Math.round(s.duration_seconds / 60)}min`;
               return "—";
             }).join("  ·  ");
             return (
@@ -161,38 +153,55 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
-type Stats    = { count: number; streak: number; loggedToday: boolean; workoutDates: string[] };
 type Lifetime = { totalSessions: number; totalHrs: number; longestStreak: number; firstDate: string | null };
 
-export default function GymPage() {
-  const C = useTheme();
-  const [stats,    setStats]    = useState<Stats | null>(null);
-  const [lifetime, setLifetime] = useState<Lifetime | null>(null);
-  const [workouts, setWorkouts] = useState<HevyWorkoutFull[]>([]);
-  const [loading,  setLoading]  = useState(true);
+const GOAL = 200;
 
+export default function GymPage() {
+  const C          = useTheme();
+  const curYear    = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(curYear);
+  const [lifetime,  setLifetime]  = useState<Lifetime | null>(null);
+  const [workouts,  setWorkouts]  = useState<HevyWorkoutFull[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [wxLoading, setWxLoading] = useState(false);
+
+  // Fetch lifetime once
   useEffect(() => {
-    Promise.all([
-      fetch("/api/hevy").then(r => r.json()),
-      fetch("/api/hevy/workouts").then(r => r.json()),
-      fetch("/api/hevy/lifetime").then(r => r.json()),
-    ]).then(([s, w, l]) => {
-      setStats(s);
-      setWorkouts(w.workouts ?? []);
-      setLifetime(l.error ? null : l);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetch("/api/hevy/lifetime").then(r => r.json()).then(l => {
+      if (!l.error) setLifetime(l);
+    });
   }, []);
 
-  const workoutDates = new Set(stats?.workoutDates ?? []);
-  const count        = stats?.count    ?? 0;
-  const streak       = stats?.streak   ?? 0;
-  const GOAL         = 200;
+  // Fetch workouts when year changes
+  useEffect(() => {
+    setWxLoading(true);
+    fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
+      setWorkouts(w.workouts ?? []);
+      setLoading(false);
+      setWxLoading(false);
+    }).catch(() => { setLoading(false); setWxLoading(false); });
+  }, [selectedYear]);
 
-  const now          = new Date();
-  const weekNum      = Math.ceil((dayOfYear(now) + new Date(now.getFullYear(), 0, 1).getDay()) / 7);
-  const avgPerWeek   = weekNum > 0 ? (count / weekNum).toFixed(1) : "—";
-  const progress     = Math.min(100, (count / GOAL) * 100);
+  // Derive years from lifetime firstDate → curYear
+  const firstYear = lifetime?.firstDate ? parseInt(lifetime.firstDate.slice(0, 4), 10) : curYear;
+  const years     = Array.from({ length: curYear - firstYear + 1 }, (_, i) => curYear - i);
+
+  // Compute year stats from workouts
+  const dates       = workouts.map(w => w.date);
+  const workoutSet  = new Set(dates);
+  const count       = workouts.length;
+  const today       = new Date().toISOString().split("T")[0];
+  const loggedToday = selectedYear === curYear && workoutSet.has(today);
+  const streak      = selectedYear === curYear ? calcStreak(dates) : 0;
+  const progress    = Math.min(100, (count / GOAL) * 100);
+
+  // avg/week: for current year use weeks elapsed, for past years use 52
+  const now        = new Date();
+  const weeksInYear = selectedYear === curYear
+    ? Math.max(1, Math.ceil((dayOfYear(now) + new Date(now.getFullYear(), 0, 1).getDay()) / 7))
+    : 52;
+  const avgPerWeek = (count / weeksInYear).toFixed(1);
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
@@ -203,11 +212,10 @@ export default function GymPage() {
           <div>
             <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, color: C.text }}>Gym</span>
             <span style={{ fontFamily: "'Scheherazade New',serif", fontSize: 18, color: C.textFaint, marginLeft: 10 }}>رياضة</span>
-            {stats?.loggedToday && (
+            {loggedToday && (
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, marginLeft: 14 }}>✓ trained today</span>
             )}
           </div>
-
           {/* Lifetime stats */}
           <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
             {[
@@ -216,56 +224,79 @@ export default function GymPage() {
               { label: "longest streak", value: lifetime ? String(lifetime.longestStreak) : "—", unit: "days"     },
               { label: "since",          value: lifetime?.firstDate
                   ? new Date(lifetime.firstDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })
-                  : "—",
-                unit: "" },
+                  : "—", unit: "" },
             ].map(s => (
               <div key={s.label} style={{ textAlign: "right" }}>
                 <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
                 <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 15, color: C.text, lineHeight: 1 }}>
-                  {s.value}
-                  {s.unit && <span style={{ fontSize: 9, color: C.textFaint, marginLeft: 3 }}>{s.unit}</span>}
+                  {s.value}{s.unit && <span style={{ fontSize: 9, color: C.textFaint, marginLeft: 3 }}>{s.unit}</span>}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: 28, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
-          {[
-            { label: "sessions",  value: String(count),      sub: `/ ${GOAL}`, hi: true  },
-            { label: "streak",    value: String(streak),     sub: "days"                 },
-            { label: "avg / week",value: String(avgPerWeek), sub: "sessions"             },
-            { label: "remaining", value: String(Math.max(0, GOAL - count)), sub: "left"  },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
-              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, color: s.hi ? C.accent : C.text, lineHeight: 1 }}>
-                {loading ? "—" : s.value}
-                {s.sub && <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 4 }}>{s.sub}</span>}
-              </div>
+        {/* Year nav + content */}
+        <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+
+          {/* Year sidebar */}
+          <div style={{ width: 44, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+            {years.map(y => (
+              <button key={y} onClick={() => setSelectedYear(y)} style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                color: selectedYear === y ? C.accent : C.textFaint,
+                padding: "5px 0", textAlign: "center", width: "100%",
+                borderRadius: 4, letterSpacing: "0.5px",
+              }}>
+                {y}
+              </button>
+            ))}
+          </div>
+
+          {/* Main content */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+            {/* Stats row */}
+            <div style={{ display: "flex", gap: 28, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+              {[
+                { label: "sessions",   value: String(count),                         sub: selectedYear === curYear ? `/ ${GOAL}` : undefined, hi: true },
+                ...(selectedYear === curYear ? [{ label: "streak", value: String(streak), sub: "days", hi: false }] : []),
+                { label: "avg / week", value: avgPerWeek,                             sub: "sessions", hi: false },
+                ...(selectedYear === curYear ? [{ label: "remaining", value: String(Math.max(0, GOAL - count)), sub: "left", hi: false }] : []),
+              ].map(s => (
+                <div key={s.label}>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, color: s.hi ? C.accent : C.text, lineHeight: 1 }}>
+                    {wxLoading ? "—" : s.value}
+                    {s.sub && <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 4 }}>{s.sub}</span>}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Progress bar */}
-        <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 28 }}>
-          <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 10px ${C.accent}55`, transition: "width .4s" }} />
-        </div>
+            {/* Progress bar — only for current year */}
+            {selectedYear === curYear && (
+              <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 28 }}>
+                <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 10px ${C.accent}55`, transition: "width .4s" }} />
+              </div>
+            )}
 
-        {/* Heatmap */}
-        <GymHeatmap workoutDates={workoutDates} />
+            {/* Heatmap */}
+            {!loading && <GymHeatmap workoutDates={workoutSet} year={selectedYear} />}
 
-        {/* Workout history */}
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 12 }}>
-          {loading ? "loading…" : `${workouts.length} sessions in ${now.getFullYear()}`}
-        </div>
+            {/* Workout list */}
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 12 }}>
+              {wxLoading ? "loading…" : `${count} sessions in ${selectedYear}`}
+            </div>
+            <div>
+              {workouts.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}
+              {!wxLoading && workouts.length === 0 && (
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no sessions</div>
+              )}
+            </div>
 
-        <div>
-          {workouts.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}
-          {!loading && workouts.length === 0 && (
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no sessions yet</div>
-          )}
+          </div>
         </div>
 
       </div>

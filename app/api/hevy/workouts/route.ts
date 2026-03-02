@@ -39,11 +39,13 @@ interface RawPage {
   workouts: RawWorkout[];
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!KEY) return NextResponse.json({ error: "No API key" }, { status: 500 });
 
-  const year   = new Date().getFullYear();
+  const { searchParams } = new URL(req.url);
+  const year   = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()), 10);
   const cutoff = `${year}-01-01`;
+  const end    = `${year + 1}-01-01`;
   const all: HevyWorkoutFull[] = [];
 
   try {
@@ -62,6 +64,7 @@ export async function GET() {
       for (const w of data.workouts) {
         const date = w.start_time.split("T")[0];
         if (date < cutoff) { done = true; break; }
+        if (date >= end) continue; // skip future years
         const duration = Math.round(
           (new Date(w.end_time).getTime() - new Date(w.start_time).getTime()) / 60000
         );
