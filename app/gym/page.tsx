@@ -413,6 +413,7 @@ function Sparkline({ history, C }: { history: { weight: number }[]; C: ReturnTyp
 function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; initialEx?: string | null }) {
   const [page,       setPage]       = useState(1);
   const [selectedEx, setSelectedEx] = useState<string | null>(initialEx ?? null);
+  const mounted = useRef(false);
 
   const stats = useMemo(() => {
     const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number; history: { weight: number }[] }>();
@@ -432,7 +433,10 @@ function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[];
     return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count);
   }, [workouts]);
 
-  useEffect(() => { setPage(1); setSelectedEx(null); }, [workouts]);
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }
+    setPage(1); setSelectedEx(null);
+  }, [workouts]);
 
   if (selectedEx) return <ExerciseChart title={selectedEx} workouts={workouts} C={C} onBack={() => setSelectedEx(null)} />;
 
