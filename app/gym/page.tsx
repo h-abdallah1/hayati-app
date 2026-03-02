@@ -814,7 +814,7 @@ export default function GymPage() {
             {[
               { label: "all-time",       value: lifetime ? String(lifetime.totalSessions) : "—", unit: "sessions" },
               { label: "total time",     value: lifetime ? String(lifetime.totalHrs)      : "—", unit: "hrs"      },
-              { label: "longest streak", value: lifetime ? String(lifetime.longestStreak) : "—", unit: "days"     },
+              { label: "longest streak", value: lifetime ? String(lifetime.longestStreak) : "—", unit: "wks"      },
               { label: "since",          value: lifetime?.firstDate ? new Date(lifetime.firstDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—", unit: "" },
             ].map(s => (
               <div key={s.label} style={{ textAlign: "right" }}>

@@ -12,15 +12,20 @@ interface RawPage {
   workouts: RawWorkout[];
 }
 
-function calcLongestStreak(dates: string[]): number {
+function mondayOf(dateStr: string): string {
+  const d   = new Date(dateStr + "T00:00:00");
+  const dow = d.getDay();
+  d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));
+  return d.toISOString().split("T")[0];
+}
+
+function calcLongestWeeklyStreak(dates: string[]): number {
   if (!dates.length) return 0;
-  const sorted = [...new Set(dates)].sort();
+  const weeks = [...new Set(dates.map(mondayOf))].sort();
   let best = 1, cur = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1]);
-    const curr = new Date(sorted[i]);
-    const diff = (curr.getTime() - prev.getTime()) / 86400000;
-    if (diff === 1) { cur++; best = Math.max(best, cur); }
+  for (let i = 1; i < weeks.length; i++) {
+    const diff = (new Date(weeks[i]).getTime() - new Date(weeks[i - 1]).getTime()) / 86400000;
+    if (diff === 7) { cur++; best = Math.max(best, cur); }
     else cur = 1;
   }
   return best;
@@ -72,7 +77,7 @@ export async function GET() {
   }
 
   const totalHrs     = Math.round(totalMins / 60);
-  const longestStreak = calcLongestStreak(allDates);
+  const longestStreak = calcLongestWeeklyStreak(allDates);
   const firstDate    = [...allDates].sort()[0] ?? null;
   const totalSessions = new Set(allDates).size; // unique days (but count all sessions)
 
