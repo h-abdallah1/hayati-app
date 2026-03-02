@@ -26,6 +26,15 @@ input::placeholder {
   font-size: 11px;
 }
 
+@keyframes gym-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.12; }
+}
+.gym-skel {
+  border-radius: 3px;
+  animation: gym-shimmer 1.6s ease-in-out infinite;
+}
+
 @keyframes colon-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.15; }

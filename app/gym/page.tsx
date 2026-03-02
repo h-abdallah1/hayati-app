@@ -6,7 +6,7 @@ import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { isLeapYear, dayOfYear, calcStreak, GOAL } from "./helpers";
 import { GymHeatmap } from "./components/GymHeatmap";
 import { WorkoutRow } from "./components/WorkoutRow";
-import { Pager } from "./components/shared";
+import { Pager, GymSkeleton } from "./components/shared";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { ExercisesTab } from "./tabs/ExercisesTab";
 import { VolumeTab } from "./tabs/VolumeTab";
@@ -130,7 +130,9 @@ export default function GymPage() {
           </div>
 
           {/* Main */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, opacity: !loading && wxLoading ? 0.4 : 1, transition: "opacity 0.2s ease", pointerEvents: !loading && wxLoading ? "none" : "auto" }}>
+
+            {loading ? <GymSkeleton C={C} /> : (<>
 
             {/* Stats row */}
             <div style={{ display: "flex", gap: 28, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
@@ -143,7 +145,7 @@ export default function GymPage() {
                 <div key={s.label}>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, color: s.hi ? C.accent : C.text, lineHeight: 1 }}>
-                    {wxLoading ? "—" : s.value}
+                    {s.value}
                     {s.sub && <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 4 }}>{s.sub}</span>}
                   </div>
                 </div>
@@ -156,7 +158,7 @@ export default function GymPage() {
               </div>
             )}
 
-            {!loading && <GymHeatmap workouts={workouts} year={selectedYear} />}
+            <GymHeatmap workouts={workouts} year={selectedYear} />
 
             {/* Tab bar */}
             <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
@@ -200,6 +202,7 @@ export default function GymPage() {
             {tab === "prs"       && <PRsTab       workouts={workouts} C={C} onSelectEx={title => { setSelectedEx(title); setTab("exercises"); }} />}
             {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
 
+            </>)}
           </div>
         </div>
       </div>
