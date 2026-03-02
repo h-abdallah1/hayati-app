@@ -392,20 +392,40 @@ function ExerciseChart({ title, workouts, C, onBack }: {
 
 const EX_PAGE = 10;
 
+function Sparkline({ history, C }: { history: { weight: number }[]; C: ReturnType<typeof useTheme> }) {
+  if (history.length < 2) return null;
+  const W = 96, H = 22;
+  const weights = history.map(h => h.weight);
+  const lo = Math.min(...weights), hi = Math.max(...weights);
+  const rangeY = hi - lo || 1;
+  const px = (i: number) => (i / (history.length - 1)) * W;
+  const py = (i: number) => H - 2 - ((weights[i] - lo) / rangeY) * (H - 4);
+  const pts = history.map((_, i) => `${px(i)},${py(i)}`).join(" ");
+  const lastX = px(history.length - 1), lastY = py(history.length - 1);
+  return (
+    <svg width={W} height={H} style={{ display: "block", flexShrink: 0 }}>
+      <polyline points={pts} fill="none" stroke={`${C.accent}70`} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={lastX} cy={lastY} r={2.5} fill={C.accent} />
+    </svg>
+  );
+}
+
 function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; initialEx?: string | null }) {
   const [page,       setPage]       = useState(1);
   const [selectedEx, setSelectedEx] = useState<string | null>(initialEx ?? null);
 
   const stats = useMemo(() => {
-    const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number }>();
-    for (const w of workouts) {
+    const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number; history: { weight: number }[] }>();
+    for (const w of [...workouts].reverse()) { // chronological
       for (const ex of w.exercises) {
-        const p = map.get(ex.title) ?? { count: 0, sets: 0, reps: 0, maxWeight: 0 };
+        const p = map.get(ex.title) ?? { count: 0, sets: 0, reps: 0, maxWeight: 0, history: [] };
+        const sessionMax = Math.max(0, ...ex.sets.map(s => s.weight_kg ?? 0));
         map.set(ex.title, {
           count:     p.count + 1,
           sets:      p.sets + ex.sets.length,
           reps:      p.reps + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
-          maxWeight: Math.max(p.maxWeight, ...ex.sets.map(s => s.weight_kg ?? 0)),
+          maxWeight: Math.max(p.maxWeight, sessionMax),
+          history:   sessionMax > 0 ? [...p.history, { weight: sessionMax }] : p.history,
         });
       }
     }
@@ -416,7 +436,6 @@ function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[];
 
   if (selectedEx) return <ExerciseChart title={selectedEx} workouts={workouts} C={C} onBack={() => setSelectedEx(null)} />;
 
-  const maxCount  = stats[0]?.count ?? 1;
   const pageCount = Math.ceil(stats.length / EX_PAGE);
   const paged     = stats.slice((page - 1) * EX_PAGE, page * EX_PAGE);
   const offset    = (page - 1) * EX_PAGE;
@@ -436,11 +455,14 @@ function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[];
             onClick={() => setSelectedEx(s.title)}
             style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < paged.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{offset + i + 1}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
               <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{s.title}</div>
-              <div style={{ height: 2, background: C.border, borderRadius: 1 }}>
-                <div style={{ height: "100%", width: `${(s.count / maxCount) * 100}%`, background: C.accent, borderRadius: 1 }} />
-              </div>
+              {s.history.length >= 2
+                ? <Sparkline history={s.history} C={C} />
+                : <div style={{ height: 22, display: "flex", alignItems: "center" }}>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>bodyweight</span>
+                  </div>
+              }
             </div>
             <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
               <Stat label="times" value={String(s.count)} C={C} />
