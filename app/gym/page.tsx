@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useTheme } from "@/lib/theme";
-import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
+import type { HevyWorkoutFull, HevySet } from "@/app/api/hevy/workouts/route";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -10,19 +10,37 @@ function isLeapYear(y: number) { return (y % 4 === 0 && y % 100 !== 0) || y % 40
 function dayOfYear(d: Date)    { return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000) + 1; }
 
 function calcStreak(dates: string[]): number {
-  const set   = new Set(dates);
-  const today = new Date().toISOString().split("T")[0];
-  let streak  = 0;
-  const d     = new Date();
-  if (!set.has(today)) d.setDate(d.getDate() - 1);
-  while (true) {
-    const s = d.toISOString().split("T")[0];
-    if (!set.has(s)) break;
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
+  const set = new Set(dates);
+  const d   = new Date();
+  if (!set.has(d.toISOString().split("T")[0])) d.setDate(d.getDate() - 1);
+  let streak = 0;
+  while (set.has(d.toISOString().split("T")[0])) { streak++; d.setDate(d.getDate() - 1); }
   return streak;
 }
+
+function weekStart(dateStr: string): string {
+  const d   = new Date(dateStr + "T00:00:00");
+  const dow = d.getDay();
+  d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));
+  return d.toISOString().split("T")[0];
+}
+
+function setVolume(s: HevySet): number { return (s.weight_kg ?? 0) * (s.reps ?? 0); }
+function workoutVolume(w: HevyWorkoutFull): number {
+  return w.exercises.reduce((t, ex) => t + ex.sets.reduce((s, set) => s + setVolume(set), 0), 0);
+}
+
+const SPLIT_CAT = (title: string): string => {
+  const t = title.toLowerCase();
+  if (t.includes("push"))  return "Push";
+  if (t.includes("pull"))  return "Pull";
+  if (t.includes("leg"))   return "Legs";
+  if (t.includes("upper")) return "Upper";
+  if (t.includes("lower")) return "Lower";
+  if (t.includes("full"))  return "Full Body";
+  if (t.includes("cardio") || t.includes("run")) return "Cardio";
+  return "Other";
+};
 
 const MONTH_NAMES  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAY_INITIALS = ["S","M","T","W","T","F","S"];
@@ -38,7 +56,7 @@ function monthStartCols(jan1DOW: number, leap: boolean): number[] {
 // ── Heatmap ────────────────────────────────────────────────────────────────
 
 function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: number }) {
-  const C       = useTheme();
+  const C = useTheme();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [sq, setSq] = useState(10);
   const GAP = 3; const DL_W = 10; const DL_G = 6;
@@ -46,8 +64,7 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () =>
-      setSq(Math.min(11, Math.max(6, Math.floor((el.offsetWidth - DL_W - DL_G - 52 * GAP) / 53))));
+    const measure = () => setSq(Math.min(11, Math.max(6, Math.floor((el.offsetWidth - DL_W - DL_G - 52 * GAP) / 53))));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -59,22 +76,17 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
   const leap     = isLeapYear(year);
   const total    = leap ? 366 : 365;
   const todayDOY = year === curYear ? dayOfYear(now) : year < curYear ? total + 1 : 0;
-
-  const jan1DOW = new Date(year, 0, 1).getDay();
-  const mCols   = monthStartCols(jan1DOW, leap);
-  const step    = sq + GAP;
-  const BR      = Math.max(1, Math.round(sq * 0.2));
-  const pulse   = Math.max(2, Math.round(sq * 0.35));
-
-  const toDateStr = (d: number) => new Date(year, 0, d).toISOString().split("T")[0];
+  const jan1DOW  = new Date(year, 0, 1).getDay();
+  const mCols    = monthStartCols(jan1DOW, leap);
+  const step     = sq + GAP;
+  const BR       = Math.max(1, Math.round(sq * 0.2));
+  const pulse    = Math.max(2, Math.round(sq * 0.35));
+  const toStr    = (d: number) => new Date(year, 0, d).toISOString().split("T")[0];
 
   return (
     <div style={{ marginBottom: 28 }}>
       <style>{`
-        @keyframes gymPulse {
-          0%,100%{box-shadow:0 0 0 0px ${C.accent}60;}
-          55%{box-shadow:0 0 0 ${pulse}px ${C.accent}1e;}
-        }
+        @keyframes gymPulse{0%,100%{box-shadow:0 0 0 0px ${C.accent}60;}55%{box-shadow:0 0 0 ${pulse}px ${C.accent}1e;}}
         .gym-today{animation:gymPulse 2.6s ease-in-out infinite;}
       `}</style>
       <div ref={wrapRef} style={{ width: "100%" }}>
@@ -94,17 +106,13 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
           <div style={{ display: "grid", gridTemplateRows: `repeat(7,${sq}px)`, gridAutoColumns: `${sq}px`, gridAutoFlow: "column", gap: GAP }}>
             {Array.from({ length: jan1DOW }).map((_, i) => <div key={`o${i}`} style={{ width: sq, height: sq }} />)}
             {Array.from({ length: total }).map((_, i) => {
-              const d       = i + 1;
+              const d = i + 1;
               const isToday = d === todayDOY;
-              const past    = d < todayDOY;
-              const trained = workoutDates.has(toDateStr(d));
+              const trained = workoutDates.has(toStr(d));
               return (
-                <div key={d} title={toDateStr(d)} className={isToday ? "gym-today" : undefined} style={{
+                <div key={d} title={toStr(d)} className={isToday ? "gym-today" : undefined} style={{
                   width: sq, height: sq, borderRadius: BR,
-                  background: isToday
-                    ? (trained ? C.accent : C.borderHi)
-                    : trained ? `${C.accent}80`
-                    : past ? C.border : `${C.border}55`,
+                  background: isToday ? (trained ? C.accent : C.borderHi) : trained ? `${C.accent}80` : d < todayDOY ? C.border : `${C.border}55`,
                 }} />
               );
             })}
@@ -115,12 +123,11 @@ function GymHeatmap({ workoutDates, year }: { workoutDates: Set<string>; year: n
   );
 }
 
-// ── Workout row ────────────────────────────────────────────────────────────
+// ── Workout row (Sessions tab) ──────────────────────────────────────────────
 
 function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useTheme> }) {
   const [open, setOpen] = useState(false);
   const dateLabel = new Date(w.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-
   return (
     <div style={{ borderBottom: `1px solid ${C.border}` }}>
       <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
@@ -133,9 +140,9 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
         <div style={{ paddingBottom: 12, paddingLeft: 108, display: "flex", flexDirection: "column", gap: 6 }}>
           {w.exercises.map((ex, i) => {
             const setsStr = ex.sets.map(s => {
-              if (s.weight_kg && s.reps)  return `${s.weight_kg}kg × ${s.reps}`;
-              if (s.reps)                 return `${s.reps} reps`;
-              if (s.duration_seconds)     return `${Math.round(s.duration_seconds / 60)}min`;
+              if (s.weight_kg && s.reps) return `${s.weight_kg}kg × ${s.reps}`;
+              if (s.reps)               return `${s.reps} reps`;
+              if (s.duration_seconds)   return `${Math.round(s.duration_seconds / 60)}min`;
               return "—";
             }).join("  ·  ");
             return (
@@ -151,60 +158,266 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
   );
 }
 
+// ── Tab: Exercises ──────────────────────────────────────────────────────────
+
+function ExercisesTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const stats = useMemo(() => {
+    const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number }>();
+    for (const w of workouts) {
+      for (const ex of w.exercises) {
+        const p = map.get(ex.title) ?? { count: 0, sets: 0, reps: 0, maxWeight: 0 };
+        map.set(ex.title, {
+          count:     p.count + 1,
+          sets:      p.sets + ex.sets.length,
+          reps:      p.reps + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
+          maxWeight: Math.max(p.maxWeight, ...ex.sets.map(s => s.weight_kg ?? 0)),
+        });
+      }
+    }
+    return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count);
+  }, [workouts]);
+
+  const maxCount = stats[0]?.count ?? 1;
+
+  if (!stats.length) return <Empty C={C} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {stats.map((s, i) => (
+        <div key={s.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < stats.length - 1 ? `1px solid ${C.border}` : "none" }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{s.title}</div>
+            <div style={{ height: 2, background: C.border, borderRadius: 1 }}>
+              <div style={{ height: "100%", width: `${(s.count / maxCount) * 100}%`, background: C.accent, borderRadius: 1 }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+            <Stat label="times" value={String(s.count)} C={C} />
+            <Stat label="sets"  value={String(s.sets)}  C={C} />
+            <Stat label="reps"  value={String(s.reps)}  C={C} />
+            {s.maxWeight > 0 && <Stat label="max" value={`${s.maxWeight}kg`} C={C} />}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Tab: Volume ─────────────────────────────────────────────────────────────
+
+function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const weeks = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of workouts) {
+      const wk = weekStart(w.date);
+      map.set(wk, (map.get(wk) ?? 0) + workoutVolume(w));
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([wk, vol]) => ({
+        label: new Date(wk + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        vol: Math.round(vol),
+      }));
+  }, [workouts]);
+
+  if (!weeks.length) return <Empty C={C} />;
+
+  const maxVol  = Math.max(...weeks.map(w => w.vol), 1);
+  const BAR_H   = 100;
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, overflowX: "auto", paddingBottom: 8, minHeight: BAR_H + 32 }}>
+        {weeks.map((w, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, writingMode: "vertical-rl", transform: "rotate(180deg)", marginBottom: 2 }}>
+              {Math.round(w.vol / 1000)}t
+            </span>
+            <div
+              title={`${w.label}: ${w.vol.toLocaleString()}kg`}
+              style={{
+                width: 22,
+                height: Math.max(3, Math.round((w.vol / maxVol) * BAR_H)),
+                background: `${C.accent}90`,
+                borderRadius: "3px 3px 0 0",
+                transition: "height .3s",
+              }}
+            />
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, textAlign: "center", width: 28 }}>{w.label}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 12 }}>
+        total volume · {Math.round(weeks.reduce((s, w) => s + w.vol, 0) / 1000)}t
+      </div>
+    </div>
+  );
+}
+
+// ── Tab: PRs ────────────────────────────────────────────────────────────────
+
+function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const prs = useMemo(() => {
+    const map = new Map<string, { weight: number; reps: number; date: string }>();
+    for (const w of workouts) {
+      for (const ex of w.exercises) {
+        for (const s of ex.sets) {
+          if (!s.weight_kg || !s.reps) continue;
+          const prev = map.get(ex.title);
+          if (!prev || s.weight_kg > prev.weight || (s.weight_kg === prev.weight && s.reps > prev.reps)) {
+            map.set(ex.title, { weight: s.weight_kg, reps: s.reps, date: w.date });
+          }
+        }
+      }
+    }
+    return [...map.entries()]
+      .map(([title, { weight, reps, date }]) => ({
+        title, weight, reps, date,
+        orm: Math.round(weight * (1 + reps / 30)),
+      }))
+      .sort((a, b) => b.weight - a.weight);
+  }, [workouts]);
+
+  if (!prs.length) return <Empty C={C} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {prs.map((pr, i) => (
+        <div key={pr.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < prs.length - 1 ? `1px solid ${C.border}` : "none" }}>
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.title}</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 2 }}>
+              {new Date(pr.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+            <Stat label="weight"  value={`${pr.weight}kg`}    C={C} hi />
+            <Stat label="reps"    value={String(pr.reps)}      C={C} />
+            <Stat label="est 1RM" value={`${pr.orm}kg`}        C={C} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Tab: Split ──────────────────────────────────────────────────────────────
+
+function SplitTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const split = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of workouts) {
+      const cat = SPLIT_CAT(w.title);
+      map.set(cat, (map.get(cat) ?? 0) + 1);
+    }
+    return [...map.entries()].map(([cat, count]) => ({ cat, count })).sort((a, b) => b.count - a.count);
+  }, [workouts]);
+
+  if (!split.length) return <Empty C={C} />;
+
+  const total  = split.reduce((s, e) => s + e.count, 0);
+  const max    = split[0]?.count ?? 1;
+  const CAT_COLORS: Record<string, string> = {
+    Push: C.accent, Pull: C.teal, Legs: C.amber,
+    Upper: C.blue, Lower: C.red, "Full Body": C.textMuted, Cardio: C.teal, Other: C.textFaint,
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {split.map(s => {
+        const color = CAT_COLORS[s.cat] ?? C.textMuted;
+        const pct   = Math.round((s.count / total) * 100);
+        return (
+          <div key={s.cat}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text }}>{s.cat}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>{s.count} sessions · {pct}%</span>
+            </div>
+            <div style={{ height: 4, background: C.border, borderRadius: 2 }}>
+              <div style={{ height: "100%", width: `${(s.count / max) * 100}%`, background: color, borderRadius: 2, boxShadow: `0 0 8px ${color}44`, transition: "width .3s" }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Shared mini components ──────────────────────────────────────────────────
+
+function Stat({ label, value, C, hi }: { label: string; value: string; C: ReturnType<typeof useTheme>; hi?: boolean }) {
+  return (
+    <div style={{ textAlign: "right" }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: 1 }}>{label}</div>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: hi ? C.accent : C.textMuted }}>{value}</div>
+    </div>
+  );
+}
+
+function Empty({ C }: { C: ReturnType<typeof useTheme> }) {
+  return <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no data</div>;
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 type Lifetime = { totalSessions: number; totalHrs: number; longestStreak: number; firstDate: string | null };
+type Tab      = "sessions" | "exercises" | "volume" | "prs" | "split";
 
 const GOAL      = 200;
 const PAGE_SIZE = 10;
+const TABS: { key: Tab; label: string }[] = [
+  { key: "sessions",  label: "Sessions"  },
+  { key: "exercises", label: "Exercises" },
+  { key: "volume",    label: "Volume"    },
+  { key: "prs",       label: "PRs"       },
+  { key: "split",     label: "Split"     },
+];
 
 export default function GymPage() {
-  const C          = useTheme();
-  const curYear    = new Date().getFullYear();
+  const C       = useTheme();
+  const curYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(curYear);
+  const [tab,          setTab]          = useState<Tab>("sessions");
   const [page,         setPage]         = useState(1);
   const [lifetime,  setLifetime]  = useState<Lifetime | null>(null);
   const [workouts,  setWorkouts]  = useState<HevyWorkoutFull[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [wxLoading, setWxLoading] = useState(false);
 
-  // Fetch lifetime once
   useEffect(() => {
-    fetch("/api/hevy/lifetime").then(r => r.json()).then(l => {
-      if (!l.error) setLifetime(l);
-    });
+    fetch("/api/hevy/lifetime").then(r => r.json()).then(l => { if (!l.error) setLifetime(l); });
   }, []);
 
-  // Fetch workouts when year changes
   useEffect(() => {
     setPage(1);
     setWxLoading(true);
     fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
       setWorkouts(w.workouts ?? []);
-      setLoading(false);
-      setWxLoading(false);
+      setLoading(false); setWxLoading(false);
     }).catch(() => { setLoading(false); setWxLoading(false); });
   }, [selectedYear]);
 
-  // Derive years from lifetime firstDate → curYear
-  const firstYear = lifetime?.firstDate ? parseInt(lifetime.firstDate.slice(0, 4), 10) : curYear;
-  const years     = Array.from({ length: curYear - firstYear + 1 }, (_, i) => curYear - i);
-
-  // Compute year stats from workouts
-  const dates       = workouts.map(w => w.date);
-  const workoutSet  = new Set(dates);
-  const count       = workouts.length;
-  const today       = new Date().toISOString().split("T")[0];
+  const firstYear  = lifetime?.firstDate ? parseInt(lifetime.firstDate.slice(0, 4), 10) : curYear;
+  const years      = Array.from({ length: curYear - firstYear + 1 }, (_, i) => curYear - i);
+  const dates      = workouts.map(w => w.date);
+  const workoutSet = new Set(dates);
+  const count      = workouts.length;
+  const today      = new Date().toISOString().split("T")[0];
   const loggedToday = selectedYear === curYear && workoutSet.has(today);
   const streak      = selectedYear === curYear ? calcStreak(dates) : 0;
   const progress    = Math.min(100, (count / GOAL) * 100);
-
-  // avg/week: for current year use weeks elapsed, for past years use 52
-  const now        = new Date();
+  const now         = new Date();
   const weeksInYear = selectedYear === curYear
-    ? Math.max(1, Math.ceil((dayOfYear(now) + new Date(now.getFullYear(), 0, 1).getDay()) / 7))
+    ? Math.max(1, Math.ceil((dayOfYear(now) + new Date(curYear, 0, 1).getDay()) / 7))
     : 52;
   const avgPerWeek = (count / weeksInYear).toFixed(1);
+
+  const navBtn = (disabled: boolean): React.CSSProperties => ({
+    background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
+    cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.3 : 1,
+    fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+    color: C.textMuted, padding: "2px 8px", lineHeight: 1.6,
+  });
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
@@ -215,19 +428,14 @@ export default function GymPage() {
           <div>
             <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, color: C.text }}>Gym</span>
             <span style={{ fontFamily: "'Scheherazade New',serif", fontSize: 18, color: C.textFaint, marginLeft: 10 }}>رياضة</span>
-            {loggedToday && (
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, marginLeft: 14 }}>✓ trained today</span>
-            )}
+            {loggedToday && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, marginLeft: 14 }}>✓ trained today</span>}
           </div>
-          {/* Lifetime stats */}
-          <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: 20 }}>
             {[
               { label: "all-time",       value: lifetime ? String(lifetime.totalSessions) : "—", unit: "sessions" },
               { label: "total time",     value: lifetime ? String(lifetime.totalHrs)      : "—", unit: "hrs"      },
               { label: "longest streak", value: lifetime ? String(lifetime.longestStreak) : "—", unit: "days"     },
-              { label: "since",          value: lifetime?.firstDate
-                  ? new Date(lifetime.firstDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })
-                  : "—", unit: "" },
+              { label: "since",          value: lifetime?.firstDate ? new Date(lifetime.firstDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—", unit: "" },
             ].map(s => (
               <div key={s.label} style={{ textAlign: "right" }}>
                 <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
@@ -249,23 +457,20 @@ export default function GymPage() {
                 background: "none", border: "none", cursor: "pointer",
                 fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
                 color: selectedYear === y ? C.accent : C.textFaint,
-                padding: "5px 0", textAlign: "center", width: "100%",
-                borderRadius: 4, letterSpacing: "0.5px",
-              }}>
-                {y}
-              </button>
+                padding: "5px 0", textAlign: "center", width: "100%", borderRadius: 4, letterSpacing: "0.5px",
+              }}>{y}</button>
             ))}
           </div>
 
-          {/* Main content */}
+          {/* Main */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
             {/* Stats row */}
             <div style={{ display: "flex", gap: 28, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
               {[
-                { label: "sessions",   value: String(count),                         sub: selectedYear === curYear ? `/ ${GOAL}` : undefined, hi: true },
-                ...(selectedYear === curYear ? [{ label: "streak", value: String(streak), sub: "days", hi: false }] : []),
-                { label: "avg / week", value: avgPerWeek,                             sub: "sessions", hi: false },
+                { label: "sessions",   value: String(count),   sub: selectedYear === curYear ? `/ ${GOAL}` : undefined, hi: true },
+                ...(selectedYear === curYear ? [{ label: "streak",    value: String(streak), sub: "days",     hi: false }] : []),
+                { label: "avg / week", value: avgPerWeek,       sub: "sessions", hi: false },
                 ...(selectedYear === curYear ? [{ label: "remaining", value: String(Math.max(0, GOAL - count)), sub: "left", hi: false }] : []),
               ].map(s => (
                 <div key={s.label}>
@@ -278,62 +483,66 @@ export default function GymPage() {
               ))}
             </div>
 
-            {/* Progress bar — only for current year */}
             {selectedYear === curYear && (
               <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 28 }}>
                 <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 10px ${C.accent}55`, transition: "width .4s" }} />
               </div>
             )}
 
-            {/* Heatmap */}
             {!loading && <GymHeatmap workoutDates={workoutSet} year={selectedYear} />}
 
-            {/* Workout list */}
-            {(() => {
-              const pageCount   = Math.ceil(count / PAGE_SIZE);
-              const paged       = workouts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-              const btnStyle = (disabled: boolean): React.CSSProperties => ({
-                background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
-                cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.3 : 1,
-                fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
-                color: C.textMuted, padding: "2px 8px", lineHeight: 1.6,
-              });
+            {/* Tab bar */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
+              {TABS.map(t => (
+                <button key={t.key} onClick={() => setTab(t.key)} style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                  color: tab === t.key ? C.accent : C.textFaint,
+                  padding: "6px 12px", borderRadius: "4px 4px 0 0",
+                  borderBottom: `2px solid ${tab === t.key ? C.accent : "transparent"}`,
+                  marginBottom: -1,
+                }}>{t.label}</button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            {tab === "sessions" && (() => {
+              const pageCount = Math.ceil(count / PAGE_SIZE);
+              const paged     = workouts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
               return (
                 <>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+                    <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
                       {wxLoading ? "loading…" : `${count} sessions in ${selectedYear}`}
-                    </div>
+                    </span>
                     {pageCount > 1 && (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button style={btnStyle(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
-                          {page} / {pageCount}
-                        </span>
-                        <button style={btnStyle(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+                        <button style={navBtn(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
+                        <button style={navBtn(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
                       </div>
                     )}
                   </div>
-                  <div>
-                    {paged.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}
-                    {!wxLoading && count === 0 && (
-                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no sessions</div>
-                    )}
-                  </div>
+                  <div>{paged.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}</div>
+                  {!wxLoading && count === 0 && <Empty C={C} />}
                   {pageCount > 1 && (
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 16 }}>
-                      <button style={btnStyle(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }}>
+                      <button style={navBtn(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
-                      <button style={btnStyle(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+                      <button style={navBtn(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
                     </div>
                   )}
                 </>
               );
             })()}
 
+            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} />}
+            {tab === "volume"    && <VolumeTab    workouts={workouts} C={C} />}
+            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} />}
+            {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
+
           </div>
         </div>
-
       </div>
     </div>
   );
