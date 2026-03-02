@@ -537,7 +537,7 @@ function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType
 
 const PR_PAGE = 10;
 
-function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+function PRsTab({ workouts, C, onSelectEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; onSelectEx: (title: string) => void }) {
   const [page, setPage] = useState(1);
 
   const prs = useMemo(() => {
@@ -578,7 +578,9 @@ function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<ty
       </div>
       <div style={{ display: "flex", flexDirection: "column" }}>
         {paged.map((pr, i) => (
-          <div key={pr.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < paged.length - 1 ? `1px solid ${C.border}` : "none" }}>
+          <div key={pr.title}
+            onClick={() => onSelectEx(pr.title)}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < paged.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{offset + i + 1}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.title}</div>
@@ -932,7 +934,7 @@ export default function GymPage() {
 
             {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} initialEx={initialEx} />}
             {tab === "volume"    && <VolumeTab    workouts={workouts} C={C} />}
-            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} />}
+            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} onSelectEx={title => { setInitialEx(title); setTab("exercises"); }} />}
             {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
 
           </div>
