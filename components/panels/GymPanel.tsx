@@ -1,66 +1,64 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 import { Panel, Tag } from "@/components/ui";
 
-const STORAGE_KEY = "hayati-gym";
 const YEAR_GOAL = 200;
 
-function loadDates(): string[] {
-  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : []; } catch { return []; }
-}
-function saveDates(dates: string[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dates)); } catch {}
-}
-function toDateStr(d: Date): string {
-  return d.toISOString().split("T")[0];
-}
-function calcStreak(dates: string[]): number {
-  const set = new Set(dates);
-  let streak = 0;
-  const d = new Date();
-  if (!set.has(toDateStr(d))) d.setDate(d.getDate() - 1);
-  while (set.has(toDateStr(d))) { streak++; d.setDate(d.getDate() - 1); }
-  return streak;
-}
+type HevyData = {
+  count: number;
+  streak: number;
+  loggedToday: boolean;
+  lastWorkout: { title: string; date: string; duration: number } | null;
+  week: string[];
+  workoutDates: string[];
+};
 
 export function GymPanel() {
   const C = useTheme();
-  const [dates, setDates] = useState<string[]>([]);
-  const today = toDateStr(new Date());
-  const year = new Date().getFullYear();
+  const [data, setData]       = useState<HevyData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [synced, setSynced]   = useState<Date | null>(null);
 
-  useEffect(() => { setDates(loadDates()); }, []);
+  const sync = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch("/api/hevy");
+      const json = await res.json();
+      if (!json.error) { setData(json); setSynced(new Date()); }
+    } catch {}
+    setLoading(false);
+  }, []);
 
-  const yearDates = dates.filter(d => d.startsWith(String(year)));
-  const count = yearDates.length;
-  const progress = Math.min(100, (count / YEAR_GOAL) * 100);
-  const loggedToday = dates.includes(today);
-  const streak = calcStreak(dates);
+  useEffect(() => { sync(); }, [sync]);
 
-  const logToday = () => {
-    if (loggedToday) return;
-    const next = [...dates, today];
-    setDates(next); saveDates(next);
-  };
-  const undo = () => {
-    const next = dates.filter(d => d !== today);
-    setDates(next); saveDates(next);
-  };
+  const count        = data?.count        ?? 0;
+  const streak       = data?.streak       ?? 0;
+  const loggedToday  = data?.loggedToday  ?? false;
+  const last         = data?.lastWorkout  ?? null;
+  const progress     = Math.min(100, (count / YEAR_GOAL) * 100);
+  const week         = data?.week         ?? [];
+  const workoutSet   = new Set(data?.workoutDates ?? []);
+  const today        = new Date().toISOString().split("T")[0];
 
   return (
     <Panel style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={loggedToday ? C.accent : C.textFaint}>Gym</Tag>
-        {loggedToday
-          ? <button onClick={undo} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>undo</button>
-          : <button onClick={logToday} style={{ background: C.accentDim, border: `1px solid ${C.accent}`, borderRadius: 5, cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, padding: "3px 10px" }}>+ log today</button>
-        }
+        <button
+          onClick={sync}
+          disabled={loading}
+          style={{ background: "none", border: "none", cursor: loading ? "default" : "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, opacity: loading ? 0.4 : 1 }}
+        >
+          {loading ? "syncing…" : "↻ sync"}
+        </button>
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 14 }}>
-        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 42, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{count}</span>
+        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 42, fontWeight: 800, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
+          {loading ? "—" : count}
+        </span>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>/ {YEAR_GOAL}</span>
       </div>
 
@@ -68,11 +66,36 @@ export function GymPanel() {
         <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 8px ${C.accent}55`, transition: "width .3s" }} />
       </div>
 
-      <div style={{ display: "flex", gap: 20, marginTop: "auto" }}>
+      {/* 7-day strip */}
+      {week.length > 0 && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+          {week.map(date => {
+            const trained  = workoutSet.has(date);
+            const isToday  = date === today;
+            const dayLabel = new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
+            return (
+              <div key={date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{
+                  width: "100%", aspectRatio: "1", borderRadius: 4,
+                  background: trained ? (isToday ? C.accent : `${C.accent}70`) : C.border,
+                  boxShadow: trained && isToday ? `0 0 8px ${C.accent}55` : undefined,
+                  border: isToday && !trained ? `1px solid ${C.borderHi}` : "1px solid transparent",
+                  transition: "background .2s",
+                }} />
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: isToday ? C.textMuted : C.textFaint }}>
+                  {dayLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 20, marginBottom: last ? 14 : 0 }}>
         {[
-          { label: "streak", val: String(streak), unit: "days", color: streak > 0 ? C.amber : C.textFaint },
+          { label: "streak",    val: String(streak),                     unit: "days",  color: streak > 0 ? C.amber : C.textFaint },
           { label: "remaining", val: String(Math.max(0, YEAR_GOAL - count)), unit: "left", color: C.textMuted },
-          { label: "today", val: loggedToday ? "✓" : "—", unit: "", color: loggedToday ? C.accent : C.textFaint },
+          { label: "today",     val: loggedToday ? "✓" : "—",           unit: "",      color: loggedToday ? C.accent : C.textFaint },
         ].map(s => (
           <div key={s.label}>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
@@ -83,6 +106,22 @@ export function GymPanel() {
           </div>
         ))}
       </div>
+
+      {last && (
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: "auto" }}>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>last session</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last.title}</div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 2 }}>
+            {new Date(last.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {last.duration} min
+          </div>
+        </div>
+      )}
+
+      {synced && (
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, marginTop: 8 }}>
+          synced {synced.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        </div>
+      )}
     </Panel>
   );
 }
