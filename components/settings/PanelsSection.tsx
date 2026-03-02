@@ -5,18 +5,16 @@ import { usePanelSettings } from "@/lib/settings";
 import { sectionHead } from "./styles";
 
 const PANELS = [
-  { id: "focus",        label: "Focus"         },
-  { id: "tasks",        label: "Tasks"         },
-  { id: "status",       label: "Status"        },
-  { id: "prayer",       label: "Prayer Times"  },
-  { id: "news",         label: "News"          },
-  { id: "quran",        label: "Quran Verse"   },
-  { id: "currentReads", label: "Current Reads" },
-  { id: "readingList",  label: "Reading List"  },
-  { id: "calendar",     label: "Calendar"      },
-  { id: "weather",      label: "Weather"       },
-  { id: "gym",          label: "Gym Tracker"   },
-  { id: "finance",      label: "Finance"       },
+  { id: "focus",   label: "Focus"       },
+  { id: "tasks",   label: "Tasks"       },
+  { id: "time",    label: "Time"        },
+  { id: "news",    label: "News"        },
+  { id: "quran",   label: "Quran Verse" },
+  { id: "reading", label: "Reading"     },
+  { id: "calendar",label: "Calendar"    },
+  { id: "weather", label: "Weather"     },
+  { id: "gym",     label: "Gym Tracker" },
+  { id: "finance", label: "Finance"     },
 ];
 
 export function PanelsSection() {
