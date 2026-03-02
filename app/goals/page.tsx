@@ -260,7 +260,28 @@ const SEED_2025: Goal[] = [
   { id: 20250013, title: "Apply for an Australian PR and visa",                                        status: "done", year: 2025, created: "2025-01-01T00:00:00.000Z" },
 ];
 
-const ALL_SEEDS = [...SEED_2024, ...SEED_2025];
+const SEED_2026: Goal[] = [
+  { id: 20260001, title: "Create a website for my photography portfolio", status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260002, title: "Finish one junk journal",                       status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260003, title: "Do 1 push up a day everyday",                   status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260004, title: "Save 150k",                                     status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260005, title: "Make less impulse purchases",                   status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260006, title: "Finish 2026 with 0 debt",                       status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260007, title: "Order takeout less",                            status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260008, title: "Do 200 gym sessions",                           status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260009, title: "Minimize soda intake",                          status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260010, title: "Watch 30 movies",                               status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260011, title: "Draw for 200 hrs or do 200 sketches",           status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260012, title: "Read 10 books, learn 3 topics",                 status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260013, title: "Release a game on Steam",                       status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260014, title: "Write a song with Tala",                        status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260015, title: "Pray more",                                     status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260016, title: "Journal more",                                  status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260017, title: "Get engaged",                                   status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+  { id: 20260018, title: "Learn to live life more and to let go more often — trust the process", status: "todo", year: 2026, created: "2026-01-01T00:00:00.000Z" },
+];
+
+const ALL_SEEDS = [...SEED_2024, ...SEED_2025, ...SEED_2026];
 
 // Patches applied to already-persisted seeded goals (title fixes, field additions)
 const SEED_PATCHES: Record<number, Partial<Goal>> = {
