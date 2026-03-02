@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import type { Goal, Note } from "@/lib/types";
 
-type Kind = "page" | "goal" | "note";
+type Kind = "page" | "goal" | "note" | "exercise";
 type Result = { kind: Kind; label: string; sub?: string; href: string };
 
 const PAGES: Result[] = [
@@ -16,7 +16,7 @@ const PAGES: Result[] = [
   { kind: "page", label: "Gym",       sub: "fitness", href: "/gym"     },
 ];
 
-const KIND_LABEL: Record<Kind, string> = { page: "page", goal: "goal", note: "note" };
+const KIND_LABEL: Record<Kind, string> = { page: "page", goal: "goal", note: "note", exercise: "exercise" };
 
 export function SearchPalette() {
   const C      = useTheme();
@@ -24,17 +24,19 @@ export function SearchPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef  = useRef<HTMLDivElement>(null);
 
-  const [open,  setOpen]  = useState(false);
-  const [query, setQuery] = useState("");
-  const [sel,   setSel]   = useState(0);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [open,      setOpen]      = useState(false);
+  const [query,     setQuery]     = useState("");
+  const [sel,       setSel]       = useState(0);
+  const [goals,     setGoals]     = useState<Goal[]>([]);
+  const [notes,     setNotes]     = useState<Note[]>([]);
+  const [exercises, setExercises] = useState<string[]>([]);
 
   // Load data when opened
   useEffect(() => {
     if (!open) return;
-    try { const s = localStorage.getItem("hayati-goals"); if (s) setGoals(JSON.parse(s)); } catch {}
-    try { const s = localStorage.getItem("hayati-notes"); if (s) setNotes(JSON.parse(s)); } catch {}
+    try { const s = localStorage.getItem("hayati-goals");         if (s) setGoals(JSON.parse(s));     } catch {}
+    try { const s = localStorage.getItem("hayati-notes");         if (s) setNotes(JSON.parse(s));     } catch {}
+    try { const s = localStorage.getItem("hayati-gym-exercises"); if (s) setExercises(JSON.parse(s)); } catch {}
     setQuery("");
     setSel(0);
     setTimeout(() => inputRef.current?.focus(), 30);
@@ -61,6 +63,9 @@ export function SearchPalette() {
         ...notes
           .filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
           .map(n => ({ kind: "note" as Kind, label: n.title, sub: n.content.slice(0, 50).replace(/\n/g, " "), href: "/notes" })),
+        ...exercises
+          .filter(e => e.toLowerCase().includes(q))
+          .map(e => ({ kind: "exercise" as Kind, label: e, sub: "gym", href: `/gym?ex=${encodeURIComponent(e)}` })),
       ];
 
   const clampedSel = Math.min(sel, Math.max(0, results.length - 1));
@@ -106,7 +111,7 @@ export function SearchPalette() {
             ref={inputRef}
             value={query}
             onChange={e => { setQuery(e.target.value); setSel(0); }}
-            placeholder="Search pages, goals, notes…"
+            placeholder="Search pages, goals, notes, exercises…"
             style={{ flex: 1, background: "none", border: "none", outline: "none", fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.text }}
           />
           {query && (

@@ -392,9 +392,9 @@ function ExerciseChart({ title, workouts, C, onBack }: {
 
 const EX_PAGE = 10;
 
-function ExercisesTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; initialEx?: string | null }) {
   const [page,       setPage]       = useState(1);
-  const [selectedEx, setSelectedEx] = useState<string | null>(null);
+  const [selectedEx, setSelectedEx] = useState<string | null>(initialEx ?? null);
 
   const stats = useMemo(() => {
     const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number }>();
@@ -759,10 +759,29 @@ export default function GymPage() {
     setPage(1);
     setWxLoading(true);
     fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
-      setWorkouts(w.workouts ?? []);
+      const loaded: HevyWorkoutFull[] = w.workouts ?? [];
+      setWorkouts(loaded);
       setLoading(false); setWxLoading(false);
+      // Cache exercise names for global search
+      try {
+        const names = [...new Set(loaded.flatMap(wx => wx.exercises.map(ex => ex.title)))];
+        localStorage.setItem("hayati-gym-exercises", JSON.stringify(names));
+      } catch {}
     }).catch(() => { setLoading(false); setWxLoading(false); });
   }, [selectedYear]);
+
+  // Auto-open exercise chart when navigated from search (?ex=Name)
+  const [initialEx, setInitialEx] = useState<string | null>(null);
+  useEffect(() => {
+    if (workouts.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const ex = params.get("ex");
+    if (ex) {
+      setTab("exercises");
+      setInitialEx(decodeURIComponent(ex));
+      window.history.replaceState({}, "", "/gym");
+    }
+  }, [workouts]);
 
   const firstYear  = lifetime?.firstDate ? parseInt(lifetime.firstDate.slice(0, 4), 10) : curYear;
   const years      = Array.from({ length: curYear - firstYear + 1 }, (_, i) => curYear - i);
@@ -889,7 +908,7 @@ export default function GymPage() {
               );
             })()}
 
-            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} />}
+            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} initialEx={initialEx} />}
             {tab === "volume"    && <VolumeTab    workouts={workouts} C={C} />}
             {tab === "prs"       && <PRsTab       workouts={workouts} C={C} />}
             {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
