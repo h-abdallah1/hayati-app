@@ -265,7 +265,7 @@ function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType
                 transition: "height .3s",
               }}
             />
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, textAlign: "center", width: 28 }}>{w.label}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, textAlign: "center", whiteSpace: "nowrap" }}>{w.label}</span>
           </div>
         ))}
       </div>
