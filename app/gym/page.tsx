@@ -410,10 +410,8 @@ function Sparkline({ history, C }: { history: { weight: number }[]; C: ReturnTyp
   );
 }
 
-function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; initialEx?: string | null }) {
-  const [page,       setPage]       = useState(1);
-  const [selectedEx, setSelectedEx] = useState<string | null>(initialEx ?? null);
-  const mounted = useRef(false);
+function ExercisesTab({ workouts, C, selectedEx, setSelectedEx }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme>; selectedEx: string | null; setSelectedEx: (v: string | null) => void }) {
+  const [page, setPage] = useState(1);
 
   const stats = useMemo(() => {
     const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number; history: { weight: number }[] }>();
@@ -433,10 +431,7 @@ function ExercisesTab({ workouts, C, initialEx }: { workouts: HevyWorkoutFull[];
     return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count);
   }, [workouts]);
 
-  useEffect(() => {
-    if (!mounted.current) { mounted.current = true; return; }
-    setPage(1); setSelectedEx(null);
-  }, [workouts]);
+  useEffect(() => { setPage(1); }, [workouts]);
 
   if (selectedEx) return <ExerciseChart title={selectedEx} workouts={workouts} C={C} onBack={() => setSelectedEx(null)} />;
 
@@ -783,8 +778,11 @@ export default function GymPage() {
     fetch("/api/hevy/lifetime").then(r => r.json()).then(l => { if (!l.error) setLifetime(l); });
   }, []);
 
+  const [selectedEx, setSelectedEx] = useState<string | null>(null);
+
   useEffect(() => {
     setPage(1);
+    setSelectedEx(null);
     setWxLoading(true);
     fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
       const loaded: HevyWorkoutFull[] = w.workouts ?? [];
@@ -799,14 +797,13 @@ export default function GymPage() {
   }, [selectedYear]);
 
   // Auto-open exercise chart when navigated from search (?ex=Name)
-  const [initialEx, setInitialEx] = useState<string | null>(null);
   useEffect(() => {
     if (workouts.length === 0) return;
     const params = new URLSearchParams(window.location.search);
     const ex = params.get("ex");
     if (ex) {
       setTab("exercises");
-      setInitialEx(decodeURIComponent(ex));
+      setSelectedEx(decodeURIComponent(ex));
       window.history.replaceState({}, "", "/gym");
     }
   }, [workouts]);
@@ -936,9 +933,9 @@ export default function GymPage() {
               );
             })()}
 
-            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} initialEx={initialEx} />}
+            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} selectedEx={selectedEx} setSelectedEx={setSelectedEx} />}
             {tab === "volume"    && <VolumeTab    workouts={workouts} C={C} />}
-            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} onSelectEx={title => { setInitialEx(title); setTab("exercises"); }} />}
+            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} onSelectEx={title => { setSelectedEx(title); setTab("exercises"); }} />}
             {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
 
           </div>
