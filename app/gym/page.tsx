@@ -155,12 +155,14 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
 
 type Lifetime = { totalSessions: number; totalHrs: number; longestStreak: number; firstDate: string | null };
 
-const GOAL = 200;
+const GOAL      = 200;
+const PAGE_SIZE = 10;
 
 export default function GymPage() {
   const C          = useTheme();
   const curYear    = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(curYear);
+  const [page,         setPage]         = useState(1);
   const [lifetime,  setLifetime]  = useState<Lifetime | null>(null);
   const [workouts,  setWorkouts]  = useState<HevyWorkoutFull[]>([]);
   const [loading,   setLoading]   = useState(true);
@@ -175,6 +177,7 @@ export default function GymPage() {
 
   // Fetch workouts when year changes
   useEffect(() => {
+    setPage(1);
     setWxLoading(true);
     fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
       setWorkouts(w.workouts ?? []);
@@ -286,15 +289,47 @@ export default function GymPage() {
             {!loading && <GymHeatmap workoutDates={workoutSet} year={selectedYear} />}
 
             {/* Workout list */}
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 12 }}>
-              {wxLoading ? "loading…" : `${count} sessions in ${selectedYear}`}
-            </div>
-            <div>
-              {workouts.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}
-              {!wxLoading && workouts.length === 0 && (
-                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no sessions</div>
-              )}
-            </div>
+            {(() => {
+              const pageCount   = Math.ceil(count / PAGE_SIZE);
+              const paged       = workouts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+              const btnStyle = (disabled: boolean): React.CSSProperties => ({
+                background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
+                cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.3 : 1,
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+                color: C.textMuted, padding: "2px 8px", lineHeight: 1.6,
+              });
+              return (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+                      {wxLoading ? "loading…" : `${count} sessions in ${selectedYear}`}
+                    </div>
+                    {pageCount > 1 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <button style={btnStyle(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
+                          {page} / {pageCount}
+                        </span>
+                        <button style={btnStyle(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    {paged.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}
+                    {!wxLoading && count === 0 && (
+                      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center", padding: "48px 0" }}>no sessions</div>
+                    )}
+                  </div>
+                  {pageCount > 1 && (
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 16 }}>
+                      <button style={btnStyle(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
+                      <button style={btnStyle(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
           </div>
         </div>
