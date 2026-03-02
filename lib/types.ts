@@ -14,6 +14,7 @@ export type GlobalSettings = {
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
   calendarFeeds: string[];
+  hiddenPanels: string[];
 };
 export type NewsItem = { source: string; title: string; url: string; time: string };
 export type CalEventFull = { date: string; label: string; color: string; url?: string };

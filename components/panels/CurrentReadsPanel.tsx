@@ -1,59 +1,151 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import type { Book } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
+
+type CurrentBook = { title: string; author: string; progress: number; cover?: string };
+
+const STORAGE_KEY = "hayati-current-book";
+const DEFAULT_BOOK: CurrentBook = {
+  title: "The Almanack of Naval Ravikant",
+  author: "Eric Jorgenson",
+  progress: 68,
+};
+
+function readBook(): CurrentBook {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_BOOK;
+    return { ...DEFAULT_BOOK, ...JSON.parse(raw) };
+  } catch { return DEFAULT_BOOK; }
+}
+
+async function fetchCover(title: string, author: string): Promise<string | undefined> {
+  try {
+    const q = encodeURIComponent(`intitle:${title}${author ? ` inauthor:${author}` : ""}`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+    const data = await res.json();
+    const thumb: string | undefined = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
+    if (!thumb) return undefined;
+    // upgrade to https and request a larger zoom
+    return thumb.replace("http://", "https://").replace("zoom=1", "zoom=2");
+  } catch { return undefined; }
+}
 
 export function CurrentReadsPanel() {
   const C = useTheme();
-  const [books, setBooks] = useState<Book[]>([
-    { id:1, title:"The Almanack of Naval Ravikant", author:"Eric Jorgenson", progress:68, color:"#c8f135" },
-    { id:2, title:"Clean Code", author:"Robert C. Martin", progress:34, color:"#4ecdc4" },
-  ]);
-  const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState({ title:"", author:"" });
-  const addBook = () => {
-    if (!draft.title.trim()) return;
-    const cols=[C.accent,C.teal,C.amber,C.blue];
-    setBooks(b=>[...b,{id:Date.now(),title:draft.title.trim(),author:draft.author.trim(),progress:0,color:cols[b.length%cols.length]}]);
-    setDraft({title:"",author:""}); setAdding(false);
+  const [book, setBook] = useState<CurrentBook>(DEFAULT_BOOK);
+  const [editing, setEditing] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [draft, setDraft] = useState({ title: "", author: "" });
+
+  useEffect(() => { setBook(readBook()); }, []);
+
+  const save = (updated: CurrentBook) => {
+    setBook(updated);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
   };
-  const nudge = (id: number, delta: number) => setBooks(b=>b.map(x=>x.id===id?{...x,progress:Math.min(100,Math.max(0,x.progress+delta))}:x));
+
+  const startEdit = () => {
+    setDraft({ title: book.title, author: book.author });
+    setEditing(true);
+  };
+
+  const commitEdit = async () => {
+    const title = draft.title.trim();
+    const author = draft.author.trim();
+    if (!title) return;
+    setFetching(true);
+    setEditing(false);
+    const cover = await fetchCover(title, author);
+    save({ title, author, progress: 0, cover });
+    setFetching(false);
+  };
+
+  const cancelEdit = () => setEditing(false);
+
+  const inputStyle = {
+    background: C.surfaceHi, border: `1px solid ${C.border}`, borderRadius: 6,
+    padding: "7px 10px", fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+    color: C.text, outline: "none", width: "100%", boxSizing: "border-box" as const,
+  };
+
   return (
-    <Panel style={{ gridColumn:"span 2", display:"flex", flexDirection:"column" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
+    <Panel style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <Tag color={C.textFaint}>Currently reading</Tag>
-        <button onClick={()=>setAdding(a=>!a)} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:adding?C.accent:C.textFaint }}>{adding?"cancel":"+ add"}</button>
-      </div>
-      {adding && (
-        <div style={{ display:"flex", gap:8, marginBottom:16, padding:"10px 12px", background:C.surfaceHi, borderRadius:8, border:`1px solid ${C.border}` }}>
-          <input autoFocus value={draft.title} onChange={e=>setDraft(d=>({...d,title:e.target.value}))} placeholder="title..." style={{ flex:2, background:"transparent", border:"none", outline:"none", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text }} />
-          <div style={{ width:1, background:C.border }} />
-          <input value={draft.author} onChange={e=>setDraft(d=>({...d,author:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addBook()} placeholder="author..." style={{ flex:1, background:"transparent", border:"none", outline:"none", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text }} />
-          <button onClick={addBook} style={{ background:"none", border:"none", cursor:"pointer", color:C.accent, fontFamily:"'JetBrains Mono',monospace", fontSize:11 }}>add</button>
-        </div>
-      )}
-      <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-        {books.map(book => (
-          <div key={book.id}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
-              <div>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:C.text, marginBottom:2 }}>{book.title}</div>
-                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.textFaint }}>{book.author}</div>
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <button onClick={()=>nudge(book.id,-5)} style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:4, color:C.textFaint, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:10, padding:"1px 6px", lineHeight:1.6 }}>&#8722;</button>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:book.color, minWidth:30, textAlign:"center" }}>{book.progress}%</span>
-                <button onClick={()=>nudge(book.id,5)} style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:4, color:C.textFaint, cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:10, padding:"1px 6px", lineHeight:1.6 }}>+</button>
-              </div>
+        {!editing
+          ? <button onClick={startEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint }}>✎</button>
+          : <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={cancelEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>cancel</button>
+              <button onClick={commitEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent }}>save</button>
             </div>
-            <div style={{ height:3, background:C.border, borderRadius:2 }}>
-              <div style={{ height:"100%", width:`${book.progress}%`, background:book.color, borderRadius:2, boxShadow:`0 0 8px ${book.color}55`, transition:"width .3s" }} />
+        }
+      </div>
+
+      {editing ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <input
+            autoFocus
+            value={draft.title}
+            onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
+            placeholder="Book title..."
+            style={inputStyle}
+          />
+          <input
+            value={draft.author}
+            onChange={e => setDraft(d => ({ ...d, author: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") cancelEdit(); }}
+            placeholder="Author..."
+            style={inputStyle}
+          />
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 2 }}>
+            Cover fetched automatically. Progress resets to 0.
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            {/* Cover */}
+            <div style={{
+              width: 64, height: 90, borderRadius: 6, flexShrink: 0,
+              background: C.surfaceHi, border: `1px solid ${C.border}`,
+              overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {fetching ? (
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>…</span>
+              ) : book.cover ? (
+                <img src={book.cover} alt={book.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              ) : (
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: C.border }}>▣</span>
+              )}
+            </div>
+
+            {/* Meta + progress */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", height: 90 }}>
+              <div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.35, marginBottom: 5 }}>
+                  {book.title}
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+                  {book.author}
+                </div>
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                  <div style={{ flex: 1, height: 3, background: C.border, borderRadius: 2 }}>
+                    <div style={{ height: "100%", width: `${book.progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 8px ${C.accent}55`, transition: "width .3s" }} />
+                  </div>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, flexShrink: 0 }}>
+                    {book.progress}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </Panel>
   );
 }

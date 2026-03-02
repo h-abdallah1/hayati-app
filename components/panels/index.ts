@@ -4,7 +4,6 @@ export { TasksPanel }         from "./TasksPanel";
 export { StatusPanel }        from "./StatusPanel";
 export { PrayerPanel }        from "./PrayerPanel";
 export { NewsPanel }          from "./NewsPanel";
-export { HabitsPanel }        from "./HabitsPanel";
 export { QuranPanel }         from "./QuranPanel";
 export { CurrentReadsPanel }  from "./CurrentReadsPanel";
 export { ReadingListPanel }   from "./ReadingListPanel";

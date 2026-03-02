@@ -69,6 +69,7 @@ export function useGlobalSettings() {
 const DEFAULT_PANELS: PanelSettings = {
   newsFeeds: [],
   calendarFeeds: [],
+  hiddenPanels: [],
 };
 
 const PANELS_KEY = "hayati-panels";
@@ -85,6 +86,7 @@ function readPanels(): PanelSettings {
           )
         : DEFAULT_PANELS.newsFeeds,
       calendarFeeds: Array.isArray(parsed.calendarFeeds) ? parsed.calendarFeeds : DEFAULT_PANELS.calendarFeeds,
+      hiddenPanels: Array.isArray(parsed.hiddenPanels) ? parsed.hiddenPanels : DEFAULT_PANELS.hiddenPanels,
     };
   } catch {
     return DEFAULT_PANELS;
