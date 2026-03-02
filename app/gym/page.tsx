@@ -160,7 +160,11 @@ function WorkoutRow({ w, C }: { w: HevyWorkoutFull; C: ReturnType<typeof useThem
 
 // ── Tab: Exercises ──────────────────────────────────────────────────────────
 
+const EX_PAGE = 15;
+
 function ExercisesTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const [page, setPage] = useState(1);
+
   const stats = useMemo(() => {
     const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number }>();
     for (const w of workouts) {
@@ -177,28 +181,46 @@ function ExercisesTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnT
     return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count);
   }, [workouts]);
 
-  const maxCount = stats[0]?.count ?? 1;
+  useEffect(() => { setPage(1); }, [workouts]);
+
+  const maxCount  = stats[0]?.count ?? 1;
+  const pageCount = Math.ceil(stats.length / EX_PAGE);
+  const paged     = stats.slice((page - 1) * EX_PAGE, page * EX_PAGE);
+  const offset    = (page - 1) * EX_PAGE;
 
   if (!stats.length) return <Empty C={C} />;
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      {stats.map((s, i) => (
-        <div key={s.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < stats.length - 1 ? `1px solid ${C.border}` : "none" }}>
-          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{s.title}</div>
-            <div style={{ height: 2, background: C.border, borderRadius: 1 }}>
-              <div style={{ height: "100%", width: `${(s.count / maxCount) * 100}%`, background: C.accent, borderRadius: 1 }} />
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+          {stats.length} exercises
+        </span>
+        <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {paged.map((s, i) => (
+          <div key={s.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < paged.length - 1 ? `1px solid ${C.border}` : "none" }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{offset + i + 1}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{s.title}</div>
+              <div style={{ height: 2, background: C.border, borderRadius: 1 }}>
+                <div style={{ height: "100%", width: `${(s.count / maxCount) * 100}%`, background: C.accent, borderRadius: 1 }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+              <Stat label="times" value={String(s.count)} C={C} />
+              <Stat label="sets"  value={String(s.sets)}  C={C} />
+              <Stat label="reps"  value={String(s.reps)}  C={C} />
+              {s.maxWeight > 0 && <Stat label="max" value={`${s.maxWeight}kg`} C={C} />}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
-            <Stat label="times" value={String(s.count)} C={C} />
-            <Stat label="sets"  value={String(s.sets)}  C={C} />
-            <Stat label="reps"  value={String(s.reps)}  C={C} />
-            {s.maxWeight > 0 && <Stat label="max" value={`${s.maxWeight}kg`} C={C} />}
-          </div>
+        ))}
+      </div>
+      {pageCount > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -256,7 +278,11 @@ function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType
 
 // ── Tab: PRs ────────────────────────────────────────────────────────────────
 
+const PR_PAGE = 15;
+
 function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
+  const [page, setPage] = useState(1);
+
   const prs = useMemo(() => {
     const map = new Map<string, { weight: number; reps: number; date: string }>();
     for (const w of workouts) {
@@ -278,25 +304,44 @@ function PRsTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<ty
       .sort((a, b) => b.weight - a.weight);
   }, [workouts]);
 
+  useEffect(() => { setPage(1); }, [workouts]);
+
+  const pageCount = Math.ceil(prs.length / PR_PAGE);
+  const paged     = prs.slice((page - 1) * PR_PAGE, page * PR_PAGE);
+  const offset    = (page - 1) * PR_PAGE;
+
   if (!prs.length) return <Empty C={C} />;
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      {prs.map((pr, i) => (
-        <div key={pr.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < prs.length - 1 ? `1px solid ${C.border}` : "none" }}>
-          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.title}</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 2 }}>
-              {new Date(pr.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+          {prs.length} exercises
+        </span>
+        <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {paged.map((pr, i) => (
+          <div key={pr.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < paged.length - 1 ? `1px solid ${C.border}` : "none" }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, width: 20, textAlign: "right", flexShrink: 0 }}>{offset + i + 1}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.title}</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 2 }}>
+                {new Date(pr.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+              <Stat label="weight"  value={`${pr.weight}kg`} C={C} hi />
+              <Stat label="reps"    value={String(pr.reps)}   C={C} />
+              <Stat label="est 1RM" value={`${pr.orm}kg`}     C={C} />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
-            <Stat label="weight"  value={`${pr.weight}kg`}    C={C} hi />
-            <Stat label="reps"    value={String(pr.reps)}      C={C} />
-            <Stat label="est 1RM" value={`${pr.orm}kg`}        C={C} />
-          </div>
+        ))}
+      </div>
+      {pageCount > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -344,6 +389,23 @@ function SplitTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<
 }
 
 // ── Shared mini components ──────────────────────────────────────────────────
+
+function Pager({ page, pageCount, setPage, C }: { page: number; pageCount: number; setPage: (fn: (p: number) => number) => void; C: ReturnType<typeof useTheme> }) {
+  if (pageCount <= 1) return null;
+  const btn = (disabled: boolean): React.CSSProperties => ({
+    background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
+    cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.3 : 1,
+    fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+    color: C.textMuted, padding: "2px 8px", lineHeight: 1.6,
+  });
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <button style={btn(page === 1)}         disabled={page === 1}         onClick={() => setPage(p => p - 1)}>‹</button>
+      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
+      <button style={btn(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+    </div>
+  );
+}
 
 function Stat({ label, value, C, hi }: { label: string; value: string; C: ReturnType<typeof useTheme>; hi?: boolean }) {
   return (
@@ -412,12 +474,6 @@ export default function GymPage() {
     : 52;
   const avgPerWeek = (count / weeksInYear).toFixed(1);
 
-  const navBtn = (disabled: boolean): React.CSSProperties => ({
-    background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
-    cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.3 : 1,
-    fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
-    color: C.textMuted, padding: "2px 8px", lineHeight: 1.6,
-  });
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
@@ -515,21 +571,13 @@ export default function GymPage() {
                     <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
                       {wxLoading ? "loading…" : `${count} sessions in ${selectedYear}`}
                     </span>
-                    {pageCount > 1 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button style={navBtn(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
-                        <button style={navBtn(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
-                      </div>
-                    )}
+                    <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
                   </div>
                   <div>{paged.map(w => <WorkoutRow key={w.id} w={w} C={C} />)}</div>
                   {!wxLoading && count === 0 && <Empty C={C} />}
                   {pageCount > 1 && (
-                    <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }}>
-                      <button style={navBtn(page === 1)} disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{page} / {pageCount}</span>
-                      <button style={navBtn(page === pageCount)} disabled={page === pageCount} onClick={() => setPage(p => p + 1)}>›</button>
+                    <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+                      <Pager page={page} pageCount={pageCount} setPage={setPage} C={C} />
                     </div>
                   )}
                 </>
