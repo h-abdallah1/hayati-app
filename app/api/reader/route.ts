@@ -13,13 +13,14 @@ export async function POST(req: Request) {
     }
     const content = (article.content ?? "")
       .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<iframe[\s\S]*?<\/iframe>/gi, "");
+      .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+      // Readability often prepends the title as the first <h1> — strip it to avoid duplication
+      .replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>\s*/i, "");
     return NextResponse.json({
       title: article.title,
       content,
       author: article.author,
       published: article.published,
-      image: article.image,
       source: article.source,
     });
   } catch {

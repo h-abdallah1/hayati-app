@@ -10,7 +10,6 @@ type ArticleData = {
   content?: string;
   author?: string;
   published?: string;
-  image?: string;
   source?: string;
 };
 
@@ -140,29 +139,39 @@ function ReaderContent() {
           </div>
         )}
 
-        {error && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, paddingTop: 80 }}>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>
-              could not extract article content
-            </span>
-            {url && (
+        {error && url && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+                could not extract — showing original page
+              </span>
               <a
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: 11,
+                  fontSize: 10,
                   color: C.accent,
                   textDecoration: "none",
                   display: "flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 4,
                 }}
               >
-                open in browser <ExternalLink size={11} />
+                open externally <ExternalLink size={10} />
               </a>
-            )}
+            </div>
+            <iframe
+              src={`/api/proxy?url=${encodeURIComponent(url)}`}
+              style={{
+                width: "100%",
+                height: "calc(100vh - 180px)",
+                border: `1px solid ${C.border}`,
+                borderRadius: 6,
+                background: C.surface,
+              }}
+            />
           </div>
         )}
 
@@ -201,24 +210,6 @@ function ReaderContent() {
             }}>
               {article.title}
             </h1>
-
-            {/* Hero image */}
-            {article.image && (
-              <img
-                src={article.image}
-                alt=""
-                style={{
-                  width: "100%",
-                  maxHeight: 320,
-                  objectFit: "cover",
-                  borderRadius: 6,
-                  marginBottom: 24,
-                  border: `1px solid ${C.border}`,
-                  display: "block",
-                }}
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            )}
 
             {/* Article body */}
             <div
