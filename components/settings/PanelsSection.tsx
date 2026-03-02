@@ -15,6 +15,8 @@ const PANELS = [
   { id: "readingList",  label: "Reading List"  },
   { id: "calendar",     label: "Calendar"      },
   { id: "weather",      label: "Weather"       },
+  { id: "gym",          label: "Gym Tracker"   },
+  { id: "finance",      label: "Finance"       },
 ];
 
 export function PanelsSection() {

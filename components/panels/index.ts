@@ -9,3 +9,5 @@ export { CurrentReadsPanel }  from "./CurrentReadsPanel";
 export { ReadingListPanel }   from "./ReadingListPanel";
 export { CalendarPanel }      from "./CalendarPanel";
 export { WeatherPanel }       from "./WeatherPanel";
+export { GymPanel }           from "./GymPanel";
+export { FinancePanel }       from "./FinancePanel";
