@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
 import { useNews } from "@/lib/hooks";
@@ -12,6 +13,7 @@ const PAGE_SIZE = 5;
 
 export function NewsPanel() {
   const C = useTheme();
+  const router = useRouter();
   const { panels } = usePanelSettings();
   const { items: liveItems, loaded } = useNews(panels.newsFeeds);
   const [page, setPage] = useState(0);
@@ -78,9 +80,9 @@ export function NewsPanel() {
               {n.url ? (
                 <a
                   href={n.url}
-                  target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text, lineHeight:1.55, flex:1, textDecoration:"none" }}
+                  onClick={e => { e.preventDefault(); router.push(`/reader?url=${encodeURIComponent(n.url!)}`); }}
+                  style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text, lineHeight:1.55, flex:1, textDecoration:"none", cursor:"pointer" }}
                   onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
                   onMouseLeave={e => (e.currentTarget.style.color = C.text)}
                 >
