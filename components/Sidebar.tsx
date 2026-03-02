@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell } from "lucide-react";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Search } from "lucide-react";
 
 const NAV = [
   { href: "/",        Icon: LayoutDashboard, label: "Dashboard" },
@@ -18,6 +18,10 @@ export function Sidebar() {
   const C = useTheme();
   const path = usePathname();
   const [hovered, setHovered] = useState<string | null>(null);
+
+  const openSearch = () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
+  };
 
   return (
     <div style={{
@@ -71,6 +75,26 @@ export function Sidebar() {
           </Link>
         );
       })}
+
+      {/* Search button at bottom */}
+      <div style={{ marginTop: "auto", marginBottom: 16 }}>
+        <button
+          onClick={openSearch}
+          title="Search (⌘K)"
+          onMouseEnter={() => setHovered("search")}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 38, height: 36, borderRadius: 7,
+            background: hovered === "search" ? C.surfaceHi : "transparent",
+            border: "1px solid transparent",
+            color: hovered === "search" ? C.textMuted : C.textFaint,
+            cursor: "pointer",
+          }}
+        >
+          <Search size={15} strokeWidth={1.7} />
+        </button>
+      </div>
     </div>
   );
 }
