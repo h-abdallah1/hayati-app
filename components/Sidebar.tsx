@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet } from "lucide-react";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell } from "lucide-react";
 
 const NAV = [
   { href: "/",        Icon: LayoutDashboard, label: "Dashboard" },
   { href: "/goals",   Icon: Target,          label: "Goals"     },
   { href: "/notes",   Icon: FileText,        label: "Notes"     },
   { href: "/finance", Icon: Wallet,          label: "Finance"   },
+  { href: "/gym",     Icon: Dumbbell,        label: "Gym"       },
 ];
 
 export function Sidebar() {
