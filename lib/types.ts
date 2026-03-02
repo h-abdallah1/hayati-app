@@ -15,6 +15,8 @@ export type PanelSettings = {
   newsFeeds: NewsFeed[];
   calendarFeeds: string[];
   hiddenPanels: string[];
+  pomodoroWork: number;
+  pomodoroBreak: number;
 };
 export type NewsItem = { source: string; title: string; url: string; time: string };
 export type CalEventFull = { date: string; label: string; color: string; url?: string };

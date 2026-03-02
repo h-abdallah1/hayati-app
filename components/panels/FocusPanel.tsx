@@ -2,17 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
+import { usePanelSettings } from "@/lib/settings";
 import { Panel, Tag } from "@/components/ui";
 
 export function FocusPanel() {
   const C = useTheme();
+  const { panels } = usePanelSettings();
   const [focus, setFocus] = useState("Ship the Hayati dashboard");
   const [editing, setEditing] = useState(false);
   const [done, setDone] = useState(false);
 
   const [phase, setPhase] = useState<"work" | "break">("work");
-  const [secs, setSecs] = useState(25 * 60);
+  const totalSecs = phase === "work" ? panels.pomodoroWork * 60 : panels.pomodoroBreak * 60;
+  const [secs, setSecs] = useState(panels.pomodoroWork * 60);
   const [running, setRunning] = useState(false);
+
+  // Reset timer when settings change (only if not running)
+  useEffect(() => {
+    if (!running) setSecs(phase === "work" ? panels.pomodoroWork * 60 : panels.pomodoroBreak * 60);
+  }, [panels.pomodoroWork, panels.pomodoroBreak]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!running) return;
@@ -29,13 +37,14 @@ export function FocusPanel() {
     if (secs === 0 && !running) {
       const next = phase === "work" ? "break" : "work";
       setPhase(next);
-      setSecs(next === "work" ? 25 * 60 : 5 * 60);
+      setSecs(next === "work" ? panels.pomodoroWork * 60 : panels.pomodoroBreak * 60);
     }
-  }, [secs, running]);
+  }, [secs, running]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => { setRunning(false); setSecs(phase === "work" ? 25 * 60 : 5 * 60); };
+  const reset = () => { setRunning(false); setSecs(phase === "work" ? panels.pomodoroWork * 60 : panels.pomodoroBreak * 60); };
   const mm = String(Math.floor(secs / 60)).padStart(2, "0");
   const ss = String(secs % 60).padStart(2, "0");
+  const progress = Math.max(0, Math.min(100, ((totalSecs - secs) / totalSecs) * 100));
 
   return (
     <Panel style={{ borderColor:done?C.accent+"44":C.border, display:"flex", flexDirection:"column" }}>
@@ -54,8 +63,14 @@ export function FocusPanel() {
           <div style={{ flex:1, height:1, background:C.border }} />
           <Tag color={C.textFaint}>{phase}</Tag>
         </div>
-        <div style={{ textAlign:"center", fontFamily:"'JetBrains Mono',monospace", fontSize:18, color:running?C.accent:C.text, marginBottom:10 }}>
-          {mm}:{ss}
+        {/* Progress bar + timer inline */}
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+          <div style={{ flex:1, height:3, background:C.border, borderRadius:2 }}>
+            <div style={{ height:"100%", width:`${progress}%`, background:running?C.accent:C.borderHi, borderRadius:2, transition:"width 1s linear", boxShadow:running?`0 0 8px ${C.accent}55`:undefined }} />
+          </div>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, color:running?C.accent:C.text, flexShrink:0, minWidth:44, textAlign:"right" }}>
+            {mm}:{ss}
+          </span>
         </div>
         <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
           <button onClick={() => setRunning(r=>!r)} style={{ border:`1px solid ${C.border}`, borderRadius:5, background:"transparent", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text, padding:"3px 10px" }}>

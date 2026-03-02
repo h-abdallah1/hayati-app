@@ -70,6 +70,8 @@ const DEFAULT_PANELS: PanelSettings = {
   newsFeeds: [],
   calendarFeeds: [],
   hiddenPanels: [],
+  pomodoroWork: 25,
+  pomodoroBreak: 5,
 };
 
 const PANELS_KEY = "hayati-panels";
@@ -87,6 +89,8 @@ function readPanels(): PanelSettings {
         : DEFAULT_PANELS.newsFeeds,
       calendarFeeds: Array.isArray(parsed.calendarFeeds) ? parsed.calendarFeeds : DEFAULT_PANELS.calendarFeeds,
       hiddenPanels: Array.isArray(parsed.hiddenPanels) ? parsed.hiddenPanels : DEFAULT_PANELS.hiddenPanels,
+      pomodoroWork: typeof parsed.pomodoroWork === "number" ? parsed.pomodoroWork : DEFAULT_PANELS.pomodoroWork,
+      pomodoroBreak: typeof parsed.pomodoroBreak === "number" ? parsed.pomodoroBreak : DEFAULT_PANELS.pomodoroBreak,
     };
   } catch {
     return DEFAULT_PANELS;
