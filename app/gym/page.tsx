@@ -360,30 +360,56 @@ function SplitTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<
 
   if (!split.length) return <Empty C={C} />;
 
-  const total  = split.reduce((s, e) => s + e.count, 0);
-  const max    = split[0]?.count ?? 1;
+  const total = split.reduce((s, e) => s + e.count, 0);
   const CAT_COLORS: Record<string, string> = {
     Push: C.accent, Pull: C.teal, Legs: C.amber,
     Upper: C.blue, Lower: C.red, "Full Body": C.textMuted, Cardio: C.teal, Other: C.textFaint,
   };
 
+  const R = 52, SW = 20, SIZE = 140;
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const circ = 2 * Math.PI * R;
+
+  let cumArc = 0;
+  const segments = split.map(s => {
+    const arc   = (s.count / total) * circ;
+    const seg   = { ...s, arc, offset: -cumArc, color: CAT_COLORS[s.cat] ?? C.textMuted };
+    cumArc += arc;
+    return seg;
+  });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {split.map(s => {
-        const color = CAT_COLORS[s.cat] ?? C.textMuted;
-        const pct   = Math.round((s.count / total) * 100);
-        return (
-          <div key={s.cat}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text }}>{s.cat}</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>{s.count} sessions · {pct}%</span>
-            </div>
-            <div style={{ height: 4, background: C.border, borderRadius: 2 }}>
-              <div style={{ height: "100%", width: `${(s.count / max) * 100}%`, background: color, borderRadius: 2, boxShadow: `0 0 8px ${color}44`, transition: "width .3s" }} />
-            </div>
+    <div style={{ display: "flex", gap: 32, alignItems: "center" }}>
+      {/* Donut */}
+      <svg width={SIZE} height={SIZE} style={{ flexShrink: 0 }}>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={C.border} strokeWidth={SW} />
+        {segments.map((s, i) => (
+          <circle
+            key={i} cx={cx} cy={cy} r={R} fill="none"
+            stroke={s.color} strokeWidth={SW}
+            strokeDasharray={`${s.arc} ${circ - s.arc}`}
+            strokeDashoffset={s.offset}
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        ))}
+        <text x={cx} y={cy - 7} textAnchor="middle" fill={C.text}
+          fontFamily="'Syne',sans-serif" fontSize={22} fontWeight={800}>{total}</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fill={C.textFaint}
+          fontFamily="'JetBrains Mono',monospace" fontSize={8}>sessions</text>
+      </svg>
+
+      {/* Legend */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 9 }}>
+        {segments.map(s => (
+          <div key={s.cat} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, flex: 1 }}>{s.cat}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+              {s.count} · {Math.round((s.count / total) * 100)}%
+            </span>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
