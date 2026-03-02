@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@extractus/article-extractor": "^8.0.20",
     "adhan": "^4.4.3",
     "fast-xml-parser": "^5.4.1",
     "ical.js": "^2.2.1",

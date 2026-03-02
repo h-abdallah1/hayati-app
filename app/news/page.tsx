@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { RefreshCw, Star, X } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
@@ -45,6 +46,7 @@ function itemId(n: { url?: string; title: string }): string {
 
 export default function NewsPage() {
   const C = useTheme();
+  const router = useRouter();
   const { panels } = usePanelSettings();
   const { items: liveItems, loaded, refresh } = useNews(panels.newsFeeds);
   const [page, setPage] = useState(0);
@@ -481,10 +483,9 @@ export default function NewsPage() {
                       {n.url ? (
                         <a
                           href={n.url}
-                          target="_blank"
                           rel="noopener noreferrer"
-                          onClick={() => markRead(id)}
-                          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.text, lineHeight: 1.5, textDecoration: "none" }}
+                          onClick={e => { e.preventDefault(); markRead(id); router.push(`/reader?url=${encodeURIComponent(n.url!)}`); }}
+                          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.text, lineHeight: 1.5, textDecoration: "none", cursor: "pointer" }}
                           onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
                           onMouseLeave={e => (e.currentTarget.style.color = C.text)}
                         >
