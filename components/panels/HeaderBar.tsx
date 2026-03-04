@@ -24,10 +24,17 @@ export function HeaderBar({ time }: { time: Date }) {
             ? 'Good evening'
             : 'Good night';
   const timeStr = formatClock(time, global.timeFormat);
-  const dayFrac = (h * 3600 + m * 60 + s) / 86400;
+  const dayFrac   = (h * 3600 + m * 60 + s) / 86400;
+  const weekFrac  = (time.getDay() || 7) / 7;
+  const monthFrac = time.getDate() / 30;
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const dateStr = `${DAYS[time.getDay()]} · ${MONTHS[time.getMonth()]} ${time.getDate()}`;
+  const metrics = [
+    { label: 'day',   frac: dayFrac,   color: C.accent },
+    { label: 'week',  frac: weekFrac,  color: C.teal   },
+    { label: 'month', frac: monthFrac, color: C.blue   },
+  ];
   return (
     <div
       style={{
@@ -86,45 +93,18 @@ export function HeaderBar({ time }: { time: Date }) {
           {greeting},&nbsp;<span style={{ color: C.text }}>{global.name}</span>
         </span>
       </div>
-      <div style={{ flex: 1, maxWidth: 340 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: 5,
-          }}
-        >
-          <Tag color={C.textFaint}>day progress</Tag>
-          <Tag color={C.textMuted}>{(dayFrac * 100).toFixed(0)}%</Tag>
-        </div>
-        <div
-          style={{
-            height: 3,
-            background: C.border,
-            borderRadius: 2,
-            position: 'relative',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              width: `${dayFrac * 100}%`,
-              background: `linear-gradient(90deg,${C.accent}77,${C.accent})`,
-              borderRadius: 2,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: -3,
-              left: `${dayFrac * 100}%`,
-              width: 1,
-              height: 9,
-              background: C.accent,
-              transform: 'translateX(-50%)',
-            }}
-          />
-        </div>
+      <div style={{ flex: 1, maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {metrics.map(({ label, frac, color }) => (
+          <div key={label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <Tag color={C.textFaint}>{label}</Tag>
+              <Tag color={color}>{(frac * 100).toFixed(0)}%</Tag>
+            </div>
+            <div style={{ height: 2, background: C.border, borderRadius: 2 }}>
+              <div style={{ height: '100%', width: `${Math.min(frac * 100, 100)}%`, background: color, borderRadius: 2, boxShadow: `0 0 5px ${color}66` }} />
+            </div>
+          </div>
+        ))}
       </div>
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}

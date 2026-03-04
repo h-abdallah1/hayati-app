@@ -5,7 +5,6 @@ import { usePanelSettings } from "@/lib/settings";
 import { sectionHead } from "./styles";
 
 const PANELS = [
-  { id: "time",    label: "Time"        },
   { id: "prayer",  label: "Prayer"      },
   { id: "news",    label: "News"        },
   { id: "quran",   label: "Quran Verse" },
