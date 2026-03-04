@@ -1,6 +1,4 @@
 export { HeaderBar }    from "./HeaderBar";
-export { FocusPanel }   from "./FocusPanel";
-export { TasksPanel }   from "./TasksPanel";
 export { TimePanel }    from "./TimePanel";
 export { ReadingPanel } from "./ReadingPanel";
 export { NewsPanel }    from "./NewsPanel";

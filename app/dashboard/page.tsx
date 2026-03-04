@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme";
 import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { formatClock } from "@/lib/time";
 import {
-  HeaderBar, FocusPanel, TasksPanel, TimePanel, ReadingPanel,
+  HeaderBar, TimePanel, ReadingPanel,
   NewsPanel, QuranPanel, CalendarPanel, WeatherPanel,
   GymPanel, FinancePanel, FilmsPanel,
 } from "@/components/panels";
@@ -19,9 +19,7 @@ function HayatiInner() {
     <div style={{ minHeight:"100vh", background:C.bg, padding:"24px 28px" }}>
       <HeaderBar time={time} />
       <div className="hg" style={{ maxWidth:1280, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gridAutoRows:"auto", gap:12 }}>
-        {/* Row 1: four single-col panels */}
-        {show("focus")   && <FocusPanel />}
-        {show("tasks")   && <TasksPanel />}
+        {/* Row 1: two single-col panels */}
         {show("time")    && <TimePanel time={time} />}
         {show("calendar")&& <CalendarPanel time={time} />}
         {/* Row 2: two double-col panels */}
