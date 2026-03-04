@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2, Globe } from "lucide-react";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2, Globe, Settings } from "lucide-react";
 
 const NAV = [
   { href: "/",         Icon: LayoutDashboard, label: "Dashboard" },
@@ -26,6 +26,10 @@ export function Sidebar() {
 
   const openSearch = () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
+  };
+
+  const openSettings = () => {
+    window.dispatchEvent(new CustomEvent("hayati:open-settings"));
   };
 
   return (
@@ -81,24 +85,30 @@ export function Sidebar() {
         );
       })}
 
-      {/* Search button at bottom */}
-      <div style={{ marginTop: "auto", marginBottom: 16 }}>
-        <button
-          onClick={openSearch}
-          title="Search (⌘K)"
-          onMouseEnter={() => setHovered("search")}
-          onMouseLeave={() => setHovered(null)}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 38, height: 36, borderRadius: 7,
-            background: hovered === "search" ? C.surfaceHi : "transparent",
-            border: "1px solid transparent",
-            color: hovered === "search" ? C.textMuted : C.textFaint,
-            cursor: "pointer",
-          }}
-        >
-          <Search size={15} strokeWidth={1.7} />
-        </button>
+      {/* Bottom buttons */}
+      <div style={{ marginTop: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+        {([
+          { key: "search", Icon: Search, title: "Search (⌘K)", onClick: openSearch },
+          { key: "settings", Icon: Settings, title: "Settings", onClick: openSettings },
+        ] as const).map(({ key, Icon, title, onClick }) => (
+          <button
+            key={key}
+            onClick={onClick}
+            title={title}
+            onMouseEnter={() => setHovered(key)}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 38, height: 36, borderRadius: 7,
+              background: hovered === key ? C.surfaceHi : "transparent",
+              border: "1px solid transparent",
+              color: hovered === key ? C.textMuted : C.textFaint,
+              cursor: "pointer",
+            }}
+          >
+            <Icon size={15} strokeWidth={1.7} />
+          </button>
+        ))}
       </div>
     </div>
   );

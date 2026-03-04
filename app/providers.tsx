@@ -1,16 +1,35 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { GlobalSettingsProvider, PanelSettingsProvider } from "@/lib/settings";
 import { ThemeProvider } from "@/lib/theme";
 import { SearchPalette } from "@/components/SearchPalette";
+import { SettingsDrawer } from "@/components/SettingsDrawer";
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setSettingsOpen(true);
+    window.addEventListener("hayati:open-settings", handler);
+    return () => window.removeEventListener("hayati:open-settings", handler);
+  }, []);
+
+  return (
+    <>
+      {children}
+      <SearchPalette />
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
+  );
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <GlobalSettingsProvider>
       <PanelSettingsProvider>
         <ThemeProvider>
-          {children}
-          <SearchPalette />
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
       </PanelSettingsProvider>
     </GlobalSettingsProvider>

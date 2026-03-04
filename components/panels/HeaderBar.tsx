@@ -6,13 +6,7 @@ import { useTheme } from '@/lib/theme';
 import { formatClock } from '@/lib/time';
 import { Dot, Sep, Stat, Tag } from '@/components/ui';
 
-export function HeaderBar({
-  time,
-  onOpenSettings,
-}: {
-  time: Date;
-  onOpenSettings: () => void;
-}) {
+export function HeaderBar({ time }: { time: Date }) {
   const C = useTheme();
   const { global } = useGlobalSettings();
   const wx = useWeather(global.location);
@@ -139,26 +133,6 @@ export function HeaderBar({
         <Sep />
         <Stat icon="&#9711;" label={timeStr} />
         <Stat label={dateStr} dim />
-        <Sep />
-        <button
-          onClick={onOpenSettings}
-          title="Settings"
-          style={{
-            background: 'none',
-            border: `1px solid ${C.border}`,
-            borderRadius: 5,
-            cursor: 'pointer',
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 13,
-            color: C.textMuted,
-            padding: '1px 6px',
-            lineHeight: 1.6,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          ⚙
-        </button>
       </div>
     </div>
   );
