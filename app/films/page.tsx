@@ -15,6 +15,7 @@ function stars(r: number): string {
 
 type SortMode = "newest" | "rating";
 type FilterMode = "all" | "3plus" | "4plus";
+type ViewMode = "grid" | "timeline";
 
 
 export default function FilmsPage() {
@@ -24,6 +25,7 @@ export default function FilmsPage() {
   const { films, loaded, refresh } = useLetterboxd(username);
 
   const [sort, setSort] = useState<SortMode>("newest");
+  const [view, setView] = useState<ViewMode>("grid");
   const [filter, setFilter] = useState<FilterMode>("all");
   const [search, setSearch] = useState("");
   const [likedOnly, setLikedOnly] = useState(false);
@@ -39,8 +41,8 @@ export default function FilmsPage() {
     .filter(f => !rewatchOnly || f.rewatch);
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
-    return b.watchedDate.localeCompare(a.watchedDate);
+    if (view === "timeline" || sort === "newest") return b.watchedDate.localeCompare(a.watchedDate);
+    return (b.rating ?? 0) - (a.rating ?? 0);
   });
 
   const avgRating = films.length > 0 && films.some(f => f.rating !== undefined)
@@ -120,12 +122,19 @@ export default function FilmsPage() {
       {username && loaded && films.length > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: 4 }}>
-            {(["newest", "rating"] as SortMode[]).map(s => (
-              <button key={s} onClick={() => setSort(s)} style={activeBtn(sort === s)}>
-                {s === "newest" ? "newest" : "by rating"}
-              </button>
+            {(["grid", "timeline"] as ViewMode[]).map(v => (
+              <button key={v} onClick={() => setView(v)} style={activeBtn(view === v)}>{v}</button>
             ))}
           </div>
+          {view === "grid" && (
+            <div style={{ display: "flex", gap: 4 }}>
+              {(["newest", "rating"] as SortMode[]).map(s => (
+                <button key={s} onClick={() => setSort(s)} style={activeBtn(sort === s)}>
+                  {s === "newest" ? "newest" : "by rating"}
+                </button>
+              ))}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 4, marginLeft: 8 }}>
             {([["all", "all"], ["3plus", "★★★+"], ["4plus", "★★★★+"]] as [FilterMode, string][]).map(([f, label]) => (
               <button key={f} onClick={() => setFilter(f)} style={activeBtn(filter === f)}>
@@ -169,7 +178,7 @@ export default function FilmsPage() {
         <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
           no films found
         </div>
-      ) : (
+      ) : view === "grid" ? (
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
@@ -179,6 +188,8 @@ export default function FilmsPage() {
             <FilmCard key={i} film={film} C={C} onSelect={setSelected} />
           ))}
         </div>
+      ) : (
+        <TimelineView films={sorted} C={C} onSelect={setSelected} />
       )}
 
       <FilmDrawer film={selected} C={C} onClose={() => setSelected(null)} />
@@ -187,6 +198,114 @@ export default function FilmsPage() {
 }
 
 type Palette = ReturnType<typeof useTheme>;
+
+function monthLabel(key: string): string {
+  const [y, m] = key.split("-");
+  return new Date(Number(y), Number(m) - 1).toLocaleString("default", { month: "long", year: "numeric" });
+}
+
+function TimelineView({ films, C, onSelect }: { films: FilmEntry[]; C: Palette; onSelect: (f: FilmEntry) => void }) {
+  const byMonth = films.reduce<Record<string, FilmEntry[]>>((acc, f) => {
+    const key = f.watchedDate.slice(0, 7);
+    (acc[key] ??= []).push(f);
+    return acc;
+  }, {});
+  const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div style={{ maxWidth: 640 }}>
+      {months.map(month => (
+        <div key={month} style={{ marginBottom: 32 }}>
+          {/* Month header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
+              {monthLabel(month)}
+            </span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
+              {byMonth[month].length} film{byMonth[month].length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          {/* Entries with vertical line */}
+          <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24 }}>
+            {byMonth[month].map((film, i) => (
+              <div
+                key={i}
+                onClick={() => onSelect(film)}
+                style={{ position: "relative", display: "flex", gap: 14, paddingBottom: 24, cursor: "pointer" }}
+              >
+                {/* Timeline dot */}
+                <div style={{
+                  position: "absolute",
+                  left: -29,
+                  top: 24,
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: C.accent,
+                }} />
+                {/* Day badge */}
+                <div style={{
+                  fontFamily: "'JetBrains Mono',monospace",
+                  fontSize: 10,
+                  color: C.textFaint,
+                  width: 20,
+                  flexShrink: 0,
+                  paddingTop: 6,
+                }}>
+                  {film.watchedDate.slice(8)}
+                </div>
+                {/* Poster */}
+                <div style={{
+                  width: 48,
+                  flexShrink: 0,
+                  aspectRatio: "2/3",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  background: C.surfaceHi,
+                  border: `1px solid ${C.border}`,
+                }}>
+                  {film.poster && (
+                    <img
+                      src={film.poster}
+                      alt={film.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  )}
+                </div>
+                {/* Text info */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, paddingTop: 4 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, fontWeight: 600 }}>
+                    {film.title}
+                  </span>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {film.year && <span style={{ fontSize: 10, color: C.textFaint }}>{film.year}</span>}
+                    {film.rating !== undefined && <span style={{ fontSize: 10, color: C.accent }}>{stars(film.rating)}</span>}
+                    {film.liked && <span style={{ fontSize: 10, color: "#e05252" }}>♥</span>}
+                    {film.rewatch && <span style={{ fontSize: 10, color: C.textFaint }}>↺</span>}
+                  </div>
+                  {film.review && (
+                    <span style={{
+                      fontFamily: "'JetBrains Mono',monospace",
+                      fontSize: 10,
+                      color: C.textFaint,
+                      lineHeight: 1.6,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}>
+                      {film.review}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function FilmDrawer({ film, C, onClose }: { film: FilmEntry | null; C: Palette; onClose: () => void }) {
   const open = film !== null;
