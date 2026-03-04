@@ -18,7 +18,7 @@ import {
 } from "./helpers";
 
 const CELL = 18;
-const GAP = 3;
+const GAP = 5;
 const STRIP_H = 5;
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -230,7 +230,7 @@ export default function OverviewPage() {
               display: "grid",
               gridTemplateColumns: `28px repeat(${totalCols}, ${CELL}px)`,
               gap: `${GAP}px`,
-              marginBottom: rowIdx === 6 ? 0 : 0,
+              marginBottom: rowIdx === 6 ? 0 : GAP,
             }}>
               {/* Day-of-week label */}
               <div style={{
