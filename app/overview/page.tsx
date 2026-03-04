@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Dumbbell, Clapperboard, FileText } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
@@ -36,6 +37,12 @@ const CAT_LABELS: Record<ActivityCategory, string> = {
 
 const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note"];
 
+const CAT_ICONS = {
+  gym:  Dumbbell,
+  film: Clapperboard,
+  note: FileText,
+} as const;
+
 export default function OverviewPage() {
   const C = useTheme();
   const { global: settings } = useGlobalSettings();
@@ -52,6 +59,12 @@ export default function OverviewPage() {
   // Tooltip
   const [tooltip, setTooltip] = useState<{ x: number; y: number; dateKey: string } | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+
+  // Month filter: null = All, 0–11 = month index
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+
+  // Reset month filter when year changes
+  useEffect(() => { setSelectedMonth(null); }, [year]);
 
   // Fetch gym
   useEffect(() => {
@@ -311,13 +324,43 @@ export default function OverviewPage() {
 
       {/* Activity Feed */}
       <div ref={feedRef}>
-        <div style={{ fontSize: 11, color: C.textFaint, marginBottom: 16, letterSpacing: "0.06em" }}>
-          ACTIVITY FEED
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: C.textFaint, letterSpacing: "0.06em" }}>ACTIVITY FEED</div>
         </div>
-        {feedEntries.length === 0 ? (
-          <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>
-        ) : (
-          feedEntries.map(entry => (
+
+        {/* Month filter segments */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 20 }}>
+          {[null, 0,1,2,3,4,5,6,7,8,9,10,11].map(m => {
+            const active = selectedMonth === m;
+            const label = m === null ? "All" : new Date(year, m, 1).toLocaleDateString("en-US", { month: "short" });
+            return (
+              <button
+                key={m ?? "all"}
+                onClick={() => setSelectedMonth(m)}
+                style={{
+                  fontSize: 11,
+                  padding: "3px 9px",
+                  borderRadius: 4,
+                  border: `1px solid ${active ? C.accentMid : C.border}`,
+                  background: active ? C.accentDim : "transparent",
+                  color: active ? C.accent : C.textMuted,
+                  cursor: "pointer",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {(() => {
+          const visible = selectedMonth === null
+            ? feedEntries
+            : feedEntries.filter(e => new Date(e.date).getMonth() === selectedMonth);
+          return visible.length === 0 ? (
+            <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>
+          ) : visible.map(entry => (
             <div
               key={entry.date}
               data-date={entry.date}
@@ -329,31 +372,20 @@ export default function OverviewPage() {
               {entry.items.map((item, i) => (
                 <div key={i} style={{
                   display: "flex",
-                  alignItems: "flex-start",
+                  alignItems: "center",
                   gap: 8,
                   fontSize: 12,
                   color: C.text,
                   paddingLeft: 8,
-                  marginBottom: 3,
+                  marginBottom: 4,
                 }}>
-                  <div style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    background: CAT_COLORS[item.category],
-                    marginTop: 3,
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ color: CAT_COLORS[item.category], marginRight: 4 }}>
-                    {CAT_LABELS[item.category]}
-                  </span>
-                  <span style={{ color: C.textMuted }}>—</span>
-                  <span style={{ color: C.text }}>{item.label}</span>
+                  {(() => { const Icon = CAT_ICONS[item.category]; return <Icon size={13} color={CAT_COLORS[item.category]} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
+                  <span style={{ color: C.textMuted }}>{item.label}</span>
                 </div>
               ))}
             </div>
-          ))
-        )}
+          ));
+        })()}
       </div>
 
       {/* Tooltip */}
