@@ -30,6 +30,13 @@ function extractPoster(description: unknown): string | undefined {
   return m?.[1] ?? undefined;
 }
 
+function extractReview(description: unknown): string | undefined {
+  const html = extractText(description);
+  const noImg = html.replace(/<img[^>]*>/gi, "");
+  const text = noImg.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text || undefined;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const username = req.nextUrl.searchParams.get("username")?.trim();
@@ -68,9 +75,10 @@ export async function GET(req: NextRequest) {
       const rewatch = extractText(item["letterboxd:rewatch"]).toLowerCase() === "yes";
       const liked = extractText(item["letterboxd:memberLike"]).toLowerCase() === "yes";
       const poster = extractPoster(item.description);
+      const review = extractReview(item.description);
       const link = extractText(item.link) || undefined;
 
-      films.push({ title, year, rating, watchedDate, rewatch, liked, poster, url: link });
+      films.push({ title, year, rating, watchedDate, rewatch, liked, poster, url: link, review });
     }
 
     films.sort((a, b) => b.watchedDate.localeCompare(a.watchedDate));

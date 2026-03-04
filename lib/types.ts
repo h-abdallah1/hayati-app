@@ -44,4 +44,5 @@ export type FilmEntry = {
   liked: boolean;
   poster?: string;
   url?: string;
+  review?: string;
 };

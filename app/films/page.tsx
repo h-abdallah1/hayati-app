@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks";
@@ -28,6 +28,7 @@ export default function FilmsPage() {
   const [search, setSearch] = useState("");
   const [likedOnly, setLikedOnly] = useState(false);
   const [rewatchOnly, setRewatchOnly] = useState(false);
+  const [selected, setSelected] = useState<FilmEntry | null>(null);
 
   useEffect(() => { setSearch(""); setLikedOnly(false); setRewatchOnly(false); }, [username]);
 
@@ -175,28 +176,166 @@ export default function FilmsPage() {
           gap: 16,
         }}>
           {sorted.map((film: FilmEntry, i: number) => (
-            <FilmCard key={i} film={film} C={C} />
+            <FilmCard key={i} film={film} C={C} onSelect={setSelected} />
           ))}
         </div>
       )}
+
+      <FilmDrawer film={selected} C={C} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
 type Palette = ReturnType<typeof useTheme>;
 
-function FilmCard({ film, C }: { film: FilmEntry; C: Palette }) {
+function FilmDrawer({ film, C, onClose }: { film: FilmEntry | null; C: Palette; onClose: () => void }) {
+  const open = film !== null;
+
+  const handleKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [handleKey]);
+
+  return (
+    <>
+      {/* Overlay */}
+      {open && (
+        <div
+          onClick={onClose}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 40,
+          }}
+        />
+      )}
+      {/* Panel */}
+      <div style={{
+        position: "fixed",
+        top: 0,
+        right: 0,
+        height: "100%",
+        width: 360,
+        zIndex: 50,
+        background: C.surface,
+        borderLeft: `1px solid ${C.border}`,
+        transform: open ? "translateX(0)" : "translateX(100%)",
+        transition: "transform 0.25s ease",
+        display: "flex",
+        flexDirection: "column",
+        overflowY: "auto",
+      }}>
+        {film && (
+          <>
+            {/* Poster */}
+            {film.poster && (
+              <div style={{ width: "100%", aspectRatio: "2/3", flexShrink: 0, position: "relative" }}>
+                <img
+                  src={film.poster}
+                  alt={film.title}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+            )}
+            {/* Content */}
+            <div style={{ padding: "20px 20px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Close button */}
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  onClick={onClose}
+                  style={{
+                    background: "none",
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 5,
+                    cursor: "pointer",
+                    fontFamily: "'JetBrains Mono',monospace",
+                    fontSize: 10,
+                    color: C.textFaint,
+                    padding: "2px 8px",
+                  }}
+                >
+                  ✕ close
+                </button>
+              </div>
+              {/* Title + link */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.3, flex: 1 }}>
+                  {film.title}
+                </span>
+                {film.url && (
+                  <a
+                    href={film.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: C.accent, textDecoration: "none", fontSize: 14, flexShrink: 0, marginTop: 2 }}
+                    title="View on Letterboxd"
+                  >
+                    ↗
+                  </a>
+                )}
+              </div>
+              {/* Year + date */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {film.year && (
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>{film.year}</span>
+                )}
+                {film.year && <span style={{ color: C.textFaint, fontSize: 10 }}>·</span>}
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>{film.watchedDate}</span>
+              </div>
+              {/* Rating + badges */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {film.rating !== undefined && (
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, color: C.accent, letterSpacing: "1px" }}>
+                    {stars(film.rating)}
+                  </span>
+                )}
+                {film.liked && (
+                  <span style={{ fontSize: 12, color: "#e05252" }} title="Liked">♥ liked</span>
+                )}
+                {film.rewatch && (
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }} title="Rewatch">↺ rewatch</span>
+                )}
+              </div>
+              {/* Divider */}
+              <div style={{ height: 1, background: C.border }} />
+              {/* Review */}
+              <div style={{
+                fontFamily: "'JetBrains Mono',monospace",
+                fontSize: 12,
+                color: film.review ? C.text : C.textFaint,
+                lineHeight: 1.7,
+              }}>
+                {film.review ?? "no review written"}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+function FilmCard({ film, C, onSelect }: { film: FilmEntry; C: Palette; onSelect: (f: FilmEntry) => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {/* Poster */}
-      <div style={{
-        width: "100%",
-        aspectRatio: "2/3",
-        borderRadius: 6,
-        overflow: "hidden",
-        background: C.surfaceHi,
-        border: `1px solid ${C.border}`,
-      }}>
+      <div
+        onClick={() => onSelect(film)}
+        style={{
+          width: "100%",
+          aspectRatio: "2/3",
+          borderRadius: 6,
+          overflow: "hidden",
+          background: C.surfaceHi,
+          border: `1px solid ${C.border}`,
+          cursor: "pointer",
+        }}
+      >
         {film.poster ? (
           <img
             src={film.poster}
