@@ -88,7 +88,7 @@ export default function TravelPage() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 1 }}>
+          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: "0.08em", color: C.text }}>
             TRAVEL
           </span>
           <span style={{ fontSize: 12, color: C.textMuted }}>

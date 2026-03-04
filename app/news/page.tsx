@@ -188,7 +188,7 @@ export default function NewsPage() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 22, color: C.text }}>News</span>
+            <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.08em", color: C.text }}>NEWS</span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Dot size={4} />
               <Tag color={C.textMuted}>{isLive ? "live" : "static"}</Tag>
