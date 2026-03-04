@@ -11,7 +11,6 @@ const PANELS = [
   { id: "quran",   label: "Quran Verse" },
   { id: "reading", label: "Reading"     },
   { id: "calendar",label: "Calendar"    },
-  { id: "weather", label: "Weather"     },
   { id: "gym",     label: "Gym Tracker" },
   { id: "finance", label: "Finance"     },
   { id: "films",   label: "Films"       },
