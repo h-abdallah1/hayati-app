@@ -214,19 +214,29 @@ function TimelineView({ films, C, onSelect }: { films: FilmEntry[]; C: Palette; 
 
   return (
     <div style={{ maxWidth: 640 }}>
-      {months.map(month => (
-        <div key={month} style={{ marginBottom: 32 }}>
-          {/* Month header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
-              {monthLabel(month)}
-            </span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
-              {byMonth[month].length} film{byMonth[month].length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          {/* Entries with vertical line */}
-          <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24 }}>
+      {/* Single continuous vertical line wrapping everything */}
+      <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24 }}>
+        {months.map(month => (
+          <div key={month}>
+            {/* Month header — sits on the line with a diamond marker */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingTop: 4 }}>
+              <div style={{
+                position: "absolute",
+                left: -29,
+                width: 8,
+                height: 8,
+                borderRadius: 2,
+                background: C.border,
+                transform: "rotate(45deg)",
+              }} />
+              <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>
+                {monthLabel(month)}
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
+                {byMonth[month].length} film{byMonth[month].length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {/* Entries */}
             {byMonth[month].map((film, i) => (
               <div
                 key={i}
@@ -301,8 +311,8 @@ function TimelineView({ films, C, onSelect }: { films: FilmEntry[]; C: Palette; 
               </div>
             ))}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
