@@ -274,22 +274,25 @@ export default function OverviewPage() {
                       width: CELL,
                       height: CELL,
                       borderRadius: 2,
-                      background: hasActivity ? C.surfaceHi : C.surface,
-                      border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${C.border}`,
+                      background: hasActivity
+                        ? activeCats.length === 1
+                          ? CAT_COLORS[activeCats[0]]
+                          : `linear-gradient(to right, ${activeCats.map((c, i) => `${CAT_COLORS[c]} ${(i / activeCats.length) * 100}%, ${CAT_COLORS[c]} ${((i + 1) / activeCats.length) * 100}%`).join(", ")})`
+                        : C.surface,
+                      border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${hasActivity ? "transparent" : C.border}`,
                       cursor: hasActivity ? "pointer" : "default",
                       position: "relative",
                       overflow: "hidden",
                       display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "flex-end",
+                      flexDirection: "row",
                     }}
                   >
                     {activeCats.map(cat => (
                       <div
                         key={cat}
                         style={{
-                          width: "100%",
-                          height: STRIP_H,
+                          flex: 1,
+                          height: "100%",
                           background: CAT_COLORS[cat],
                           flexShrink: 0,
                         }}
