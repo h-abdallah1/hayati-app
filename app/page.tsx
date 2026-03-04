@@ -23,14 +23,18 @@ function HayatiInner() {
     <div style={{ minHeight:"100vh", background:C.bg, padding:"24px 28px" }}>
       <HeaderBar time={time} onOpenSettings={() => setSettingsOpen(true)} />
       <div className="hg" style={{ maxWidth:1280, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gridAutoRows:"auto", gap:12 }}>
+        {/* Row 1: four single-col panels */}
         {show("focus")   && <FocusPanel />}
         {show("tasks")   && <TasksPanel />}
         {show("time")    && <TimePanel time={time} />}
+        {show("calendar")&& <CalendarPanel time={time} />}
+        {/* Row 2: two double-col panels */}
         {show("news")    && <NewsPanel />}
         {show("quran")   && <QuranPanel />}
+        {/* Row 3: two double-col panels */}
         {show("reading") && <ReadingPanel />}
-        {show("calendar")&& <CalendarPanel time={time} />}
         {show("weather") && <WeatherPanel />}
+        {/* Row 4: remaining single-col panels */}
         {show("gym")     && <GymPanel />}
         {show("finance") && <FinancePanel />}
         {show("films")   && <FilmsPanel />}
