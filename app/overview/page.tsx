@@ -358,33 +358,47 @@ export default function OverviewPage() {
           const visible = selectedMonth === null
             ? feedEntries
             : feedEntries.filter(e => new Date(e.date).getMonth() === selectedMonth);
-          return visible.length === 0 ? (
-            <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>
-          ) : visible.map(entry => (
-            <div
-              key={entry.date}
-              data-date={entry.date}
-              style={{ marginBottom: 20 }}
-            >
-              <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6, fontWeight: 600 }}>
-                {formatDateFull(entry.date)}
-              </div>
-              {entry.items.map((item, i) => (
-                <div key={i} style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 12,
-                  color: C.text,
-                  paddingLeft: 8,
-                  marginBottom: 4,
-                }}>
-                  {(() => { const Icon = CAT_ICONS[item.category]; return <Icon size={13} color={CAT_COLORS[item.category]} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
-                  <span style={{ color: C.textMuted }}>{item.label}</span>
+          if (visible.length === 0)
+            return <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>;
+          return (
+            <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24, maxWidth: 560 }}>
+              {visible.map(entry => (
+                <div key={entry.date} data-date={entry.date} style={{ position: "relative", paddingBottom: 24 }}>
+                  {/* Diamond marker */}
+                  <div style={{
+                    position: "absolute", left: -29,
+                    width: 8, height: 8,
+                    borderRadius: 2,
+                    background: C.border,
+                    transform: "rotate(45deg)",
+                    top: 3,
+                  }} />
+                  {/* Date label */}
+                  <div style={{
+                    fontSize: 11, fontWeight: 600,
+                    color: C.textMuted,
+                    marginBottom: 8,
+                    fontFamily: "'Syne', sans-serif",
+                  }}>
+                    {formatDateFull(entry.date)}
+                  </div>
+                  {/* Items */}
+                  {entry.items.map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 12,
+                      marginBottom: 6,
+                    }}>
+                      {(() => { const Icon = CAT_ICONS[item.category]; return <Icon size={13} color={CAT_COLORS[item.category]} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
+                      <span style={{ color: C.textMuted }}>{item.label}</span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ));
+          );
         })()}
       </div>
 
