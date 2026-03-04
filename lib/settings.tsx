@@ -10,6 +10,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   location: { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai", label: "Sharjah, UAE" },
   timeFormat: "12h",
   letterboxdUsername: "",
+  obsidianVaultPath: "",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -24,6 +25,7 @@ function readGlobal(): GlobalSettings {
       location: { ...DEFAULT_GLOBAL.location, ...parsed.location },
       timeFormat: (parsed.timeFormat === "12h" || parsed.timeFormat === "24h") ? parsed.timeFormat as TimeFormat : DEFAULT_GLOBAL.timeFormat,
       letterboxdUsername: typeof parsed.letterboxdUsername === "string" ? parsed.letterboxdUsername : DEFAULT_GLOBAL.letterboxdUsername,
+      obsidianVaultPath: typeof parsed.obsidianVaultPath === "string" ? parsed.obsidianVaultPath : DEFAULT_GLOBAL.obsidianVaultPath,
     };
   } catch {
     return DEFAULT_GLOBAL;

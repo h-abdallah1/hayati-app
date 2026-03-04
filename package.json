@@ -11,6 +11,7 @@
   "dependencies": {
     "@extractus/article-extractor": "^8.0.20",
     "adhan": "^4.4.3",
+    "d3-force": "^3.0.0",
     "fast-xml-parser": "^5.4.1",
     "ical.js": "^2.2.1",
     "lucide-react": "^0.575.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-force": "^3.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

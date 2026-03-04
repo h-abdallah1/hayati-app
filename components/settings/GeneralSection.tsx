@@ -15,16 +15,19 @@ export function GeneralSection({ open }: Props) {
   const { global, updateGlobal } = useGlobalSettings();
   const [nameVal, setNameVal] = useState(global.name);
   const [lbVal, setLbVal] = useState(global.letterboxdUsername ?? "");
+  const [vaultVal, setVaultVal] = useState(global.obsidianVaultPath ?? "");
 
   useEffect(() => {
     if (open) {
       setNameVal(global.name);
       setLbVal(global.letterboxdUsername ?? "");
+      setVaultVal(global.obsidianVaultPath ?? "");
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveName = () => { const v = nameVal.trim(); if (v) updateGlobal({ name: v }); };
   const saveLb = () => { updateGlobal({ letterboxdUsername: lbVal.trim() }); };
+  const saveVault = () => { updateGlobal({ obsidianVaultPath: vaultVal.trim() }); };
 
   return (
     <>
@@ -49,6 +52,18 @@ export function GeneralSection({ open }: Props) {
           onBlur={saveLb}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLb()}
           placeholder="username"
+          style={inputStyle(C)}
+        />
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Obsidian vault path</span>
+        <input
+          value={vaultVal}
+          onChange={e => setVaultVal(e.target.value)}
+          onBlur={saveVault}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveVault()}
+          placeholder="/Users/you/Documents/MyVault"
           style={inputStyle(C)}
         />
       </div>

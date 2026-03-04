@@ -11,6 +11,7 @@ export type GlobalSettings = {
   location: LocationCoords;
   timeFormat: TimeFormat;
   letterboxdUsername: string;
+  obsidianVaultPath: string;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
