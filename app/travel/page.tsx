@@ -5,10 +5,20 @@ import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
 import type { GeometryCollection } from "topojson-specification";
 import type { Feature, Geometry } from "geojson";
+import { numericToAlpha2 } from "i18n-iso-countries";
 import { useTheme } from "@/lib/theme";
+import { useGlobalSettings } from "@/lib/settings";
 import { FlatMap } from "./components/FlatMap";
 import { GlobeView } from "./components/GlobeView";
 import { Map, Globe } from "lucide-react";
+
+function getFlag(numericId: string): string {
+  const alpha2 = numericToAlpha2(numericId);
+  if (!alpha2) return "";
+  return [...alpha2.toUpperCase()].map(c =>
+    String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1F1E6)
+  ).join("");
+}
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 const STORAGE_KEY = "hayati-visited-countries";
@@ -17,6 +27,7 @@ type View = "flat" | "globe";
 
 export default function TravelPage() {
   const C = useTheme();
+  const { global } = useGlobalSettings();
   const [visited, setVisited] = useState<string[]>([]);
   const [countries, setCountries] = useState<Feature<Geometry, { name: string }>[]>([]);
   const [view, setView] = useState<View>("flat");
@@ -83,6 +94,11 @@ export default function TravelPage() {
           <span style={{ fontSize: 12, color: C.textMuted }}>
             {visited.length} countr{visited.length === 1 ? "y" : "ies"}
           </span>
+          {countries.length > 0 && (
+            <span style={{ fontSize: 12, color: C.textFaint }}>
+              {((visited.length / countries.length) * 100).toFixed(1)}% of world
+            </span>
+          )}
         </div>
 
         {/* View toggle */}
@@ -128,7 +144,7 @@ export default function TravelPage() {
       {/* Map / Globe */}
       <div>
         {view === "flat" ? (
-          <FlatMap countries={countries} visited={visited} onToggle={toggle} C={C} />
+          <FlatMap countries={countries} visited={visited} onToggle={toggle} C={C} projection={global.travelProjection} />
         ) : (
           <GlobeView countries={countries} visited={visited} onToggle={toggle} C={C} />
         )}
@@ -158,6 +174,7 @@ export default function TravelPage() {
                 color: C.accent,
               }}
             >
+              {getFlag(id) && <span style={{ fontSize: 14, lineHeight: 1 }}>{getFlag(id)}</span>}
               <span>{name}</span>
               <button
                 onClick={() => remove(id)}

@@ -1,28 +1,42 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { geoEquirectangular, geoPath } from "d3-geo";
+import { geoEquirectangular, geoNaturalEarth1, geoMercator, geoPath } from "d3-geo";
+import { geoRobinson, geoWinkel3, geoMollweide, geoPatterson } from "d3-geo-projection";
 import type { Feature, Geometry } from "geojson";
 import type { C_DARK } from "@/lib/design";
+import type { MapProjection } from "@/lib/types";
 
 const W = 960;
 const H = 500;
+
+function buildProjection(name: MapProjection) {
+  switch (name) {
+    case "naturalEarth":   return geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
+    case "mercator":       return geoMercator().scale(130).translate([W / 2, H / 2]);
+    case "robinson":       return geoRobinson().scale(145).translate([W / 2, H / 2]);
+    case "winkel3":        return geoWinkel3().scale(145).translate([W / 2, H / 2]);
+    case "mollweide":      return geoMollweide().scale(145).translate([W / 2, H / 2]);
+    case "patterson":      return geoPatterson().scale(145).translate([W / 2, H / 2]);
+    default:               return geoEquirectangular().scale(153).translate([W / 2, H / 2]);
+  }
+}
 
 interface Props {
   countries: Feature<Geometry, { name: string }>[];
   visited: string[];
   onToggle: (id: string, name: string) => void;
   C: typeof C_DARK;
+  projection: MapProjection;
 }
 
-export function FlatMap({ countries, visited, onToggle, C }: Props) {
+export function FlatMap({ countries, visited, onToggle, C, projection }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string } | null>(null);
 
   const { pathGen } = useMemo(() => {
-    const projection = geoEquirectangular().scale(153).translate([W / 2, H / 2]);
-    return { pathGen: geoPath().projection(projection) };
-  }, []);
+    return { pathGen: geoPath().projection(buildProjection(projection)) };
+  }, [projection]);
 
   return (
     <div style={{ position: "relative" }}>

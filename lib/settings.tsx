@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat } from "./types";
+import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection } from "./types";
 
 // ── Global settings ──────────────────────────────────────────────────────────
 
@@ -11,6 +11,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   timeFormat: "12h",
   letterboxdUsername: "",
   obsidianVaultPath: "",
+  travelProjection: "equirectangular",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -26,6 +27,7 @@ function readGlobal(): GlobalSettings {
       timeFormat: (parsed.timeFormat === "12h" || parsed.timeFormat === "24h") ? parsed.timeFormat as TimeFormat : DEFAULT_GLOBAL.timeFormat,
       letterboxdUsername: typeof parsed.letterboxdUsername === "string" ? parsed.letterboxdUsername : DEFAULT_GLOBAL.letterboxdUsername,
       obsidianVaultPath: typeof parsed.obsidianVaultPath === "string" ? parsed.obsidianVaultPath : DEFAULT_GLOBAL.obsidianVaultPath,
+      travelProjection: (["equirectangular","naturalEarth","mercator","robinson","winkel3","mollweide","patterson"] as MapProjection[]).includes(parsed.travelProjection as MapProjection) ? parsed.travelProjection as MapProjection : DEFAULT_GLOBAL.travelProjection,
     };
   } catch {
     return DEFAULT_GLOBAL;
