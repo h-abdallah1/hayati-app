@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2, Globe, Settings } from "lucide-react";
+import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2, Globe, Settings } from "lucide-react";
 
 const NAV = [
-  { href: "/",         Icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/",          Icon: Home,            label: "Home"      },
+  { href: "/dashboard", Icon: LayoutDashboard, label: "Dashboard" },
   { href: "/overview", Icon: Grid2X2,         label: "Overview"  },
   { href: "/goals",    Icon: Target,          label: "Goals"     },
   { href: "/notes",    Icon: FileText,        label: "Notes"     },
