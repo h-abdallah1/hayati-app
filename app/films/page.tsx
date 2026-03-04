@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks";
@@ -16,6 +16,7 @@ function stars(r: number): string {
 type SortMode = "newest" | "rating";
 type FilterMode = "all" | "3plus" | "4plus";
 
+
 export default function FilmsPage() {
   const C = useTheme();
   const { global } = useGlobalSettings();
@@ -24,12 +25,17 @@ export default function FilmsPage() {
 
   const [sort, setSort] = useState<SortMode>("newest");
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [search, setSearch] = useState("");
+  const [likedOnly, setLikedOnly] = useState(false);
+  const [rewatchOnly, setRewatchOnly] = useState(false);
 
-  const filtered = films.filter(f => {
-    if (filter === "3plus") return (f.rating ?? 0) >= 3;
-    if (filter === "4plus") return (f.rating ?? 0) >= 4;
-    return true;
-  });
+  useEffect(() => { setSearch(""); setLikedOnly(false); setRewatchOnly(false); }, [username]);
+
+  const filtered = films
+    .filter(f => !search || f.title.toLowerCase().includes(search.toLowerCase()))
+    .filter(f => filter === "3plus" ? (f.rating ?? 0) >= 3 : filter === "4plus" ? (f.rating ?? 0) >= 4 : true)
+    .filter(f => !likedOnly || f.liked)
+    .filter(f => !rewatchOnly || f.rewatch);
 
   const sorted = [...filtered].sort((a, b) => {
     if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
@@ -40,12 +46,11 @@ export default function FilmsPage() {
     ? (films.reduce((s, f) => s + (f.rating ?? 0), 0) / films.filter(f => f.rating !== undefined).length).toFixed(1)
     : null;
 
-  const yearCounts: Record<string, number> = {};
-  for (const f of films) {
-    const y = f.watchedDate.slice(0, 4);
-    yearCounts[y] = (yearCounts[y] ?? 0) + 1;
-  }
-  const mostYear = Object.entries(yearCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const thisYear = String(now.getFullYear());
+  const countThisMonth = films.filter(f => f.watchedDate.startsWith(thisMonth)).length;
+  const countThisYear = films.filter(f => f.watchedDate.startsWith(thisYear)).length;
 
   const btnBase: React.CSSProperties = {
     background: "none",
@@ -88,7 +93,7 @@ export default function FilmsPage() {
 
       {/* Stats bar */}
       {loaded && films.length > 0 && (
-        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{films.length}</span>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>films in feed</span>
@@ -99,18 +104,20 @@ export default function FilmsPage() {
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>avg rating</span>
             </div>
           )}
-          {mostYear && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{mostYear}</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>most watched</span>
-            </div>
-          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{countThisMonth}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>this month</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{countThisYear}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>this year</span>
+          </div>
         </div>
       )}
 
       {/* Controls */}
       {username && loaded && films.length > 0 && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: 4 }}>
             {(["newest", "rating"] as SortMode[]).map(s => (
               <button key={s} onClick={() => setSort(s)} style={activeBtn(sort === s)}>
@@ -125,6 +132,26 @@ export default function FilmsPage() {
               </button>
             ))}
           </div>
+          <button onClick={() => setLikedOnly(v => !v)} style={activeBtn(likedOnly)}>♥ liked</button>
+          <button onClick={() => setRewatchOnly(v => !v)} style={activeBtn(rewatchOnly)}>↺ rewatch</button>
+          <div style={{ flex: 1 }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="search titles…"
+            style={{
+              fontFamily: "'JetBrains Mono',monospace",
+              fontSize: 10,
+              padding: "3px 9px",
+              border: `1px solid ${C.border}`,
+              borderRadius: 5,
+              background: C.surfaceHi,
+              color: C.text,
+              outline: "none",
+              maxWidth: 200,
+              lineHeight: 1.6,
+            }}
+          />
         </div>
       )}
 
