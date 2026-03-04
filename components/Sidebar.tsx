@@ -4,17 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard } from "lucide-react";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2 } from "lucide-react";
 
 const NAV = [
-  { href: "/",        Icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/goals",   Icon: Target,          label: "Goals"     },
-  { href: "/notes",   Icon: FileText,        label: "Notes"     },
-  { href: "/finance", Icon: Wallet,          label: "Finance"   },
-  { href: "/gym",     Icon: Dumbbell,        label: "Gym"       },
-  { href: "/news",    Icon: Newspaper,       label: "News"      },
-  { href: "/films",   Icon: Clapperboard,    label: "Films"     },
-  { href: "/prayer",  Icon: Moon,            label: "Prayer"    },
+  { href: "/",         Icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/overview", Icon: Grid2X2,         label: "Overview"  },
+  { href: "/goals",    Icon: Target,          label: "Goals"     },
+  { href: "/notes",    Icon: FileText,        label: "Notes"     },
+  { href: "/finance",  Icon: Wallet,          label: "Finance"   },
+  { href: "/gym",      Icon: Dumbbell,        label: "Gym"       },
+  { href: "/news",     Icon: Newspaper,       label: "News"      },
+  { href: "/films",    Icon: Clapperboard,    label: "Films"     },
+  { href: "/prayer",   Icon: Moon,            label: "Prayer"    },
 ];
 
 export function Sidebar() {
