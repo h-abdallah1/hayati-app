@@ -8,7 +8,7 @@ import { formatClock } from "@/lib/time";
 import {
   HeaderBar, FocusPanel, TasksPanel, TimePanel, ReadingPanel,
   NewsPanel, QuranPanel, CalendarPanel, WeatherPanel,
-  GymPanel, FinancePanel,
+  GymPanel, FinancePanel, FilmsPanel,
 } from "@/components/panels";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 
@@ -33,6 +33,7 @@ function HayatiInner() {
         {show("weather") && <WeatherPanel />}
         {show("gym")     && <GymPanel />}
         {show("finance") && <FinancePanel />}
+        {show("films")   && <FilmsPanel />}
       </div>
       <div style={{ maxWidth:1280, margin:"12px auto 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, letterSpacing:"1px" }}>HAYATI v2.0 · حياتي</span>

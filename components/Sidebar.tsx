@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search } from "lucide-react";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard } from "lucide-react";
 
 const NAV = [
   { href: "/",        Icon: LayoutDashboard, label: "Dashboard" },
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/finance", Icon: Wallet,          label: "Finance"   },
   { href: "/gym",     Icon: Dumbbell,        label: "Gym"       },
   { href: "/news",    Icon: Newspaper,       label: "News"      },
+  { href: "/films",   Icon: Clapperboard,    label: "Films"     },
   { href: "/prayer",  Icon: Moon,            label: "Prayer"    },
 ];
 

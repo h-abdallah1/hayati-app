@@ -10,6 +10,7 @@ export type GlobalSettings = {
   name: string;
   location: LocationCoords;
   timeFormat: TimeFormat;
+  letterboxdUsername: string;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
@@ -33,3 +34,14 @@ export type CalEventFull = { date: string; label: string; color: string; url?: s
 export type Goal = { id: number; title: string; optional?: boolean; status: "todo" | "active" | "done"; description?: string; created: string; year?: number };
 export type Note = { id: number; title: string; content: string; updated: string };
 export type Transaction = { id: number; amount: number; category: string; description: string; date: string; type: "in" | "out" };
+
+export type FilmEntry = {
+  title: string;
+  year?: number;
+  rating?: number;
+  watchedDate: string;
+  rewatch: boolean;
+  liked: boolean;
+  poster?: string;
+  url?: string;
+};

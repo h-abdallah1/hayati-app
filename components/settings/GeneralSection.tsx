@@ -14,12 +14,17 @@ export function GeneralSection({ open }: Props) {
   const { isDark, toggle } = useThemeToggle();
   const { global, updateGlobal } = useGlobalSettings();
   const [nameVal, setNameVal] = useState(global.name);
+  const [lbVal, setLbVal] = useState(global.letterboxdUsername ?? "");
 
   useEffect(() => {
-    if (open) setNameVal(global.name);
+    if (open) {
+      setNameVal(global.name);
+      setLbVal(global.letterboxdUsername ?? "");
+    }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveName = () => { const v = nameVal.trim(); if (v) updateGlobal({ name: v }); };
+  const saveLb = () => { updateGlobal({ letterboxdUsername: lbVal.trim() }); };
 
   return (
     <>
@@ -32,6 +37,18 @@ export function GeneralSection({ open }: Props) {
           onChange={e => setNameVal(e.target.value)}
           onBlur={saveName}
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveName()}
+          style={inputStyle(C)}
+        />
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Letterboxd username</span>
+        <input
+          value={lbVal}
+          onChange={e => setLbVal(e.target.value)}
+          onBlur={saveLb}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveLb()}
+          placeholder="username"
           style={inputStyle(C)}
         />
       </div>

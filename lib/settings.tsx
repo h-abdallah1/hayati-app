@@ -9,6 +9,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   name: "Hussein",
   location: { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai", label: "Sharjah, UAE" },
   timeFormat: "12h",
+  letterboxdUsername: "",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -22,6 +23,7 @@ function readGlobal(): GlobalSettings {
       name: parsed.name ?? DEFAULT_GLOBAL.name,
       location: { ...DEFAULT_GLOBAL.location, ...parsed.location },
       timeFormat: (parsed.timeFormat === "12h" || parsed.timeFormat === "24h") ? parsed.timeFormat as TimeFormat : DEFAULT_GLOBAL.timeFormat,
+      letterboxdUsername: typeof parsed.letterboxdUsername === "string" ? parsed.letterboxdUsername : DEFAULT_GLOBAL.letterboxdUsername,
     };
   } catch {
     return DEFAULT_GLOBAL;

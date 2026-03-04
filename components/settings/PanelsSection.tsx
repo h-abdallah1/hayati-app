@@ -15,6 +15,7 @@ const PANELS = [
   { id: "weather", label: "Weather"     },
   { id: "gym",     label: "Gym Tracker" },
   { id: "finance", label: "Finance"     },
+  { id: "films",   label: "Films"       },
 ];
 
 export function PanelsSection() {

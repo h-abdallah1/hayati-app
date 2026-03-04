@@ -9,3 +9,4 @@ export { CalendarPanel }from "./CalendarPanel";
 export { WeatherPanel } from "./WeatherPanel";
 export { GymPanel }     from "./GymPanel";
 export { FinancePanel } from "./FinancePanel";
+export { FilmsPanel }  from "./FilmsPanel";
