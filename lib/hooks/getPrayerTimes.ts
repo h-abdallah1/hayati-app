@@ -1,12 +1,25 @@
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
-import type { TimeFormat } from "@/lib/types";
+import type { TimeFormat, PrayerMethod } from "@/lib/types";
 
 type Coords = { lat: number; lon: number; tz: string };
 const DEFAULT_COORDS: Coords = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
 
-export function getPrayerTimes(coords: Coords = DEFAULT_COORDS, timeFormat: TimeFormat = "12h") {
+const METHOD_MAP: Record<PrayerMethod, () => ReturnType<typeof CalculationMethod.Dubai>> = {
+  Dubai:                 CalculationMethod.Dubai,
+  MuslimWorldLeague:     CalculationMethod.MuslimWorldLeague,
+  NorthAmerica:          CalculationMethod.NorthAmerica,
+  Egyptian:              CalculationMethod.Egyptian,
+  Karachi:               CalculationMethod.Karachi,
+  Kuwait:                CalculationMethod.Kuwait,
+  Qatar:                 CalculationMethod.Qatar,
+  Singapore:             CalculationMethod.Singapore,
+  Turkey:                CalculationMethod.Turkey,
+  MoonsightingCommittee: CalculationMethod.MoonsightingCommittee,
+};
+
+export function getPrayerTimes(coords: Coords = DEFAULT_COORDS, timeFormat: TimeFormat = "12h", method: PrayerMethod = "Dubai") {
   const c = new Coordinates(coords.lat, coords.lon);
-  const params = CalculationMethod.Dubai();
+  const params = (METHOD_MAP[method] ?? CalculationMethod.Dubai)();
   const pt = new PrayerTimes(c, new Date(), params);
 
   const fmt = (d: Date) =>

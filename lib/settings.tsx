@@ -1,9 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection } from "./types";
+import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection, PrayerMethod } from "./types";
 
 // ── Global settings ──────────────────────────────────────────────────────────
+
+const PRAYER_METHODS: PrayerMethod[] = ["Dubai","MuslimWorldLeague","NorthAmerica","Egyptian","Karachi","Kuwait","Qatar","Singapore","Turkey","MoonsightingCommittee"];
 
 const DEFAULT_GLOBAL: GlobalSettings = {
   name: "Hussein",
@@ -12,6 +14,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   letterboxdUsername: "",
   obsidianVaultPath: "",
   travelProjection: "equirectangular",
+  prayerMethod: "Dubai",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -28,6 +31,7 @@ function readGlobal(): GlobalSettings {
       letterboxdUsername: typeof parsed.letterboxdUsername === "string" ? parsed.letterboxdUsername : DEFAULT_GLOBAL.letterboxdUsername,
       obsidianVaultPath: typeof parsed.obsidianVaultPath === "string" ? parsed.obsidianVaultPath : DEFAULT_GLOBAL.obsidianVaultPath,
       travelProjection: (["equirectangular","naturalEarth","mercator","robinson","winkel3","mollweide","patterson"] as MapProjection[]).includes(parsed.travelProjection as MapProjection) ? parsed.travelProjection as MapProjection : DEFAULT_GLOBAL.travelProjection,
+      prayerMethod: PRAYER_METHODS.includes(parsed.prayerMethod as PrayerMethod) ? parsed.prayerMethod as PrayerMethod : DEFAULT_GLOBAL.prayerMethod,
     };
   } catch {
     return DEFAULT_GLOBAL;

@@ -6,6 +6,47 @@ import type { Transaction } from "@/lib/types";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+function MonthlyChart({ txns, year, C }: { txns: Transaction[]; year: number; C: ReturnType<typeof useTheme> }) {
+  const data = MONTHS.map((label, m) => {
+    const month = txns.filter(t => {
+      const d = new Date(t.date + "T00:00:00");
+      return d.getFullYear() === year && d.getMonth() === m;
+    });
+    const income   = month.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
+    const expenses = month.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
+    return { label, income, expenses };
+  });
+  const maxVal = Math.max(...data.flatMap(d => [d.income, d.expenses]), 1);
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 10 }}>
+        {year} — monthly
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 56 }}>
+        {data.map(({ label, income, expenses }) => (
+          <div key={label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 44, width: "100%" }}>
+              <div style={{ flex: 1, background: C.teal + "55", borderRadius: "2px 2px 0 0", height: `${(income / maxVal) * 100}%`, minHeight: income > 0 ? 2 : 0 }} title={`Income: ${fmt(income)}`} />
+              <div style={{ flex: 1, background: C.red   + "55", borderRadius: "2px 2px 0 0", height: `${(expenses / maxVal) * 100}%`, minHeight: expenses > 0 ? 2 : 0 }} title={`Expenses: ${fmt(expenses)}`} />
+            </div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint }}>{label.slice(0,1)}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: C.teal + "55" }} />
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint }}>income</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: C.red + "55" }} />
+          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint }}>expenses</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const INITIAL: Transaction[] = [
   { id: 1, amount: 4200,  category: "income",    description: "Monthly salary", date: "2026-03-01", type: "in"  },
   { id: 2, amount: 120,   category: "food",       description: "Groceries",      date: "2026-03-05", type: "out" },
@@ -40,6 +81,9 @@ export default function FinancePage() {
   const [txType,  setTxType]  = useState<"in" | "out">("out");
   const [date,    setDate]    = useState(now.toISOString().split("T")[0]);
 
+  // Category filter
+  const [catFilter, setCatFilter] = useState("all");
+
   useEffect(() => { setTxns(load()); }, []);
 
   const update = (next: Transaction[]) => { setTxns(next); persist(next); };
@@ -67,15 +111,28 @@ export default function FinancePage() {
     else setViewMonth(m => m + 1);
   };
 
-  const visible = txns
+  const monthTxns = txns
     .filter(t => {
       const d = new Date(t.date + "T00:00:00");
       return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
     })
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  const income   = visible.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
-  const expenses = visible.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
+  // Running balance (computed ascending, displayed descending)
+  const monthAsc = [...monthTxns].reverse();
+  let runBalance = 0;
+  const balanceMap = new Map<number, number>();
+  for (const t of monthAsc) {
+    runBalance += t.type === "in" ? t.amount : -t.amount;
+    balanceMap.set(t.id, runBalance);
+  }
+
+  // Category list for filter
+  const allCats = ["all", ...Array.from(new Set(monthTxns.map(t => t.category))).sort()];
+  const visible = catFilter === "all" ? monthTxns : monthTxns.filter(t => t.category === catFilter);
+
+  const income   = monthTxns.filter(t => t.type === "in").reduce((s, t) => s + t.amount, 0);
+  const expenses = monthTxns.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
   const net      = income - expenses;
 
   const inputStyle: React.CSSProperties = {
@@ -119,6 +176,25 @@ export default function FinancePage() {
                 {s.val}
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Monthly bar chart */}
+        <MonthlyChart txns={txns} year={viewYear} C={C} />
+
+        {/* Category filter */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+          {allCats.map(c => (
+            <button key={c} onClick={() => setCatFilter(c)} style={{
+              background: catFilter === c ? C.accentDim : "none",
+              border: `1px solid ${catFilter === c ? C.accentMid : C.border}`,
+              borderRadius: 5, cursor: "pointer",
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+              color: catFilter === c ? C.accent : C.textFaint,
+              padding: "3px 9px", letterSpacing: "0.3px",
+            }}>
+              {c}
+            </button>
           ))}
         </div>
 
@@ -186,6 +262,9 @@ export default function FinancePage() {
               </span>
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: t.type === "in" ? C.teal : C.red, flexShrink: 0, minWidth: 80, textAlign: "right" }}>
                 {t.type === "in" ? "+" : "−"}{fmt(t.amount)}
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: (balanceMap.get(t.id) ?? 0) >= 0 ? C.teal : C.red, flexShrink: 0, minWidth: 70, textAlign: "right", opacity: 0.7 }}>
+                {fmt(balanceMap.get(t.id) ?? 0)}
               </span>
               <button
                 onClick={() => remove(t.id)}

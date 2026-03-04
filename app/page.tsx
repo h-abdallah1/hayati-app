@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useClock } from "@/lib/hooks";
+import { useGlobalSettings } from "@/lib/settings";
 import {
   LayoutDashboard, Grid2X2, Target, FileText, Wallet,
   Dumbbell, Newspaper, Clapperboard, Globe, Moon, Search,
@@ -28,12 +29,12 @@ type Result = { label: string; sub: string; href: string; kind: string; Icon: Re
 
 const PAGE_RESULTS: Result[] = SECTIONS.map(s => ({ label: s.label, sub: s.desc, href: s.href, kind: "page", Icon: s.Icon }));
 
-function greeting(date: Date) {
+function greeting(date: Date, name: string) {
   const h = date.getHours();
-  if (h >= 5  && h < 12) return "Good morning, Hussein";
-  if (h >= 12 && h < 17) return "Good afternoon, Hussein";
-  if (h >= 17 && h < 21) return "Good evening, Hussein";
-  return "Good night, Hussein";
+  if (h >= 5  && h < 12) return `Good morning, ${name}`;
+  if (h >= 12 && h < 17) return `Good afternoon, ${name}`;
+  if (h >= 17 && h < 21) return `Good evening, ${name}`;
+  return `Good night, ${name}`;
 }
 
 function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
@@ -202,6 +203,7 @@ function InlineSearch() {
 export default function HomePage() {
   const C = useTheme();
   const time = useClock();
+  const { global } = useGlobalSettings();
 
   return (
     <div style={{
@@ -226,7 +228,7 @@ export default function HomePage() {
           </div>
           <div style={{ width: 40, height: 1, background: C.border, margin: "16px auto" }} />
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint }}>
-            {greeting(time)}
+            {greeting(time, global.name)}
           </div>
         </div>
 

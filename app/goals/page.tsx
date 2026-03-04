@@ -326,7 +326,15 @@ export default function GoalsPage() {
   const update = (next: Goal[]) => { setGoals(next); persist(next); };
 
   const cycleStatus = (id: number) =>
-    update(goals.map(g => g.id === id ? { ...g, status: STATUS_CYCLE[g.status] } : g));
+    update(goals.map(g => {
+      if (g.id !== id) return g;
+      const next = STATUS_CYCLE[g.status];
+      return {
+        ...g,
+        status: next,
+        completedAt: next === "done" ? new Date().toISOString() : undefined,
+      };
+    }));
 
   const remove = (id: number) => update(goals.filter(g => g.id !== id));
 
@@ -395,23 +403,49 @@ export default function GoalsPage() {
 
           {/* Year nav sidebar */}
           <div style={{ width: 44, flexShrink: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-            {years.map(y => (
-              <button key={y} onClick={() => setSelectedYear(y)} style={{
-                background: "none", border: "none", cursor: "pointer",
-                fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
-                color: selectedYear === y ? C.accent : C.textFaint,
-                padding: "5px 0", textAlign: "center", width: "100%", borderRadius: 4,
-                letterSpacing: "0.5px",
-              }}>
-                {y}
-              </button>
-            ))}
+            {years.map(y => {
+              const yGoals = goals.filter(g => goalYear(g) === y);
+              const yDone  = yGoals.filter(g => g.status === "done").length;
+              const yPct   = yGoals.length ? Math.round(yDone / yGoals.length * 100) : 0;
+              return (
+                <button key={y} onClick={() => setSelectedYear(y)} style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                  color: selectedYear === y ? C.accent : C.textFaint,
+                  padding: "5px 0", textAlign: "center", width: "100%", borderRadius: 4,
+                  letterSpacing: "0.5px",
+                }}>
+                  <div>{y}</div>
+                  {yGoals.length > 0 && (
+                    <div style={{ fontSize: 8, color: selectedYear === y ? C.accent + "99" : C.textFaint + "88", marginTop: 1 }}>
+                      {yDone}/{yGoals.length}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Main content */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
         <YearProgress year={selectedYear} />
+
+        {/* Progress summary */}
+        {(() => {
+          const allYear = goals.filter(g => goalYear(g) === selectedYear);
+          const doneCount = allYear.filter(g => g.status === "done").length;
+          const pct = allYear.length ? Math.round(doneCount / allYear.length * 100) : 0;
+          if (!allYear.length) return null;
+          return (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginBottom: 12 }}>
+              {doneCount} / {allYear.length} done{" "}
+              <span style={{ color: pct >= 80 ? C.teal : pct >= 40 ? C.accent : C.textFaint }}>
+                ({pct}%)
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Filter tabs */}
         <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
@@ -512,6 +546,11 @@ export default function GoalsPage() {
                 {g.description && (
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginTop: 3 }}>
                     {g.description}
+                  </div>
+                )}
+                {g.status === "done" && g.completedAt && (
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.teal + "aa", marginTop: 3 }}>
+                    Completed {new Date(g.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </div>
                 )}
               </div>

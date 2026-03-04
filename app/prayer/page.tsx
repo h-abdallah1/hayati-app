@@ -5,6 +5,20 @@ import { useGlobalSettings } from "@/lib/settings";
 import { useClock, getPrayerTimes, useWeather } from "@/lib/hooks";
 import { convertHHMM, formatClock } from "@/lib/time";
 import { Tag } from "@/components/ui";
+import type { PrayerMethod } from "@/lib/types";
+
+const PRAYER_METHODS: { value: PrayerMethod; label: string }[] = [
+  { value: "Dubai",                 label: "Dubai"           },
+  { value: "MuslimWorldLeague",     label: "MWL"             },
+  { value: "NorthAmerica",          label: "ISNA"            },
+  { value: "Egyptian",              label: "Egyptian"        },
+  { value: "Karachi",               label: "Karachi"         },
+  { value: "Kuwait",                label: "Kuwait"          },
+  { value: "Qatar",                 label: "Qatar"           },
+  { value: "Singapore",             label: "Singapore"       },
+  { value: "Turkey",                label: "Turkey"          },
+  { value: "MoonsightingCommittee", label: "Moonsighting"    },
+];
 
 function getTzOffset(tz: string): string {
   try {
@@ -30,9 +44,9 @@ function qiblaDir(lat: number, lon: number): number {
 export default function PrayerPage() {
   const C = useTheme();
   const time = useClock();
-  const { global } = useGlobalSettings();
+  const { global, updateGlobal } = useGlobalSettings();
   const wx = useWeather(global.location);
-  const PRAYER_TIMES = getPrayerTimes(global.location, global.timeFormat);
+  const PRAYER_TIMES = getPrayerTimes(global.location, global.timeFormat, global.prayerMethod);
 
   const tzOffset = getTzOffset(global.location.tz);
 
@@ -206,6 +220,31 @@ export default function PrayerPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Calculation method selector */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 8 }}>
+            Calculation method
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {PRAYER_METHODS.map(m => (
+              <button
+                key={m.value}
+                onClick={() => updateGlobal({ prayerMethod: m.value })}
+                style={{
+                  background: global.prayerMethod === m.value ? C.accentDim : "none",
+                  border: `1px solid ${global.prayerMethod === m.value ? C.accentMid : C.border}`,
+                  borderRadius: 5, cursor: "pointer",
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+                  color: global.prayerMethod === m.value ? C.accent : C.textFaint,
+                  padding: "3px 9px", letterSpacing: "0.3px",
+                }}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Footer context row */}

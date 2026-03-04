@@ -7,6 +7,7 @@ export type LocationCoords = { lat: number; lon: number; tz: string; label: stri
 export type NewsFeed = { url: string; label: string };
 export type TimeFormat = "12h" | "24h";
 export type MapProjection = "equirectangular" | "naturalEarth" | "mercator" | "robinson" | "winkel3" | "mollweide" | "patterson";
+export type PrayerMethod = "Dubai" | "MuslimWorldLeague" | "NorthAmerica" | "Egyptian" | "Karachi" | "Kuwait" | "Qatar" | "Singapore" | "Turkey" | "MoonsightingCommittee";
 export type GlobalSettings = {
   name: string;
   location: LocationCoords;
@@ -14,6 +15,7 @@ export type GlobalSettings = {
   letterboxdUsername: string;
   obsidianVaultPath: string;
   travelProjection: MapProjection;
+  prayerMethod: PrayerMethod;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
@@ -34,7 +36,7 @@ export type NewsItem = {
 };
 export type CalEventFull = { date: string; label: string; color: string; url?: string };
 
-export type Goal = { id: number; title: string; optional?: boolean; status: "todo" | "active" | "done"; description?: string; created: string; year?: number };
+export type Goal = { id: number; title: string; optional?: boolean; status: "todo" | "active" | "done"; description?: string; created: string; year?: number; completedAt?: string };
 export type Note = { id: number; title: string; content: string; updated: string };
 export type Transaction = { id: number; amount: number; category: string; description: string; date: string; type: "in" | "out" };
 

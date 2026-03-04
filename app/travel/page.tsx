@@ -31,6 +31,7 @@ export default function TravelPage() {
   const [visited, setVisited] = useState<string[]>([]);
   const [countries, setCountries] = useState<Feature<Geometry, { name: string }>[]>([]);
   const [view, setView] = useState<View>("flat");
+  const [search, setSearch] = useState("");
 
   // Load geo data
   useEffect(() => {
@@ -151,6 +152,60 @@ export default function TravelPage() {
       </div>
 
       <div style={{ borderTop: `1px solid ${C.border}`, margin: "20px 0" }} />
+
+      {/* Country search */}
+      <div style={{ marginBottom: 16 }}>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search and add countries…"
+          style={{
+            background: C.surface, border: `1px solid ${search ? C.borderHi : C.border}`,
+            borderRadius: 7, padding: "7px 12px",
+            fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+            color: C.text, outline: "none", width: "100%", boxSizing: "border-box",
+          }}
+        />
+        {search.trim().length > 0 && (() => {
+          const q = search.trim().toLowerCase();
+          const matches = countries
+            .filter(f => (f.properties?.name ?? "").toLowerCase().includes(q))
+            .slice(0, 12);
+          if (matches.length === 0) return (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginTop: 8, paddingLeft: 2 }}>
+              no countries found
+            </div>
+          );
+          return (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              {matches.map(f => {
+                const id = String(f.id);
+                const name = f.properties?.name ?? id;
+                const isVisited = visited.includes(id);
+                return (
+                  <button
+                    key={id}
+                    onClick={() => { toggle(id); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 5,
+                      padding: "4px 10px", borderRadius: 16,
+                      background: isVisited ? C.accentDim : C.surface,
+                      border: `1px solid ${isVisited ? C.accentMid : C.border}`,
+                      color: isVisited ? C.accent : C.textMuted,
+                      cursor: "pointer", fontSize: 11,
+                      fontFamily: "'JetBrains Mono',monospace",
+                    }}
+                  >
+                    {getFlag(id) && <span style={{ fontSize: 14, lineHeight: 1 }}>{getFlag(id)}</span>}
+                    <span>{name}</span>
+                    <span style={{ fontSize: 12, opacity: 0.6 }}>{isVisited ? "✓" : "+"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Visited chips */}
       {visitedSorted.length === 0 ? (
