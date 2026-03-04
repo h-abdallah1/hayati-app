@@ -93,9 +93,9 @@ export function HeaderBar({ time }: { time: Date }) {
           {greeting},&nbsp;<span style={{ color: C.text }}>{global.name}</span>
         </span>
       </div>
-      <div style={{ flex: 1, maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 16 }}>
         {metrics.map(({ label, frac, color }) => (
-          <div key={label}>
+          <div key={label} style={{ width: 80 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
               <Tag color={C.textFaint}>{label}</Tag>
               <Tag color={color}>{(frac * 100).toFixed(0)}%</Tag>
