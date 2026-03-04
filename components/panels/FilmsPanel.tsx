@@ -43,11 +43,11 @@ export function FilmsPanel() {
       ) : !film ? (
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>no films found</span>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* Poster */}
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          {/* Thumbnail */}
           <div style={{
-            width: "100%", aspectRatio: "2/3",
-            borderRadius: 5, border: `1px solid ${C.border}`,
+            width: 48, height: 72, flexShrink: 0,
+            borderRadius: 4, border: `1px solid ${C.border}`,
             overflow: "hidden", background: C.surfaceHi,
           }}>
             {film.poster ? (
@@ -57,38 +57,35 @@ export function FilmsPanel() {
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
               />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>no poster</span>
-              </div>
-            )}
+            ) : null}
           </div>
 
-          {/* Title */}
-          {film.url ? (
-            <a
-              href={film.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, textDecoration: "none", lineHeight: 1.4 }}
-              onClick={e => e.stopPropagation()}
-              onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.text)}
-            >
-              {film.title}{film.year ? <span style={{ color: C.textFaint }}> {film.year}</span> : null}
-            </a>
-          ) : (
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, lineHeight: 1.4 }}>
-              {film.title}{film.year ? <span style={{ color: C.textFaint }}> {film.year}</span> : null}
-            </span>
-          )}
-
-          {/* Rating */}
-          {film.rating !== undefined && (
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 20, color: C.accent, letterSpacing: "3px", textAlign: "center", display: "block" }}>
-              {stars(film.rating)}
-            </span>
-          )}
+          {/* Info */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
+            {film.url ? (
+              <a
+                href={film.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, textDecoration: "none", lineHeight: 1.4 }}
+                onClick={e => e.stopPropagation()}
+                onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.text)}
+              >
+                {film.title}{film.year ? <span style={{ color: C.textFaint }}> {film.year}</span> : null}
+              </a>
+            ) : (
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, lineHeight: 1.4 }}>
+                {film.title}{film.year ? <span style={{ color: C.textFaint }}> {film.year}</span> : null}
+              </span>
+            )}
+            {film.rating !== undefined && (
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.accent, letterSpacing: "2px" }}>
+                {stars(film.rating)}
+              </span>
+            )}
+            <Tag color={C.textFaint}>{film.watchedDate}</Tag>
+          </div>
         </div>
       )}
     </Panel>
