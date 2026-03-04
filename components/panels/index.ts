@@ -1,5 +1,6 @@
 export { HeaderBar }    from "./HeaderBar";
 export { TimePanel }    from "./TimePanel";
+export { PrayerPanel }  from "./PrayerPanel";
 export { ReadingPanel } from "./ReadingPanel";
 export { NewsPanel }    from "./NewsPanel";
 export { QuranPanel }   from "./QuranPanel";
