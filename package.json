@@ -11,6 +11,7 @@
   "dependencies": {
     "@extractus/article-extractor": "^8.0.20",
     "adhan": "^4.4.3",
+    "better-sqlite3": "^12.6.2",
     "d3-force": "^3.0.0",
     "d3-geo": "^3.1.1",
     "d3-geo-projection": "^4.0.0",
@@ -24,8 +25,12 @@
     "react-globe.gl": "^2.37.0",
     "topojson-client": "^3.1.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3"]
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/d3-force": "^3.0.10",
     "@types/d3-geo": "^3.1.0",
     "@types/geojson": "^7946.0.16",

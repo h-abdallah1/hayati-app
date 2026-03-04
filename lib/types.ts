@@ -8,6 +8,8 @@ export type NewsFeed = { url: string; label: string };
 export type TimeFormat = "12h" | "24h";
 export type MapProjection = "equirectangular" | "naturalEarth" | "mercator" | "robinson" | "winkel3" | "mollweide" | "patterson";
 export type PrayerMethod = "Dubai" | "MuslimWorldLeague" | "NorthAmerica" | "Egyptian" | "Karachi" | "Kuwait" | "Qatar" | "Singapore" | "Turkey" | "MoonsightingCommittee";
+export type SmsConfig = { senders: string[]; enabled: boolean };
+
 export type GlobalSettings = {
   name: string;
   location: LocationCoords;
@@ -16,6 +18,9 @@ export type GlobalSettings = {
   obsidianVaultPath: string;
   travelProjection: MapProjection;
   prayerMethod: PrayerMethod;
+  smsConfig: SmsConfig;
+  paymentDay: number;
+  financeHideIncome: boolean;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

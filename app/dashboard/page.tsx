@@ -7,7 +7,7 @@ import { formatClock } from "@/lib/time";
 import {
   HeaderBar, PrayerPanel, ReadingPanel,
   NewsPanel, QuranPanel, CalendarPanel,
-  GymPanel, FinancePanel, FilmsPanel,
+  GymPanel, FinancePanel, SavingsPanel, FilmsPanel,
 } from "@/components/panels";
 function HayatiInner() {
   const C = useTheme();
@@ -30,6 +30,7 @@ function HayatiInner() {
 {/* Row 4: remaining single-col panels */}
         {show("gym")     && <GymPanel />}
         {show("finance") && <FinancePanel />}
+        {show("savings") && <SavingsPanel />}
         {show("films")   && <FilmsPanel />}
       </div>
       <div style={{ maxWidth:1280, margin:"12px auto 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
