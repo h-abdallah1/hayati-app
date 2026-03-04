@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
+import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Clapperboard, Globe, Moon, Grid2X2, Home } from "lucide-react";
 import type { Goal, Note } from "@/lib/types";
 
 type Kind = "page" | "goal" | "note" | "exercise";
-type Result = { kind: Kind; label: string; sub?: string; href: string };
+type Result = { kind: Kind; label: string; sub?: string; href: string; Icon: React.ElementType };
 
 const PAGES: Result[] = [
-  { kind: "page", label: "Dashboard", sub: "home",    href: "/"        },
-  { kind: "page", label: "Goals",     sub: "targets", href: "/goals"   },
-  { kind: "page", label: "Notes",     sub: "writing", href: "/notes"   },
-  { kind: "page", label: "Finance",   sub: "money",   href: "/finance" },
-  { kind: "page", label: "Gym",       sub: "fitness", href: "/gym"     },
+  { kind: "page", label: "Home",      sub: "landing",  href: "/",          Icon: Home           },
+  { kind: "page", label: "Dashboard", sub: "widgets",  href: "/dashboard", Icon: LayoutDashboard },
+  { kind: "page", label: "Overview",  sub: "activity", href: "/overview",  Icon: Grid2X2        },
+  { kind: "page", label: "Goals",     sub: "targets",  href: "/goals",     Icon: Target         },
+  { kind: "page", label: "Notes",     sub: "writing",  href: "/notes",     Icon: FileText       },
+  { kind: "page", label: "Finance",   sub: "money",    href: "/finance",   Icon: Wallet         },
+  { kind: "page", label: "Gym",       sub: "fitness",  href: "/gym",       Icon: Dumbbell       },
+  { kind: "page", label: "News",      sub: "rss",      href: "/news",      Icon: Newspaper      },
+  { kind: "page", label: "Films",     sub: "log",      href: "/films",     Icon: Clapperboard   },
+  { kind: "page", label: "Travel",    sub: "world",    href: "/travel",    Icon: Globe          },
+  { kind: "page", label: "Prayer",    sub: "times",    href: "/prayer",    Icon: Moon           },
 ];
-
-const KIND_LABEL: Record<Kind, string> = { page: "page", goal: "goal", note: "note", exercise: "exercise" };
 
 export function SearchPalette() {
   const C      = useTheme();
@@ -59,13 +64,13 @@ export function SearchPalette() {
         ...PAGES.filter(p => p.label.toLowerCase().includes(q)),
         ...goals
           .filter(g => g.title.toLowerCase().includes(q))
-          .map(g => ({ kind: "goal" as Kind, label: g.title, sub: g.status, href: "/goals" })),
+          .map(g => ({ kind: "goal" as Kind, label: g.title, sub: g.status, href: "/goals", Icon: Target })),
         ...notes
           .filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-          .map(n => ({ kind: "note" as Kind, label: n.title, sub: n.content.slice(0, 50).replace(/\n/g, " "), href: "/notes" })),
+          .map(n => ({ kind: "note" as Kind, label: n.title, sub: n.content.slice(0, 50).replace(/\n/g, " "), href: "/notes", Icon: FileText })),
         ...exercises
           .filter(e => e.toLowerCase().includes(q))
-          .map(e => ({ kind: "exercise" as Kind, label: e, sub: "gym", href: `/gym?ex=${encodeURIComponent(e)}` })),
+          .map(e => ({ kind: "exercise" as Kind, label: e, sub: "gym", href: `/gym?ex=${encodeURIComponent(e)}`, Icon: Dumbbell })),
       ];
 
   const clampedSel = Math.min(sel, Math.max(0, results.length - 1));
@@ -134,9 +139,7 @@ export function SearchPalette() {
               onMouseEnter={() => setSel(i)}
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 18px", background: i === clampedSel ? C.surfaceHi : "transparent", cursor: "pointer", transition: "background 0.1s" }}
             >
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: i === clampedSel ? C.accent : C.textFaint, width: 34, flexShrink: 0, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                {KIND_LABEL[r.kind]}
-              </span>
+              <r.Icon size={13} strokeWidth={1.7} color={i === clampedSel ? C.accent : C.textFaint} style={{ flexShrink: 0 }} />
               <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
               {r.sub && (
                 <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{r.sub}</span>
