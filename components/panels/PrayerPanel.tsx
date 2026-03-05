@@ -15,7 +15,7 @@ export function PrayerPanel({ time }: { time: Date }) {
 
   return (
     <Panel style={{ display:"flex", flexDirection:"column" }}>
-      <Tag color={C.textFaint}>Prayer times</Tag>
+      <div className="hayati-drag-handle" style={{ display:"inline-flex" }}><Tag color={C.textFaint}>Prayer times</Tag></div>
       <div style={{ display:"flex", flexDirection:"column", gap:2, marginTop:10 }}>
         {PRAYER_TIMES.map((p, i) => {
           const passed = p.mins < curMins, isNext = p.name === nextName;

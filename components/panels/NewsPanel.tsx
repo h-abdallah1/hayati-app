@@ -42,8 +42,8 @@ export function NewsPanel() {
   });
 
   return (
-    <Panel style={{ gridColumn:"span 2" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+    <Panel>
+      <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Tag color={C.textFaint}>Latest news</Tag>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>

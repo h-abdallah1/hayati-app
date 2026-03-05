@@ -8,7 +8,7 @@ export function QuranPanel() {
   const C = useTheme();
   const verse = useQuranVerse();
   return (
-    <Panel style={{ gridColumn:"span 2" }}>
+    <Panel>
       <div style={{ position:"absolute", bottom:-10, right:12, fontFamily:"'Scheherazade New',serif", fontSize:80, color:C.accent, opacity:0.04, lineHeight:1, pointerEvents:"none", userSelect:"none", direction:"rtl" }}>{"٣٥١"}</div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
         <Tag color={C.textFaint}>{"Quran · verse of the day"}</Tag>

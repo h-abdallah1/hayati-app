@@ -35,7 +35,7 @@ export function SavingsPanel() {
 
   return (
     <Panel style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={C.textFaint}>Savings</Tag>
         <button
           onClick={() => { setDraft(String(saved)); setEditing(true); }}

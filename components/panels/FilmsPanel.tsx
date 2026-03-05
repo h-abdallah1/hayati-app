@@ -24,7 +24,7 @@ export function FilmsPanel() {
   return (
     <Panel style={{ cursor: "pointer" }} onClick={() => router.push("/films")}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <Tag color={C.textFaint}>Last watched</Tag>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Dot size={4} />

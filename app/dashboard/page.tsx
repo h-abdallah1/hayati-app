@@ -3,34 +3,69 @@
 import { useClock } from "@/lib/hooks";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
+import { useLayout } from "@/lib/layout";
 import { formatClock } from "@/lib/time";
 import {
   HeaderBar, PrayerPanel, ReadingPanel,
   NewsPanel, CalendarPanel,
   GymPanel, FinancePanel, SavingsPanel, FilmsPanel,
 } from "@/components/panels";
+import { Responsive, useContainerWidth } from "react-grid-layout";
+import type { LayoutItem, Layout } from "react-grid-layout";
+
 function HayatiInner() {
   const C = useTheme();
   const { global } = useGlobalSettings();
   const { panels } = usePanelSettings();
+  const { layout, updateLayout } = useLayout();
+  const { width, containerRef, mounted } = useContainerWidth();
   const show = (id: string) => !panels.hiddenPanels.includes(id);
   const time = useClock();
+
+  const visibleLayout = layout.filter(item => show(item.i));
+
+  const handleLayoutChange = (currentLayout: Layout) => {
+    const updated = layout.map(item => {
+      const changed = [...currentLayout].find(l => l.i === item.i);
+      return changed ?? item;
+    });
+    updateLayout(updated);
+  };
+
+  const PANEL_MAP: Record<string, React.ReactNode> = {
+    prayer:   <PrayerPanel time={time} />,
+    gym:      <GymPanel />,
+    calendar: <CalendarPanel time={time} />,
+    finance:  <FinancePanel />,
+    savings:  <SavingsPanel />,
+    news:     <NewsPanel />,
+    reading:  <ReadingPanel />,
+    films:    <FilmsPanel />,
+  };
+
   return (
     <div style={{ minHeight:"100vh", background:C.bg, padding:"24px 28px" }}>
       <HeaderBar time={time} />
-      <div className="hg" style={{ maxWidth:1280, margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gridAutoRows:"auto", gap:12 }}>
-        {/* Row 1 */}
-        {show("prayer")  && <PrayerPanel time={time} />}
-        {show("calendar")&& <CalendarPanel time={time} />}
-        {/* Row 2: two double-col panels */}
-        {show("news")    && <NewsPanel />}
-        {/* Row 3: two double-col panels */}
-        {show("reading") && <ReadingPanel />}
-{/* Row 4: remaining single-col panels */}
-        {show("gym")     && <GymPanel />}
-        {show("finance") && <FinancePanel />}
-        {show("savings") && <SavingsPanel />}
-        {show("films")   && <FilmsPanel />}
+      <div ref={containerRef} style={{ maxWidth:1280, margin:"0 auto" }}>
+        {mounted && (
+          <Responsive
+            className="hg"
+            layouts={{ lg: visibleLayout }}
+            breakpoints={{ lg: 1200, md: 768, sm: 480 }}
+            cols={{ lg: 4, md: 2, sm: 1 }}
+            rowHeight={40}
+            margin={[10, 10]}
+            containerPadding={[0, 0]}
+            dragConfig={{ enabled: true, handle: ".hayati-drag-handle" }}
+            resizeConfig={{ enabled: true, handles: ["se"] }}
+            onLayoutChange={handleLayoutChange}
+            width={width}
+          >
+            {visibleLayout.map((item: LayoutItem) => (
+              <div key={item.i}>{PANEL_MAP[item.i]}</div>
+            ))}
+          </Responsive>
+        )}
       </div>
       <div style={{ maxWidth:1280, margin:"12px auto 0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, letterSpacing:"1px" }}>HAYATI v2.0 · حياتي</span>
@@ -42,6 +77,4 @@ function HayatiInner() {
   );
 }
 
-export default function Hayati() {
-  return <HayatiInner />;
-}
+export default function Hayati() { return <HayatiInner />; }

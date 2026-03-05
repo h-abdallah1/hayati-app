@@ -2,7 +2,8 @@
 
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
-import { sectionHead } from "./styles";
+import { useLayout } from "@/lib/layout";
+import { sectionHead, ghostBtn } from "./styles";
 
 const PANELS = [
   { id: "prayer",  label: "Prayer"      },
@@ -18,6 +19,7 @@ const PANELS = [
 export function PanelsSection() {
   const C = useTheme();
   const { panels, updatePanels } = usePanelSettings();
+  const { resetLayout } = useLayout();
 
   const toggle = (id: string) => {
     const hidden = panels.hiddenPanels.includes(id)
@@ -52,6 +54,9 @@ export function PanelsSection() {
           );
         })}
       </div>
+      <button onClick={resetLayout} style={{ ...ghostBtn(C, false), marginTop:14, width:"100%", textAlign:"center" }}>
+        reset layout
+      </button>
     </>
   );
 }

@@ -49,7 +49,7 @@ export function FinancePanel() {
 
   return (
     <Panel style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={C.textFaint}>Finance</Tag>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
           {new Date(cycleYear, adjMonth).toLocaleDateString("en-US", { month: "short", year: "numeric" })}

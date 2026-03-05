@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { GlobalSettingsProvider, PanelSettingsProvider } from "@/lib/settings";
 import { ThemeProvider } from "@/lib/theme";
+import { LayoutProvider } from "@/lib/layout";
 import { SearchPalette } from "@/components/SearchPalette";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 
@@ -28,9 +29,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <GlobalSettingsProvider>
       <PanelSettingsProvider>
-        <ThemeProvider>
-          <AppShell>{children}</AppShell>
-        </ThemeProvider>
+        <LayoutProvider>
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+          </ThemeProvider>
+        </LayoutProvider>
       </PanelSettingsProvider>
     </GlobalSettingsProvider>
   );

@@ -61,7 +61,7 @@ export function ReadingPanel() {
 
   return (
     <Panel>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+      <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <Tag color={C.textFaint}>Currently reading</Tag>
         {!editing
           ? <button onClick={startEdit} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:C.textFaint }}>✎</button>
