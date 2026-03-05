@@ -65,17 +65,10 @@ export function NewsPanel() {
         {pageItems.map((n, i) => (
           <div key={`${page}-${i}`}>
             <div style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"9px 0" }}>
-              {/* Source + author */}
-              <div style={{ width:80, flexShrink:0, display:"flex", flexDirection:"column", gap:2, paddingTop:2 }}>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.accent, fontWeight:700, letterSpacing:"0.3px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                  {n.source.toUpperCase()}
-                </span>
-                {n.author && (
-                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:C.textFaint, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                    {n.author}
-                  </span>
-                )}
-              </div>
+              {/* Source */}
+              <span style={{ width:80, flexShrink:0, fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.accent, fontWeight:700, letterSpacing:"0.3px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", paddingTop:2 }}>
+                {n.source.toUpperCase()}
+              </span>
               {/* Title */}
               {n.url ? (
                 <a
@@ -90,15 +83,6 @@ export function NewsPanel() {
                 </a>
               ) : (
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:C.text, lineHeight:1.55, flex:1 }}>{n.title}</span>
-              )}
-              {/* Thumbnail */}
-              {n.image && (
-                <img
-                  src={n.image}
-                  alt=""
-                  style={{ width:40, height:40, objectFit:"cover", borderRadius:3, flexShrink:0, border:`1px solid ${C.border}` }}
-                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
               )}
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, flexShrink:0, paddingTop:2 }}>{n.time}</span>
             </div>
