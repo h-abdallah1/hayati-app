@@ -3,8 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import type { LayoutItem } from "react-grid-layout";
 
 export const DEFAULT_LAYOUT: LayoutItem[] = [
-  { i: "prayer",   x: 0, y: 0,  w: 1, h: 8  },
-  { i: "gym",      x: 0, y: 8,  w: 1, h: 8  },
+  { i: "prayer",   x: 0, y: 0,  w: 1, h: 7  },
+  { i: "quran",    x: 0, y: 7,  w: 1, h: 7  },
+  { i: "gym",      x: 0, y: 14, w: 1, h: 8  },
   { i: "calendar", x: 1, y: 0,  w: 1, h: 9  },
   { i: "finance",  x: 1, y: 9,  w: 1, h: 4  },
   { i: "savings",  x: 1, y: 13, w: 1, h: 4  },
@@ -29,7 +30,10 @@ function readLayout(): LayoutItem[] {
         typeof item.w === "number" &&
         typeof item.h === "number"
     );
-    return valid ? parsed : DEFAULT_LAYOUT;
+    if (!valid) return DEFAULT_LAYOUT;
+    // Add any panels from DEFAULT_LAYOUT that are missing from the stored layout
+    const missing = DEFAULT_LAYOUT.filter(d => !parsed.find(p => p.i === d.i));
+    return [...parsed, ...missing];
   } catch { return DEFAULT_LAYOUT; }
 }
 

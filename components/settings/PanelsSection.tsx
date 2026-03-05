@@ -13,6 +13,7 @@ const PANELS = [
   { id: "calendar",label: "Calendar"    },
   { id: "gym",     label: "Gym Tracker" },
   { id: "finance", label: "Finance"     },
+  { id: "savings", label: "Savings"     },
   { id: "films",   label: "Films"       },
 ];
 

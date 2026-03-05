@@ -6,7 +6,7 @@ import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { useLayout } from "@/lib/layout";
 import { formatClock } from "@/lib/time";
 import {
-  HeaderBar, PrayerPanel, ReadingPanel,
+  HeaderBar, PrayerPanel, QuranPanel, ReadingPanel,
   NewsPanel, CalendarPanel,
   GymPanel, FinancePanel, SavingsPanel, FilmsPanel,
 } from "@/components/panels";
@@ -34,6 +34,7 @@ function HayatiInner() {
 
   const PANEL_MAP: Record<string, React.ReactNode> = {
     prayer:   <PrayerPanel time={time} />,
+    quran:    <QuranPanel />,
     gym:      <GymPanel />,
     calendar: <CalendarPanel time={time} />,
     finance:  <FinancePanel />,
