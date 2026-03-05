@@ -2,7 +2,7 @@
 
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
-import { useClock, getPrayerTimes, useWeather } from "@/lib/hooks";
+import { useClock, getPrayerTimes, useWeather, useQuranVerse } from "@/lib/hooks";
 import { convertHHMM, formatClock } from "@/lib/time";
 import { Tag } from "@/components/ui";
 import type { PrayerMethod } from "@/lib/types";
@@ -46,6 +46,7 @@ export default function PrayerPage() {
   const time = useClock();
   const { global, updateGlobal } = useGlobalSettings();
   const wx = useWeather(global.location);
+  const verse = useQuranVerse();
   const PRAYER_TIMES = getPrayerTimes(global.location, global.timeFormat, global.prayerMethod);
 
   const tzOffset = getTzOffset(global.location.tz);
@@ -262,6 +263,36 @@ export default function PrayerPage() {
             <Tag color={C.textFaint}>qibla</Tag>
             <Tag color={C.textMuted}>{qibla}°</Tag>
           </div>
+        </div>
+
+        {/* Quran verse */}
+        <div style={{
+          background: C.surface, border: `1px solid ${C.border}`,
+          borderRadius: 12, padding: "24px 28px", marginTop: 20,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase" }}>
+              Verse of the day
+            </div>
+            {verse && (
+              <a href={verse.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                <Tag color={C.textFaint}>{verse.ref} ↗</Tag>
+              </a>
+            )}
+          </div>
+          {verse ? (
+            <>
+              <div style={{ fontFamily: "'Scheherazade New',serif", fontSize: 26, color: C.text, direction: "rtl", textAlign: "right", lineHeight: 1.8, marginBottom: 16 }}>
+                {verse.arabic}
+              </div>
+              <div style={{ height: 1, background: C.border, marginBottom: 14 }} />
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textMuted, lineHeight: 1.7, fontStyle: "italic" }}>
+                "{verse.translation}"
+              </div>
+            </>
+          ) : (
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>loading…</div>
+          )}
         </div>
 
       </div>

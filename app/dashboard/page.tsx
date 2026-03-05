@@ -6,7 +6,7 @@ import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { formatClock } from "@/lib/time";
 import {
   HeaderBar, PrayerPanel, ReadingPanel,
-  NewsPanel, QuranPanel, CalendarPanel,
+  NewsPanel, CalendarPanel,
   GymPanel, FinancePanel, SavingsPanel, FilmsPanel,
 } from "@/components/panels";
 function HayatiInner() {
@@ -24,7 +24,6 @@ function HayatiInner() {
         {show("calendar")&& <CalendarPanel time={time} />}
         {/* Row 2: two double-col panels */}
         {show("news")    && <NewsPanel />}
-        {show("quran")   && <QuranPanel />}
         {/* Row 3: two double-col panels */}
         {show("reading") && <ReadingPanel />}
 {/* Row 4: remaining single-col panels */}
