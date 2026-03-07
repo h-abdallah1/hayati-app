@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
+import { usePanelSize } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
 const SAVINGS_KEY    = "hayati-savings";
@@ -16,6 +17,8 @@ function fmt(n: number) {
 
 export function SavingsPanel() {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
   const [saved,   setSaved]   = useState(0);
   const [editing, setEditing] = useState(false);
   const [draft,   setDraft]   = useState("");
@@ -34,7 +37,7 @@ export function SavingsPanel() {
   const savePct = Math.min(100, (saved / SAVINGS_TARGET) * 100);
 
   return (
-    <Panel style={{ display: "flex", flexDirection: "column" }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
       <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={C.textFaint}>Savings</Tag>
         <button
@@ -59,19 +62,21 @@ export function SavingsPanel() {
             color: C.text, outline: "none", width: "100%", boxSizing: "border-box", marginBottom: 10,
           }}
         />
-      ) : (
+      ) : (height === 0 || height >= 170) ? (
         <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
           <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 30, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{fmt(saved)}</span>
           <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>/ {fmt(SAVINGS_TARGET)}</span>
         </div>
-      )}
+      ) : null}
 
       <div style={{ height: 3, background: C.border, borderRadius: 2 }}>
         <div style={{ height: "100%", width: `${savePct}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 8px ${C.accent}55`, transition: "width .3s" }} />
       </div>
-      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 5 }}>
-        {fmt(SAVINGS_TARGET - saved)} remaining · {savePct.toFixed(1)}%
-      </div>
+      {(height === 0 || height >= 170) && (
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 5 }}>
+          {fmt(SAVINGS_TARGET - saved)} remaining · {savePct.toFixed(1)}%
+        </div>
+      )}
     </Panel>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
+import { usePanelSize } from "@/lib/hooks";
 import type { Transaction } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
 
@@ -15,6 +16,8 @@ function fmt(n: number) {
 
 export function FinancePanel() {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
   const [txns, setTxns] = useState<Transaction[]>([]);
 
   useEffect(() => { setTxns(loadTxns()); }, []);
@@ -48,7 +51,7 @@ export function FinancePanel() {
   const net      = income - expenses;
 
   return (
-    <Panel style={{ display: "flex", flexDirection: "column" }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
       <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={C.textFaint}>Finance</Tag>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
@@ -57,21 +60,32 @@ export function FinancePanel() {
       </div>
 
       {/* Month summary */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
-        {(hideIncome
-          ? [{ label: "spent", val: fmt(expenses), color: C.red }]
-          : [
-              { label: "income",   val: fmt(income),                          color: C.teal  },
-              { label: "expenses", val: fmt(expenses),                        color: C.red   },
-              { label: "net",      val: (net >= 0 ? "+" : "") + fmt(net),     color: net >= 0 ? C.accent : C.red },
-            ]
-        ).map(s => (
-          <div key={s.label} style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: s.color }}>{s.val}</div>
+      {height > 0 && height < 170 ? (
+        <div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>
+            {hideIncome ? "spent" : "net"}
           </div>
-        ))}
-      </div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 24, fontWeight: 700, color: hideIncome ? C.red : net >= 0 ? C.accent : C.red }}>
+            {hideIncome ? fmt(expenses) : (net >= 0 ? "+" : "") + fmt(net)}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
+          {(hideIncome
+            ? [{ label: "spent", val: fmt(expenses), color: C.red }]
+            : [
+                { label: "income",   val: fmt(income),                          color: C.teal  },
+                { label: "expenses", val: fmt(expenses),                        color: C.red   },
+                { label: "net",      val: (net >= 0 ? "+" : "") + fmt(net),     color: net >= 0 ? C.accent : C.red },
+              ]
+          ).map(s => (
+            <div key={s.label} style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: s.color }}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
     </Panel>
   );

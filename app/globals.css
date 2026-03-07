@@ -45,22 +45,33 @@ input::placeholder {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.hg > * {
+/* Animate the inner div, NOT the grid item — avoids conflicting with
+   react-grid-layout's transform: translate(X,Y) positioning */
+.hg > * > div {
   animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  height: 100%;
 }
-.hg > *:nth-child(1)  { animation-delay: 0.05s; }
-.hg > *:nth-child(2)  { animation-delay: 0.10s; }
-.hg > *:nth-child(3)  { animation-delay: 0.15s; }
-.hg > *:nth-child(4)  { animation-delay: 0.20s; }
-.hg > *:nth-child(5)  { animation-delay: 0.25s; }
-.hg > *:nth-child(6)  { animation-delay: 0.30s; }
-.hg > *:nth-child(7)  { animation-delay: 0.35s; }
-.hg > *:nth-child(8)  { animation-delay: 0.40s; }
-.hg > *:nth-child(9)  { animation-delay: 0.45s; }
-.hg > *:nth-child(10) { animation-delay: 0.50s; }
+.hg > *:nth-child(1)  > div { animation-delay: 0.05s; }
+.hg > *:nth-child(2)  > div { animation-delay: 0.10s; }
+.hg > *:nth-child(3)  > div { animation-delay: 0.15s; }
+.hg > *:nth-child(4)  > div { animation-delay: 0.20s; }
+.hg > *:nth-child(5)  > div { animation-delay: 0.25s; }
+.hg > *:nth-child(6)  > div { animation-delay: 0.30s; }
+.hg > *:nth-child(7)  > div { animation-delay: 0.35s; }
+.hg > *:nth-child(8)  > div { animation-delay: 0.40s; }
+.hg > *:nth-child(9)  > div { animation-delay: 0.45s; }
+.hg > *:nth-child(10) > div { animation-delay: 0.50s; }
 
 .hayati-drag-handle { cursor: grab; }
 .hayati-drag-handle:active { cursor: grabbing; }
+
+/* react-grid-layout drag/resize placeholder */
+.react-grid-placeholder {
+  background: rgba(200, 241, 53, 0.06) !important;
+  border: 1px dashed rgba(200, 241, 53, 0.3) !important;
+  border-radius: 12px !important;
+  opacity: 1 !important;
+}
 
 body::after {
   content: "";

@@ -5,3 +5,4 @@ export { useQuranVerse } from "./useQuranVerse";
 export { useNews } from "./useNews";
 export { useCalendarEvents } from "./useCalendarEvents";
 export { useLetterboxd } from "./useLetterboxd";
+export { usePanelSize } from "./usePanelSize";

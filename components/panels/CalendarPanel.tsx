@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
-import { useCalendarEvents } from "@/lib/hooks";
+import { useCalendarEvents, usePanelSize } from "@/lib/hooks";
 import type { CalEvent, CalEventFull } from "@/lib/types";
 import { CALENDAR_EVENTS, MONTHS_L, DAY_LABELS } from "@/lib/data";
 import { Panel, Tag } from "@/components/ui";
@@ -24,6 +24,8 @@ function convertToCalEvents(remote: CalEventFull[], month: number, year: number)
 
 export function CalendarPanel({ time }: { time: Date }) {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
   const { panels } = usePanelSettings();
   const today=time.getDate(), thisMonth=time.getMonth(), thisYear=time.getFullYear();
   const [viewing, setViewing] = useState({ month:thisMonth, year:thisYear });
@@ -52,7 +54,7 @@ export function CalendarPanel({ time }: { time: Date }) {
   const dayName=(d: number)=>new Date(viewing.year,viewing.month,d).toLocaleDateString("en-US",{weekday:"short"});
   const upcoming=isCurMonth ? events.filter(e=>e.date>=today&&e.date<=today+6).sort((a,b)=>a.date-b.date).slice(0,3) : [];
   return (
-    <Panel style={{ display:"flex", flexDirection:"column", padding:14 }}>
+    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding:14 }}>
       <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <Tag color={C.textFaint}>Calendar</Tag>
@@ -83,7 +85,7 @@ export function CalendarPanel({ time }: { time: Date }) {
           );
         })}
       </div>
-      <div style={{ marginTop:10, borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
+      {(height === 0 || height >= 220) && <div style={{ marginTop:10, borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
         {selected ? (<>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
             <Tag color={C.textFaint}>{MONTHS_L[viewing.month]} {selected}</Tag>
@@ -117,7 +119,7 @@ export function CalendarPanel({ time }: { time: Date }) {
         </>) : (
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint }}>no upcoming events</div>
         )}
-      </div>
+      </div>}
     </Panel>
   );
 }

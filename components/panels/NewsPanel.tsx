@@ -1,22 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
-import { useNews } from "@/lib/hooks";
+import { useNews, usePanelSize } from "@/lib/hooks";
 import { NEWS } from "@/lib/data";
 import { Panel, Tag, Dot } from "@/components/ui";
 import type { NewsItem } from "@/lib/types";
 
-const PAGE_SIZE = 5;
-
 export function NewsPanel() {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
   const router = useRouter();
   const { panels } = usePanelSettings();
   const { items: liveItems, loaded } = useNews(panels.newsFeeds);
   const [page, setPage] = useState(0);
+
+  const PAGE_SIZE = height <= 0 ? 5 : Math.max(2, Math.min(10, Math.floor((height - 44) / 36)));
 
   const displayItems: NewsItem[] = panels.newsFeeds.length === 0
     ? (NEWS as NewsItem[])
@@ -42,7 +44,7 @@ export function NewsPanel() {
   });
 
   return (
-    <Panel>
+    <Panel ref={ref}>
       <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Tag color={C.textFaint}>Latest news</Tag>

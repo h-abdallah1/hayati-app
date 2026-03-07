@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme";
+import { usePanelSize } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
 type CurrentBook = { title: string; author: string; progress: number; cover?: string };
@@ -30,6 +31,8 @@ async function fetchCover(title: string, author: string): Promise<string | undef
 
 export function ReadingPanel() {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
 
   const [book,     setBook]     = useState<CurrentBook>(DEFAULT_BOOK);
   const [editing,  setEditing]  = useState(false);
@@ -60,7 +63,7 @@ export function ReadingPanel() {
   };
 
   return (
-    <Panel>
+    <Panel ref={ref}>
       <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <Tag color={C.textFaint}>Currently reading</Tag>
         {!editing
@@ -80,6 +83,16 @@ export function ReadingPanel() {
             placeholder="Author..." style={inputStyle} />
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint, marginTop:2 }}>
             Cover fetched automatically. Progress resets to 0.
+          </div>
+        </div>
+      ) : height > 0 && height < 200 ? (
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:C.text, lineHeight:1.35, marginBottom:10 }}>{book.title}</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <div style={{ flex:1, height:3, background:C.border, borderRadius:2 }}>
+              <div style={{ height:"100%", width:`${book.progress}%`, background:C.accent, borderRadius:2, boxShadow:`0 0 8px ${C.accent}55`, transition:"width .3s" }} />
+            </div>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.accent, flexShrink:0 }}>{book.progress}%</span>
           </div>
         </div>
       ) : (

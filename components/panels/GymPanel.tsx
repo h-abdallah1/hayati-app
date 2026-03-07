@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "@/lib/theme";
+import { usePanelSize } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
 const YEAR_GOAL = 200;
@@ -17,6 +18,8 @@ type HevyData = {
 
 export function GymPanel() {
   const C = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+  const { height } = usePanelSize(ref);
   const [data, setData]       = useState<HevyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [synced, setSynced]   = useState<Date | null>(null);
@@ -43,7 +46,7 @@ export function GymPanel() {
   const today        = new Date().toISOString().split("T")[0];
 
   return (
-    <Panel style={{ display: "flex", flexDirection: "column" }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
       <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Tag color={loggedToday ? C.accent : C.textFaint}>Gym</Tag>
         <button
@@ -67,7 +70,7 @@ export function GymPanel() {
       </div>
 
       {/* 7-day strip */}
-      {week.length > 0 && (
+      {(height === 0 || height >= 175) && week.length > 0 && (
         <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
           {week.map(date => {
             const trained  = workoutSet.has(date);
@@ -91,23 +94,25 @@ export function GymPanel() {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 20, marginBottom: last ? 14 : 0 }}>
-        {[
-          { label: "streak",    val: String(streak),                     unit: "days",  color: streak > 0 ? C.amber : C.textFaint },
-          { label: "remaining", val: String(Math.max(0, YEAR_GOAL - count)), unit: "left", color: C.textMuted },
-          { label: "today",     val: loggedToday ? "✓" : "—",           unit: "",      color: loggedToday ? C.accent : C.textFaint },
-        ].map(s => (
-          <div key={s.label}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: s.color, lineHeight: 1 }}>
-              {s.val}
-              {s.unit && <span style={{ fontSize: 9, marginLeft: 3, color: C.textFaint }}>{s.unit}</span>}
+      {(height === 0 || height >= 175) && (
+        <div style={{ display: "flex", gap: 20, marginBottom: last ? 14 : 0 }}>
+          {[
+            { label: "streak",    val: String(streak),                         unit: "days",  color: streak > 0 ? C.amber : C.textFaint },
+            { label: "remaining", val: String(Math.max(0, YEAR_GOAL - count)), unit: "left",  color: C.textMuted },
+            { label: "today",     val: loggedToday ? "✓" : "—",               unit: "",      color: loggedToday ? C.accent : C.textFaint },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: s.color, lineHeight: 1 }}>
+                {s.val}
+                {s.unit && <span style={{ fontSize: 9, marginLeft: 3, color: C.textFaint }}>{s.unit}</span>}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {last && (
+      {(height === 0 || height >= 230) && last && (
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: "auto" }}>
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>last session</div>
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last.title}</div>
@@ -117,7 +122,7 @@ export function GymPanel() {
         </div>
       )}
 
-      {synced && (
+      {(height === 0 || height >= 260) && synced && (
         <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, marginTop: 8 }}>
           synced {synced.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
         </div>
