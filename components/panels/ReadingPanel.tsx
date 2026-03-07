@@ -62,9 +62,11 @@ export function ReadingPanel() {
     color: C.text, outline: "none", width: "100%", boxSizing: "border-box" as const,
   };
 
+  const smRead = height > 0 && height < 200;
+
   return (
-    <Panel ref={ref}>
-      <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+    <Panel ref={ref} style={{ padding: smRead ? 14 : 20 }}>
+      <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: smRead ? 8 : 14 }}>
         <Tag color={C.textFaint}>Currently reading</Tag>
         {!editing
           ? <button onClick={startEdit} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:C.textFaint }}>✎</button>
@@ -86,13 +88,25 @@ export function ReadingPanel() {
           </div>
         </div>
       ) : height > 0 && height < 200 ? (
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:C.text, lineHeight:1.35, marginBottom:10 }}>{book.title}</div>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{ flex:1, height:3, background:C.border, borderRadius:2 }}>
-              <div style={{ height:"100%", width:`${book.progress}%`, background:C.accent, borderRadius:2, boxShadow:`0 0 8px ${C.accent}55`, transition:"width .3s" }} />
+        /* Small: mini cover inline with title + progress */
+        <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+          <div style={{ width:56, height:78, borderRadius:5, flexShrink:0, background:C.surfaceHi, border:`1px solid ${C.border}`, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {fetching
+              ? <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint }}>…</span>
+              : book.cover
+                ? <img src={book.cover} alt={book.title} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                : <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, color:C.border }}>▣</span>
+            }
+          </div>
+          <div style={{ flex:1, display:"flex", flexDirection:"column", gap:4, paddingTop:2 }}>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:C.text, lineHeight:1.35 }}>{book.title}</div>
+            {book.author && <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:C.textFaint }}>{book.author}</div>}
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:4 }}>
+              <div style={{ flex:1, height:3, background:C.border, borderRadius:2 }}>
+                <div style={{ height:"100%", width:`${book.progress}%`, background:C.accent, borderRadius:2, boxShadow:`0 0 8px ${C.accent}55`, transition:"width .3s" }} />
+              </div>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.accent, flexShrink:0 }}>{book.progress}%</span>
             </div>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:C.accent, flexShrink:0 }}>{book.progress}%</span>
           </div>
         </div>
       ) : (

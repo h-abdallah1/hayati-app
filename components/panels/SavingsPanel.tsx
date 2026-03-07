@@ -36,9 +36,11 @@ export function SavingsPanel() {
 
   const savePct = Math.min(100, (saved / SAVINGS_TARGET) * 100);
 
+  const smSav = height > 0 && height < 170;
+
   return (
-    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
-      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: smSav ? 14 : 20 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: smSav ? 8 : 16 }}>
         <Tag color={C.textFaint}>Savings</Tag>
         <button
           onClick={() => { setDraft(String(saved)); setEditing(true); }}

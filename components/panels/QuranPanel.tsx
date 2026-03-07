@@ -10,8 +10,9 @@ export function QuranPanel() {
   const ref = useRef<HTMLDivElement>(null);
   const { height } = usePanelSize(ref);
   const verse = useQuranVerse();
+  const smQuran = height > 0 && height < 220;
   return (
-    <Panel ref={ref}>
+    <Panel ref={ref} style={{ padding: smQuran ? 14 : 20 }}>
       <div
         style={{
           position: 'absolute',
@@ -35,7 +36,7 @@ export function QuranPanel() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 18,
+          marginBottom: smQuran ? 10 : 18,
         }}
       >
         <Tag color={C.textFaint}>{'Quran · verse of the day'}</Tag>

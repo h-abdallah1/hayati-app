@@ -50,9 +50,11 @@ export function FinancePanel() {
   const expenses = monthTxns.filter(t => t.type === "out").reduce((s, t) => s + t.amount, 0);
   const net      = income - expenses;
 
+  const smFin = height > 0 && height < 170;
+
   return (
-    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
-      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: smFin ? 14 : 20 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: smFin ? 8 : 16 }}>
         <Tag color={C.textFaint}>Finance</Tag>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
           {new Date(cycleYear, adjMonth).toLocaleDateString("en-US", { month: "short", year: "numeric" })}

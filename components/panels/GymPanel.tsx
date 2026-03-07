@@ -45,9 +45,11 @@ export function GymPanel() {
   const workoutSet   = new Set(data?.workoutDates ?? []);
   const today        = new Date().toISOString().split("T")[0];
 
+  const sm = height > 0 && height < 175;
+
   return (
-    <Panel ref={ref} style={{ display: "flex", flexDirection: "column" }}>
-      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: sm ? 14 : 20 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: sm ? 8 : 16 }}>
         <Tag color={loggedToday ? C.accent : C.textFaint}>Gym</Tag>
         <button
           onClick={sync}
@@ -58,14 +60,14 @@ export function GymPanel() {
         </button>
       </div>
 
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 14 }}>
-        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 42, fontWeight: 800, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: sm ? 8 : 14 }}>
+        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: sm ? 28 : 42, fontWeight: 800, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
           {loading ? "—" : count}
         </span>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>/ {YEAR_GOAL}</span>
       </div>
 
-      <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 16 }}>
+      <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: sm ? 10 : 16 }}>
         <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 8px ${C.accent}55`, transition: "width .3s" }} />
       </div>
 

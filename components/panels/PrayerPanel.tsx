@@ -15,12 +15,13 @@ export function PrayerPanel({ time }: { time: Date }) {
   const curMins = time.getHours()*60+time.getMinutes();
   const nextName = PRAYER_TIMES.find(p => p.mins > curMins)?.name;
 
-  const rowPadding = height > 0 && height < 280 ? "2px 0" : "5px 0";
+  const smPray = height > 0 && height < 280;
+  const rowPadding = smPray ? "2px 0" : "5px 0";
 
   return (
-    <Panel ref={ref} style={{ display:"flex", flexDirection:"column" }}>
-      <div className="hayati-drag-handle" style={{ display:"inline-flex" }}><Tag color={C.textFaint}>Prayer times</Tag></div>
-      <div style={{ display:"flex", flexDirection:"column", gap:2, marginTop:10 }}>
+    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding: smPray ? 14 : 20 }}>
+      <div className="hayati-drag-handle" style={{ display:"inline-flex", marginBottom: smPray ? 8 : 10 }}><Tag color={C.textFaint}>Prayer times</Tag></div>
+      <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
         {PRAYER_TIMES.map((p, i) => {
           const passed = p.mins < curMins, isNext = p.name === nextName;
           return (
