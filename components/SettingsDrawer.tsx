@@ -5,7 +5,7 @@ import { GeneralSection } from './settings/GeneralSection';
 import { LocationSection } from './settings/LocationSection';
 import { NewsFeedsSection } from './settings/NewsFeedsSection';
 import { CalendarSection } from './settings/CalendarSection';
-import { PanelsSection } from './settings/PanelsSection';
+import { ModulesSection } from './settings/ModulesSection';
 import { TravelSection } from './settings/TravelSection';
 
 interface Props {
@@ -91,7 +91,7 @@ export function SettingsDrawer({ open, onClose }: Props) {
           <LocationSection open={open} />
           <NewsFeedsSection open={open} />
           <CalendarSection />
-          <PanelsSection />
+          <ModulesSection />
           <TravelSection />
         </div>
 

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
+import { useGlobalSettings } from "@/lib/settings";
+import { isRouteDisabled } from "@/lib/modules";
 import { useState } from "react";
 import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Grid2X2, Globe, Settings } from "lucide-react";
 
@@ -23,7 +25,13 @@ const NAV = [
 export function Sidebar() {
   const C = useTheme();
   const path = usePathname();
+  const { global } = useGlobalSettings();
   const [hovered, setHovered] = useState<string | null>(null);
+
+  const visibleNav = NAV.filter(({ href }) =>
+    href === "/" || href === "/dashboard" || href === "/overview" ||
+    !isRouteDisabled(href, global.disabledModules)
+  );
 
   const openSearch = () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }));
@@ -58,7 +66,7 @@ export function Sidebar() {
         ح
       </div>
 
-      {NAV.map(({ href, Icon, label }) => {
+      {visibleNav.map(({ href, Icon, label }) => {
         const active = href === "/" ? path === "/" : path.startsWith(href);
         const hover = hovered === href;
         return (

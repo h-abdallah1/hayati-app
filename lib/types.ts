@@ -21,11 +21,11 @@ export type GlobalSettings = {
   smsConfig: SmsConfig;
   paymentDay: number;
   financeHideIncome: boolean;
+  disabledModules: string[];
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
   calendarFeeds: string[];
-  hiddenPanels: string[];
   pomodoroWork: number;
   pomodoroBreak: number;
 };

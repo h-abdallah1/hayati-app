@@ -18,6 +18,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   smsConfig: { senders: [], enabled: false },
   paymentDay: 1,
   financeHideIncome: false,
+  disabledModules: [],
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -45,6 +46,7 @@ function readGlobal(): GlobalSettings {
         ? parsed.paymentDay
         : DEFAULT_GLOBAL.paymentDay,
       financeHideIncome: typeof parsed.financeHideIncome === "boolean" ? parsed.financeHideIncome : DEFAULT_GLOBAL.financeHideIncome,
+      disabledModules: Array.isArray(parsed.disabledModules) ? parsed.disabledModules : DEFAULT_GLOBAL.disabledModules,
     };
   } catch {
     return DEFAULT_GLOBAL;
@@ -92,7 +94,6 @@ export function useGlobalSettings() {
 const DEFAULT_PANELS: PanelSettings = {
   newsFeeds: [],
   calendarFeeds: [],
-  hiddenPanels: [],
   pomodoroWork: 25,
   pomodoroBreak: 5,
 };
@@ -111,7 +112,6 @@ function readPanels(): PanelSettings {
           )
         : DEFAULT_PANELS.newsFeeds,
       calendarFeeds: Array.isArray(parsed.calendarFeeds) ? parsed.calendarFeeds : DEFAULT_PANELS.calendarFeeds,
-      hiddenPanels: Array.isArray(parsed.hiddenPanels) ? parsed.hiddenPanels : DEFAULT_PANELS.hiddenPanels,
       pomodoroWork: typeof parsed.pomodoroWork === "number" ? parsed.pomodoroWork : DEFAULT_PANELS.pomodoroWork,
       pomodoroBreak: typeof parsed.pomodoroBreak === "number" ? parsed.pomodoroBreak : DEFAULT_PANELS.pomodoroBreak,
     };

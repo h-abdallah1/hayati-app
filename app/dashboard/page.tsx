@@ -2,9 +2,10 @@
 
 import { useClock } from "@/lib/hooks";
 import { useTheme } from "@/lib/theme";
-import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
+import { useGlobalSettings } from "@/lib/settings";
 import { useLayout } from "@/lib/layout";
 import { formatClock } from "@/lib/time";
+import { getHiddenPanels } from "@/lib/modules";
 import {
   HeaderBar, PrayerPanel, QuranPanel, ReadingPanel,
   NewsPanel, CalendarPanel,
@@ -16,10 +17,10 @@ import type { LayoutItem, Layout } from "react-grid-layout";
 function HayatiInner() {
   const C = useTheme();
   const { global } = useGlobalSettings();
-  const { panels } = usePanelSettings();
   const { layout, updateLayout } = useLayout();
   const { width, containerRef, mounted } = useContainerWidth();
-  const show = (id: string) => !panels.hiddenPanels.includes(id);
+  const hiddenPanels = getHiddenPanels(global.disabledModules);
+  const show = (id: string) => !hiddenPanels.includes(id);
   const time = useClock();
 
   const visibleLayout = layout.filter(item => show(item.i));
