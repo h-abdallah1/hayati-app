@@ -22,6 +22,7 @@ export type GlobalSettings = {
   paymentDay: number;
   financeHideIncome: boolean;
   disabledModules: string[];
+  moduleOrder: string[];
   showTicker: boolean;
 };
 export type PanelSettings = {

@@ -19,6 +19,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   paymentDay: 1,
   financeHideIncome: false,
   disabledModules: [],
+  moduleOrder: [],
   showTicker: true,
 };
 
@@ -48,6 +49,7 @@ function readGlobal(): GlobalSettings {
         : DEFAULT_GLOBAL.paymentDay,
       financeHideIncome: typeof parsed.financeHideIncome === "boolean" ? parsed.financeHideIncome : DEFAULT_GLOBAL.financeHideIncome,
       disabledModules: Array.isArray(parsed.disabledModules) ? parsed.disabledModules : DEFAULT_GLOBAL.disabledModules,
+      moduleOrder: Array.isArray(parsed.moduleOrder) ? parsed.moduleOrder : DEFAULT_GLOBAL.moduleOrder,
       showTicker: typeof parsed.showTicker === "boolean" ? parsed.showTicker : DEFAULT_GLOBAL.showTicker,
     };
   } catch {

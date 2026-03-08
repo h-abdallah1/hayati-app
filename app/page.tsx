@@ -7,15 +7,15 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useClock } from "@/lib/hooks";
 import { useGlobalSettings } from "@/lib/settings";
+import { isRouteDisabled, MODULES } from "@/lib/modules";
 import {
-  LayoutDashboard, Grid2X2, Target, FileText, Wallet,
+  LayoutDashboard, Target, FileText, Wallet,
   Dumbbell, Newspaper, Clapperboard, Globe, Moon, Search,
 } from "lucide-react";
 
 const SECTIONS = [
   { href: "/dashboard", Icon: LayoutDashboard, label: "Dashboard", desc: "Panels & widgets"    },
-  { href: "/overview",  Icon: Grid2X2,         label: "Overview",  desc: "Activity feed"       },
-  { href: "/goals",     Icon: Target,          label: "Goals",     desc: "Yearly goals"        },
+  { href: "/overview",  Icon: Target,          label: "Overview",  desc: "Goals & activity"    },
   { href: "/notes",     Icon: FileText,        label: "Notes",     desc: "Obsidian vault"      },
   { href: "/finance",   Icon: Wallet,          label: "Finance",   desc: "Transactions"        },
   { href: "/gym",       Icon: Dumbbell,        label: "Gym",       desc: "Workout analytics"   },
@@ -240,7 +240,21 @@ export default function HomePage() {
           gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
           gap: 8,
         }}>
-          {SECTIONS.map((s) => <NavCard key={s.href} {...s} />)}
+          {(() => {
+            const ALWAYS = new Set(["/dashboard"]);
+            const order = global.moduleOrder;
+            const visible = SECTIONS
+              .filter(s => ALWAYS.has(s.href) || !isRouteDisabled(s.href, global.disabledModules))
+              .sort((a, b) => {
+                if (ALWAYS.has(a.href) && ALWAYS.has(b.href)) return 0;
+                if (ALWAYS.has(a.href)) return -1;
+                if (ALWAYS.has(b.href)) return 1;
+                const ai = order.indexOf(MODULES.find(m => m.route === a.href)?.id ?? "");
+                const bi = order.indexOf(MODULES.find(m => m.route === b.href)?.id ?? "");
+                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+              });
+            return visible.map(s => <NavCard key={s.href} {...s} />);
+          })()}
         </div>
       </div>
     </div>

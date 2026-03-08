@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
-import { isRouteDisabled } from "@/lib/modules";
+import { isRouteDisabled, MODULES } from "@/lib/modules";
 import { useState } from "react";
 import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Globe, Settings } from "lucide-react";
 
@@ -27,8 +27,20 @@ export function Sidebar() {
   const { global } = useGlobalSettings();
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const visibleNav = NAV.filter(({ href }) =>
-    href === "/" || href === "/dashboard" || href === "/overview" ||
+  const PINNED = new Set(["/", "/dashboard"]);
+
+  const orderedNav = [
+    ...NAV.filter(n => PINNED.has(n.href)),
+    ...[...NAV.filter(n => !PINNED.has(n.href))].sort((a, b) => {
+      const order = global.moduleOrder;
+      const ai = order.indexOf(MODULES.find(m => m.route === a.href)?.id ?? "");
+      const bi = order.indexOf(MODULES.find(m => m.route === b.href)?.id ?? "");
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    }),
+  ];
+
+  const visibleNav = orderedNav.filter(({ href }) =>
+    PINNED.has(href) || href === "/overview" ||
     !isRouteDisabled(href, global.disabledModules)
   );
 
