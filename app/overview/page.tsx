@@ -160,9 +160,9 @@ export default function OverviewPage() {
     })
     .filter(d => d >= yearStart && d < yearEnd);
 
-  const commitDates = commitDays
-    .filter(d => d.date >= yearStart && d.date < yearEnd)
-    .map(d => d.date);
+  const filteredCommitDays = commitDays.filter(d => d.date >= yearStart && d.date < yearEnd);
+  const commitDates = filteredCommitDays.map(d => d.date);
+  const totalCommits = filteredCommitDays.reduce((sum, d) => sum + d.count, 0);
 
   const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates);
 
@@ -296,7 +296,7 @@ export default function OverviewPage() {
             <StatBox label="films"   value={loading ? "—" : String(filmDates.length)}   icon={<Clapperboard  size={11} color={CAT_COLORS.film}   strokeWidth={2} />} C={C} />
             <StatBox label="notes"   value={loading ? "—" : String(noteDates.length)}   icon={<FileText      size={11} color={CAT_COLORS.note}   strokeWidth={2} />} C={C} />
             {settings.githubUsername && (
-              <StatBox label="commits" value={loading ? "—" : String(commitDates.length)} icon={<GitMerge    size={11} color={CAT_COLORS.commit} strokeWidth={2} />} C={C} />
+              <StatBox label="commits" value={loading ? "—" : String(totalCommits)} icon={<GitMerge    size={11} color={CAT_COLORS.commit} strokeWidth={2} />} C={C} />
             )}
           </div>
         );
