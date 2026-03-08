@@ -199,12 +199,15 @@ export default function OverviewPage() {
 
       {/* Legend */}
       <div style={{ display: "flex", gap: 20, marginBottom: 24, alignItems: "center" }}>
-        {ORDERED_CATS.map(cat => (
-          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: CAT_COLORS[cat] }} />
-            {CAT_LABELS[cat]}
-          </div>
-        ))}
+        {ORDERED_CATS.map(cat => {
+          const Icon = CAT_ICONS[cat];
+          return (
+            <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+              <Icon size={11} color={CAT_COLORS[cat]} strokeWidth={2} />
+              {CAT_LABELS[cat]}
+            </div>
+          );
+        })}
         {loading && (
           <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 8 }}>loading…</span>
         )}
@@ -287,30 +290,28 @@ export default function OverviewPage() {
                       width: CELL,
                       height: CELL,
                       borderRadius: 2,
-                      background: hasActivity
-                        ? activeCats.length === 1
-                          ? CAT_COLORS[activeCats[0]]
-                          : `linear-gradient(to right, ${activeCats.map((c, i) => `${CAT_COLORS[c]} ${(i / activeCats.length) * 100}%, ${CAT_COLORS[c]} ${((i + 1) / activeCats.length) * 100}%`).join(", ")})`
-                        : C.surface,
+                      background: C.surface,
                       border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${hasActivity ? "transparent" : C.border}`,
                       cursor: hasActivity ? "pointer" : "default",
-                      position: "relative",
-                      overflow: "hidden",
                       display: "flex",
-                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
                     }}
                   >
-                    {activeCats.map(cat => (
-                      <div
-                        key={cat}
-                        style={{
-                          flex: 1,
-                          height: "100%",
-                          background: CAT_COLORS[cat],
-                          flexShrink: 0,
-                        }}
-                      />
-                    ))}
+                    {activeCats.map(cat => {
+                      const Icon = CAT_ICONS[cat];
+                      const sz = activeCats.length === 1 ? 11 : activeCats.length === 2 ? 7 : 5;
+                      return (
+                        <Icon
+                          key={cat}
+                          size={sz}
+                          color={CAT_COLORS[cat]}
+                          strokeWidth={activeCats.length === 1 ? 2 : 2.5}
+                          style={{ flexShrink: 0 }}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}
