@@ -31,19 +31,20 @@ function dayOfYear(date: Date): number {
 }
 
 function StatBox({
-  label, value, sub, hi, C,
+  label, value, sub, hi, icon, C,
 }: {
-  label: string; value: string; sub?: string; hi?: boolean;
+  label: string; value: string; sub?: string; hi?: boolean; icon?: JSX.Element;
   C: ReturnType<typeof useTheme>;
 }) {
   return (
     <div>
       <div style={{
+        display: "flex", alignItems: "center", gap: 4,
         fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
         color: C.textFaint, letterSpacing: "0.6px",
         textTransform: "uppercase", marginBottom: 3,
       }}>
-        {label}
+        {icon}{label}
       </div>
       <div style={{
         fontFamily: "'JetBrains Mono',monospace", fontSize: 20,
@@ -269,29 +270,17 @@ export default function OverviewPage() {
             <StatBox label="complete"    value={`${pct}%`} hi C={C} />
             <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
+            <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
+            <StatBox label="gym"   value={String(gymDates.length)}  icon={<Dumbbell   size={11} color={CAT_COLORS.gym}  strokeWidth={2} />} C={C} />
+            <StatBox label="films" value={String(filmDates.length)} icon={<Clapperboard size={11} color={CAT_COLORS.film} strokeWidth={2} />} C={C} />
+            <StatBox label="notes" value={String(noteDates.length)} icon={<FileText   size={11} color={CAT_COLORS.note} strokeWidth={2} />} C={C} />
           </div>
         );
       })()}
 
-      {/* Legend */}
-      <div style={{ display: "flex", gap: 20, marginBottom: 24, alignItems: "center" }}>
-        {ORDERED_CATS.map(cat => {
-          const Icon = CAT_ICONS[cat];
-          return (
-            <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-              <Icon size={11} color={CAT_COLORS[cat]} strokeWidth={2} />
-              {CAT_LABELS[cat]}
-            </div>
-          );
-        })}
-        {loading && (
-          <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 8 }}>loading…</span>
-        )}
-      </div>
-
       {/* Year Grid */}
       <div style={{ overflowX: "auto", marginBottom: 40 }}>
-        <div style={{ position: "relative", display: "inline-block" }}>
+        <div style={{ position: "relative", display: "inline-block", minWidth: "100%" }}>
           {/* Month labels */}
           <div style={{
             display: "grid",
@@ -394,6 +383,11 @@ export default function OverviewPage() {
             </div>
           ))}
         </div>
+        {loading && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+            <span style={{ fontSize: 10, color: C.textFaint }}>loading…</span>
+          </div>
+        )}
       </div>
 
       {/* Separator */}
