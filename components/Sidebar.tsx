@@ -83,8 +83,8 @@ export function Sidebar() {
               width: 38,
               height: 36,
               borderRadius: 7,
-              background: active ? C.accentDim : hover ? C.surfaceHi : "transparent",
-              border: `1px solid ${active ? C.accentMid : "transparent"}`,
+              background: hover ? C.surfaceHi : "transparent",
+              border: "1px solid transparent",
               color: active ? C.accent : hover ? C.textMuted : C.textFaint,
               textDecoration: "none",
             }}
