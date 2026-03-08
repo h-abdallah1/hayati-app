@@ -1,4 +1,4 @@
-import { Dumbbell, Wallet, Clapperboard, Newspaper, Moon, Calendar, BookOpen, Target, FileText, Globe, Grid2X2, type LucideIcon } from "lucide-react";
+import { Dumbbell, Wallet, Clapperboard, Newspaper, Moon, Calendar, BookOpen, FileText, Globe, Grid2X2, type LucideIcon } from "lucide-react";
 
 export type ModuleDef = {
   id: string;
@@ -17,8 +17,7 @@ export const MODULES: ModuleDef[] = [
   { id: "prayer",   label: "Prayer",   description: "Daily prayer times and Quran verse",      panels: ["prayer","quran"],    route: "/prayer",  icon: Moon         },
   { id: "calendar", label: "Calendar", description: "Events from iCal and CalDAV feeds",       panels: ["calendar"],                             icon: Calendar     },
   { id: "reading",  label: "Reading",  description: "Book and reading list tracker",            panels: ["reading"],                              icon: BookOpen     },
-  { id: "overview", label: "Overview", description: "Year progress, activity counts and goals",  panels: ["overview"],          route: "/overview",icon: Grid2X2     },
-  { id: "goals",    label: "Goals",    description: "Annual goals and progress tracking",       panels: [],                    route: "/overview", icon: Target      },
+  { id: "overview", label: "Overview", description: "Year progress, activity counts and goals", panels: ["overview"],          route: "/overview", icon: Grid2X2    },
   { id: "notes",    label: "Notes",    description: "Quick notes and Obsidian vault sync",      panels: [],                    route: "/notes",   icon: FileText     },
   { id: "travel",   label: "Travel",   description: "World map and visited countries tracker",  panels: [],                    route: "/travel",  icon: Globe        },
 ];

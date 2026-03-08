@@ -1,29 +1,18 @@
 "use client";
 
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, KeyboardEvent } from "react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import type { LocationCoords } from "@/lib/types";
 import { detectLocation, searchLocation } from "@/lib/location";
 import { inputStyle, sectionHead, addBtn, ghostBtn } from "./styles";
 
-interface Props {
-  open: boolean;
-}
-
-export function LocationSection({ open }: Props) {
+export function LocationSection() {
   const C = useTheme();
   const { global, updateGlobal } = useGlobalSettings();
   const [locSearch, setLocSearch] = useState("");
   const [locLoading, setLocLoading] = useState(false);
   const [locError, setLocError] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setLocSearch("");
-      setLocError("");
-    }
-  }, [open]);
 
   const applyLocation = (loc: LocationCoords) => {
     updateGlobal({ location: loc });

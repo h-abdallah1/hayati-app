@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, KeyboardEvent } from "react";
 import { useTheme } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
 import { inputStyle, sectionHead, btnSmall, addBtn, cancelBtn } from "./styles";
 
-interface Props {
-  open: boolean;
-}
-
-export function NewsFeedsSection({ open }: Props) {
+export function NewsFeedsSection() {
   const C = useTheme();
   const { panels, updatePanels } = usePanelSettings();
   const [newsFeedUrl, setNewsFeedUrl] = useState("");
@@ -17,10 +13,6 @@ export function NewsFeedsSection({ open }: Props) {
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editUrl, setEditUrl] = useState("");
-
-  useEffect(() => {
-    if (open) setEditingUrl(null);
-  }, [open]);
 
   const addNewsFeed = () => {
     const url = newsFeedUrl.trim();
