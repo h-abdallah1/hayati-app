@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection, PrayerMethod, SmsConfig } from "./types";
+import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection, PrayerMethod } from "./types";
 import { DEFAULT_COORDS } from "./constants";
 
 // ── Global settings ──────────────────────────────────────────────────────────
@@ -16,9 +16,6 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   obsidianVaultPath: "",
   travelProjection: "equirectangular",
   prayerMethod: "Dubai",
-  smsConfig: { senders: [], enabled: false },
-  paymentDay: 1,
-  financeHideIncome: false,
   disabledModules: [],
   moduleOrder: [],
   showTicker: true,
@@ -42,16 +39,6 @@ function readGlobal(): GlobalSettings {
       obsidianVaultPath: typeof parsed.obsidianVaultPath === "string" ? parsed.obsidianVaultPath : DEFAULT_GLOBAL.obsidianVaultPath,
       travelProjection: (["equirectangular","naturalEarth","mercator","robinson","winkel3","mollweide","patterson"] as MapProjection[]).includes(parsed.travelProjection as MapProjection) ? parsed.travelProjection as MapProjection : DEFAULT_GLOBAL.travelProjection,
       prayerMethod: PRAYER_METHODS.includes(parsed.prayerMethod as PrayerMethod) ? parsed.prayerMethod as PrayerMethod : DEFAULT_GLOBAL.prayerMethod,
-      smsConfig: (parsed.smsConfig && typeof parsed.smsConfig === "object")
-        ? {
-            enabled: typeof (parsed.smsConfig as SmsConfig).enabled === "boolean" ? (parsed.smsConfig as SmsConfig).enabled : false,
-            senders: Array.isArray((parsed.smsConfig as SmsConfig).senders) ? (parsed.smsConfig as SmsConfig).senders : [],
-          }
-        : DEFAULT_GLOBAL.smsConfig,
-      paymentDay: (typeof parsed.paymentDay === "number" && parsed.paymentDay >= 1 && parsed.paymentDay <= 28)
-        ? parsed.paymentDay
-        : DEFAULT_GLOBAL.paymentDay,
-      financeHideIncome: typeof parsed.financeHideIncome === "boolean" ? parsed.financeHideIncome : DEFAULT_GLOBAL.financeHideIncome,
       disabledModules: Array.isArray(parsed.disabledModules) ? parsed.disabledModules : DEFAULT_GLOBAL.disabledModules,
       moduleOrder: Array.isArray(parsed.moduleOrder) ? parsed.moduleOrder : DEFAULT_GLOBAL.moduleOrder,
       showTicker: typeof parsed.showTicker === "boolean" ? parsed.showTicker : DEFAULT_GLOBAL.showTicker,

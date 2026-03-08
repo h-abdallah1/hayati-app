@@ -15,78 +15,6 @@ function isEnabled(disabledModules: string[], id: string) {
   return !disabledModules.includes(id);
 }
 
-function FinanceSection() {
-  const C = useTheme();
-  const { global, updateGlobal } = useGlobalSettings();
-  const [sendersVal, setSendersVal] = useState((global.smsConfig?.senders ?? []).join("\n"));
-
-  const saveSenders = () => {
-    const senders = sendersVal.split("\n").map((s: string) => s.trim()).filter(Boolean);
-    updateGlobal({ smsConfig: { ...(global.smsConfig ?? { enabled: false }), senders } });
-  };
-  const toggleSms = () => {
-    updateGlobal({ smsConfig: { ...(global.smsConfig ?? { senders: [] }), enabled: !global.smsConfig?.enabled } });
-  };
-
-  return (
-    <>
-      <div style={sectionHead(C)}>Finance</div>
-      <div style={{ marginBottom: 12 }}>
-        <span style={fieldLabel(C)}>Payment day of month</span>
-        <input
-          type="number"
-          min={1}
-          max={28}
-          value={global.paymentDay ?? 1}
-          onChange={e => {
-            const v = parseInt(e.target.value, 10);
-            if (v >= 1 && v <= 28) updateGlobal({ paymentDay: v });
-          }}
-          style={{ ...inputStyle(C), width: 60 }}
-        />
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 4 }}>
-          Day you receive your salary (1–28). Months on the finance page run from this day.
-        </div>
-      </div>
-
-      <div style={sectionHead(C)}>SMS Import</div>
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={fieldLabel(C)}>Import from Mac Messages</span>
-          <button onClick={toggleSms} style={{
-            background: global.smsConfig?.enabled ? C.accentDim : "none",
-            border: `1px solid ${global.smsConfig?.enabled ? C.accent : C.border}`,
-            borderRadius: 5, cursor: "pointer",
-            fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
-            color: global.smsConfig?.enabled ? C.accent : C.textFaint,
-            padding: "3px 10px", letterSpacing: "0.3px",
-          }}>
-            {global.smsConfig?.enabled ? "on" : "off"}
-          </button>
-        </div>
-        <span style={fieldLabel(C)}>Bank sender names / numbers (one per line)</span>
-        <textarea
-          value={sendersVal}
-          onChange={e => setSendersVal(e.target.value)}
-          onBlur={saveSenders}
-          placeholder={"ENBD\nFAB\nADCB\n+97150xxxxxxx"}
-          rows={4}
-          style={{
-            ...inputStyle(C),
-            resize: "vertical",
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 10,
-            lineHeight: 1.6,
-          }}
-        />
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 5, lineHeight: 1.6 }}>
-          Requires: iPhone → Mac SMS forwarding on, and Full Disk Access for Terminal in System Settings → Privacy &amp; Security.
-        </div>
-      </div>
-    </>
-  );
-}
-
 function FilmsSection() {
   const C = useTheme();
   const { global, updateGlobal } = useGlobalSettings();
@@ -140,7 +68,6 @@ const ALL_TABS = [
   { id: "location", label: "Location", moduleId: null },
   { id: "news", label: "News", moduleId: "news" },
   { id: "calendar", label: "Calendar", moduleId: "calendar" },
-  { id: "finance", label: "Finance", moduleId: "finance" },
   { id: "travel", label: "Travel", moduleId: "travel" },
   { id: "films", label: "Films", moduleId: "films" },
   { id: "notes", label: "Notes", moduleId: "notes" },
@@ -232,7 +159,6 @@ export default function SettingsPage() {
               {activeTab === "location" && <LocationSection />}
               {activeTab === "news" && <NewsFeedsSection />}
               {activeTab === "calendar" && <CalendarSection />}
-              {activeTab === "finance" && <FinanceSection />}
               {activeTab === "travel" && <TravelSection />}
               {activeTab === "films" && <FilmsSection />}
               {activeTab === "notes" && <NotesSection />}

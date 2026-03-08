@@ -9,7 +9,7 @@ import { getHiddenPanels } from "@/lib/modules";
 import {
   HeaderBar, PrayerPanel, QuranPanel, ReadingPanel,
   NewsPanel, CalendarPanel,
-  GymPanel, FinancePanel, SavingsPanel, FilmsPanel, OverviewPanel,
+  GymPanel, FilmsPanel, OverviewPanel,
 } from "@/components/panels";
 import { ErrorBoundary } from "@/components/ui";
 import { Responsive, useContainerWidth } from "react-grid-layout";
@@ -39,8 +39,6 @@ function HayatiInner() {
     quran:    <QuranPanel />,
     gym:      <GymPanel />,
     calendar: <CalendarPanel time={time} />,
-    finance:  <FinancePanel />,
-    savings:  <SavingsPanel />,
     news:     <NewsPanel />,
     reading:  <ReadingPanel />,
     films:    <FilmsPanel />,

@@ -1,4 +1,4 @@
-import { Dumbbell, Wallet, Clapperboard, Newspaper, Moon, Calendar, BookOpen, FileText, Globe, Target, type LucideIcon } from "lucide-react";
+import { Dumbbell, Clapperboard, Newspaper, Moon, Calendar, BookOpen, FileText, Globe, Target, type LucideIcon } from "lucide-react";
 
 export type ModuleDef = {
   id: string;
@@ -11,7 +11,6 @@ export type ModuleDef = {
 
 export const MODULES: ModuleDef[] = [
   { id: "gym",      label: "Gym",      description: "Workout tracker and exercise analytics",  panels: ["gym"],               route: "/gym",     icon: Dumbbell     },
-  { id: "finance",  label: "Finance",  description: "Budget, transactions and savings tracker", panels: ["finance","savings"], route: "/finance", icon: Wallet       },
   { id: "films",    label: "Films",    description: "Letterboxd watch history and ratings",    panels: ["films"],             route: "/films",   icon: Clapperboard },
   { id: "news",     label: "News",     description: "RSS news feeds from custom sources",      panels: ["news"],              route: "/news",    icon: Newspaper    },
   { id: "prayer",   label: "Prayer",   description: "Daily prayer times and Quran verse",      panels: ["prayer","quran"],    route: "/prayer",  icon: Moon         },

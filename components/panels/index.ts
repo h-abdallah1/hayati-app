@@ -5,7 +5,5 @@ export { NewsPanel }    from "./NewsPanel";
 export { QuranPanel }   from "./QuranPanel";
 export { CalendarPanel }from "./CalendarPanel";
 export { GymPanel }     from "./GymPanel";
-export { FinancePanel } from "./FinancePanel";
-export { SavingsPanel } from "./SavingsPanel";
 export { FilmsPanel }    from "./FilmsPanel";
 export { OverviewPanel } from "./OverviewPanel";

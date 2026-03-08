@@ -8,8 +8,6 @@ export type NewsFeed = { url: string; label: string };
 export type TimeFormat = "12h" | "24h";
 export type MapProjection = "equirectangular" | "naturalEarth" | "mercator" | "robinson" | "winkel3" | "mollweide" | "patterson";
 export type PrayerMethod = "Dubai" | "MuslimWorldLeague" | "NorthAmerica" | "Egyptian" | "Karachi" | "Kuwait" | "Qatar" | "Singapore" | "Turkey" | "MoonsightingCommittee";
-export type SmsConfig = { senders: string[]; enabled: boolean };
-
 export type GlobalSettings = {
   name: string;
   location: LocationCoords;
@@ -18,9 +16,6 @@ export type GlobalSettings = {
   obsidianVaultPath: string;
   travelProjection: MapProjection;
   prayerMethod: PrayerMethod;
-  smsConfig: SmsConfig;
-  paymentDay: number;
-  financeHideIncome: boolean;
   disabledModules: string[];
   moduleOrder: string[];
   showTicker: boolean;
@@ -48,7 +43,6 @@ export type CalEventFull = { date: string; label: string; color: string; url?: s
 
 export type Goal = { id: number; title: string; optional?: boolean; status: "todo" | "active" | "done"; description?: string; created: string; year?: number; completedAt?: string };
 export type Note = { id: number; title: string; content: string; updated: string };
-export type Transaction = { id: number; amount: number; category: string; description: string; date: string; type: "in" | "out" };
 
 export type FilmEntry = {
   title: string;
