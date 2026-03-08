@@ -10,6 +10,8 @@ const parser = new XMLParser({
 });
 
 const UA = "Mozilla/5.0 (compatible; Hayati/1.0; RSS reader)";
+const TTL_MS = 60 * 60 * 1000; // 1 hour
+const cache = new Map<string, { films: FilmEntry[]; ts: number }>();
 
 import { extractText } from "@/lib/xml";
 
@@ -32,6 +34,11 @@ export async function GET(req: NextRequest) {
   try {
     const username = req.nextUrl.searchParams.get("username")?.trim();
     if (!username) return NextResponse.json({ films: [] });
+
+    const cached = cache.get(username);
+    if (cached && Date.now() - cached.ts < TTL_MS) {
+      return NextResponse.json({ films: cached.films });
+    }
 
     const url = `https://letterboxd.com/${encodeURIComponent(username)}/rss/`;
     const res = await fetch(url, {
@@ -73,8 +80,10 @@ export async function GET(req: NextRequest) {
     }
 
     films.sort((a, b) => b.watchedDate.localeCompare(a.watchedDate));
+    const result = films.slice(0, 50);
+    cache.set(username, { films: result, ts: Date.now() });
 
-    return NextResponse.json({ films: films.slice(0, 50) });
+    return NextResponse.json({ films: result });
   } catch {
     return NextResponse.json({ films: [] });
   }

@@ -46,7 +46,7 @@ function HayatiInner() {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:C.bg, padding:"24px 28px" }}>
+    <div style={{ background:C.bg, padding:"24px 28px", paddingBottom:0 }}>
       <HeaderBar time={time} />
       <div ref={containerRef} style={{ maxWidth:1280, margin:"0 auto" }}>
         {mounted && (
@@ -64,7 +64,7 @@ function HayatiInner() {
             width={width}
           >
             {visibleLayout.map((item: LayoutItem) => (
-              <div key={item.i}>
+              <div key={item.i} style={{ height:"100%" }}>
                 <ErrorBoundary>{PANEL_MAP[item.i]}</ErrorBoundary>
               </div>
             ))}

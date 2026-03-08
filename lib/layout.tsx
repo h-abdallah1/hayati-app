@@ -2,16 +2,16 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { LayoutItem } from "react-grid-layout";
 
+const REMOVED_PANELS = new Set(["finance", "savings"]);
+
 export const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: "prayer",   x: 0, y: 0,  w: 1, h: 7  },
   { i: "quran",    x: 0, y: 7,  w: 1, h: 7  },
   { i: "gym",      x: 0, y: 14, w: 1, h: 8  },
-  { i: "calendar", x: 1, y: 0,  w: 1, h: 9  },
-  { i: "finance",  x: 1, y: 9,  w: 1, h: 4  },
-  { i: "savings",  x: 1, y: 13, w: 1, h: 4  },
+  { i: "calendar", x: 1, y: 0,  w: 1, h: 22 },
   { i: "news",     x: 2, y: 0,  w: 2, h: 6  },
   { i: "reading",  x: 2, y: 6,  w: 2, h: 5  },
-  { i: "films",    x: 2, y: 11, w: 2, h: 5  },
+  { i: "films",    x: 2, y: 11, w: 2, h: 11 },
   { i: "overview", x: 0, y: 22, w: 4, h: 6  },
 ];
 
@@ -32,6 +32,8 @@ function readLayout(): LayoutItem[] {
         typeof item.h === "number"
     );
     if (!valid) return DEFAULT_LAYOUT;
+    // If the stored layout contains removed panels, it's stale — use the fresh default
+    if (parsed.some(item => REMOVED_PANELS.has(item.i))) return DEFAULT_LAYOUT;
     // Add any panels from DEFAULT_LAYOUT that are missing from the stored layout
     const missing = DEFAULT_LAYOUT.filter(d => !parsed.find(p => p.i === d.i));
     const merged = [...parsed, ...missing];
