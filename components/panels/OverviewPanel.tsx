@@ -46,9 +46,9 @@ export function OverviewPanel() {
     const el = gridRef.current;
     if (!el) return;
     const measure = () => {
-      const cols = 53;
-      const avail = el.offsetWidth - DOW_W - GAP - cols * GAP;
-      setSq(Math.max(6, Math.min(14, Math.floor(avail / cols))));
+      // sq drives row height only; clamp so rows look proportional to panel width
+      const colW = (el.offsetWidth - DOW_W - GAP) / 53;
+      setSq(Math.max(6, Math.min(14, Math.floor(colW))));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -101,7 +101,6 @@ export function OverviewPanel() {
   const totalCols = Math.ceil((days.length + jan1dow) / 7);
   const monthCols = getMonthStartCols(year);
   const todayKey  = toDateKey(new Date());
-  const step      = sq + GAP;
   const BR        = Math.max(1, Math.round(sq * 0.2));
 
   return (
@@ -127,56 +126,59 @@ export function OverviewPanel() {
 
       {/* Grid */}
       <div ref={gridRef} style={{ width: "100%", overflow: "hidden" }}>
-        {/* Month labels */}
-        <div style={{ paddingLeft: DOW_W + GAP, position: "relative", height: 13, marginBottom: 4 }}>
-          {monthCols.map(({ col, label }) => (
-            <span key={label} style={{
-              position: "absolute", left: col * step,
-              fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
-              color: C.textFaint, letterSpacing: "0.2px", userSelect: "none",
-            }}>
-              {label.toLowerCase()}
-            </span>
-          ))}
+        {/* Month labels — same column template as cell grid */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `${DOW_W}px repeat(${totalCols}, 1fr)`,
+          gap: `0 ${GAP}px`,
+          marginBottom: 4,
+        }}>
+          <div />
+          {Array.from({ length: totalCols }, (_, col) => {
+            const mc = monthCols.find(m => m.col === col);
+            return (
+              <div key={col} style={{
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+                color: mc ? C.textFaint : "transparent",
+                whiteSpace: "nowrap", overflow: "visible", userSelect: "none",
+              }}>
+                {mc?.label.toLowerCase() ?? ""}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Rows */}
-        <div style={{ display: "flex", gap: GAP, alignItems: "flex-start" }}>
-          {/* Day-of-week labels */}
-          <div style={{ display: "grid", gridTemplateRows: `repeat(7, ${sq}px)`, gap: GAP, width: DOW_W, flexShrink: 0 }}>
-            {DOW_LABELS.map((l, i) => (
-              <div key={i} style={{
-                height: sq, display: "flex", alignItems: "center", justifyContent: "flex-end",
-                paddingRight: 4,
-                fontFamily: "'JetBrains Mono',monospace",
-                fontSize: Math.min(9, Math.max(7, Math.round(sq * 0.65))),
-                color: i % 2 === 0 ? C.textFaint : "transparent",
-                userSelect: "none",
-              }}>
-                {l}
-              </div>
-            ))}
-          </div>
-
-          {/* Cells */}
-          <div style={{
+        {/* Rows — DOW labels + cell grid share the same column template */}
+        {DOW_LABELS.map((dow, rowIdx) => (
+          <div key={rowIdx} style={{
             display: "grid",
-            gridTemplateRows: `repeat(7, ${sq}px)`,
-            gridAutoColumns: `${sq}px`,
-            gridAutoFlow: "column",
-            gap: GAP,
+            gridTemplateColumns: `${DOW_W}px repeat(${totalCols}, 1fr)`,
+            gap: `${GAP}px`,
+            marginBottom: rowIdx === 6 ? 0 : GAP,
           }}>
-            {Array.from({ length: jan1dow }).map((_, i) => (
-              <div key={`pad${i}`} style={{ width: sq, height: sq }} />
-            ))}
-            {days.map((date, i) => {
-              const dateKey    = toDateKey(date);
+            {/* Day-of-week label */}
+            <div style={{
+              fontSize: 9, color: C.textFaint,
+              display: "flex", alignItems: "center", justifyContent: "flex-end",
+              paddingRight: 4, userSelect: "none", height: sq,
+              visibility: rowIdx % 2 === 0 ? "visible" : "hidden",
+            }}>
+              {dow}
+            </div>
+
+            {/* Cells for this row */}
+            {Array.from({ length: totalCols }, (_, colIdx) => {
+              const dayIndex = colIdx * 7 + rowIdx - jan1dow;
+              if (dayIndex < 0 || dayIndex >= days.length) {
+                return <div key={colIdx} style={{ height: sq }} />;
+              }
+              const dateKey    = toDateKey(days[dayIndex]);
               const cats       = activityMap.get(dateKey);
               const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
               const isToday    = dateKey === todayKey;
               return (
-                <div key={i} title={dateKey} style={{
-                  width: sq, height: sq, borderRadius: BR,
+                <div key={colIdx} title={dateKey} style={{
+                  height: sq, borderRadius: BR,
                   background: C.surface,
                   border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${activeCats.length ? "transparent" : C.border}`,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
@@ -190,7 +192,7 @@ export function OverviewPanel() {
               );
             })}
           </div>
-        </div>
+        ))}
       </div>
     </Panel>
   );
