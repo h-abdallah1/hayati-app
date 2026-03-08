@@ -99,6 +99,8 @@ export default function OverviewPage() {
   // Goals
   const [goals, setGoals] = useState<Goal[]>([]);
   useEffect(() => { setGoals(loadGoals()); }, []);
+  const [addingGoal, setAddingGoal] = useState(false);
+  const [newGoalTitle, setNewGoalTitle] = useState("");
 
   // Tooltip
   const [tooltip, setTooltip] = useState<{ x: number; y: number; dateKey: string } | null>(null);
@@ -403,9 +405,8 @@ export default function OverviewPage() {
         {/* Goals column */}
         {(() => {
           const yearGoals = goals.filter(g => goalYear(g) === year);
-          if (!yearGoals.length) return null;
           const doneCount = yearGoals.filter(g => g.status === "done").length;
-          const pct = Math.round(doneCount / yearGoals.length * 100);
+          const pct = yearGoals.length ? Math.round(doneCount / yearGoals.length * 100) : 0;
           const cycleGoalStatus = (id: number) => {
             const next = goals.map(g => {
               if (g.id !== id) return g;
@@ -419,10 +420,18 @@ export default function OverviewPage() {
             <div style={{ flex: "0 0 300px", minWidth: 0, paddingRight: 32, marginRight: 32, borderRight: `1px solid ${C.border}` }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
                 <span style={{ fontSize: 11, color: C.textFaint, letterSpacing: "0.06em" }}>GOALS {year}</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
-                  {doneCount}/{yearGoals.length} done
-                  {" "}<span style={{ color: pct >= 80 ? C.teal : pct >= 40 ? C.accent : C.textFaint }}>({pct}%)</span>
-                </span>
+                {yearGoals.length > 0 && (
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+                    {doneCount}/{yearGoals.length} done
+                    {" "}<span style={{ color: pct >= 80 ? C.teal : pct >= 40 ? C.accent : C.textFaint }}>({pct}%)</span>
+                  </span>
+                )}
+                <button
+                  onClick={() => setAddingGoal(true)}
+                  style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, padding: 0 }}
+                >
+                  + add
+                </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
                 {yearGoals.map((g, i) => (
@@ -465,6 +474,26 @@ export default function OverviewPage() {
                   </div>
                 ))}
               </div>
+              {addingGoal ? (
+                <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+                  <input
+                    autoFocus
+                    value={newGoalTitle}
+                    onChange={e => setNewGoalTitle(e.target.value)}
+                    placeholder="new goal..."
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && newGoalTitle.trim()) {
+                        const next = [...goals, { id: Date.now(), title: newGoalTitle.trim(), status: "todo" as const, year, created: new Date().toISOString() }];
+                        setGoals(next); persistGoals(next);
+                        setNewGoalTitle(""); setAddingGoal(false);
+                      }
+                      if (e.key === "Escape") { setNewGoalTitle(""); setAddingGoal(false); }
+                    }}
+                    style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 5, padding: "5px 8px", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, outline: "none" }}
+                  />
+                  <button onClick={() => { setNewGoalTitle(""); setAddingGoal(false); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, padding: "0 4px" }}>✕</button>
+                </div>
+              ) : null}
             </div>
           );
         })()}
