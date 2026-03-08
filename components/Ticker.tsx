@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { useNews } from "@/lib/hooks/useNews";
@@ -21,6 +22,7 @@ function dayOfYear(d: Date) {
 
 export function Ticker() {
   const C = useTheme();
+  const pathname = usePathname();
   const { global: settings } = useGlobalSettings();
   const { panels } = usePanelSettings();
   const now = useClock();
@@ -35,7 +37,7 @@ export function Ticker() {
     setActiveGoals(all.map(g => g.title));
   }, [year]);
 
-  if (!settings.showTicker) return null;
+  if (!settings.showTicker || !pathname.startsWith("/dashboard")) return null;
 
   // ── Year stats ─────────────────────────────────────────────────────────────
   const leap    = isLeapYear(year);
