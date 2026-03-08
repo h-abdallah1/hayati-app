@@ -5,21 +5,9 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
+import { NAV_ITEMS, FONT_ARABIC } from "@/lib/constants";
 import { useState } from "react";
-import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Globe, Settings, Maximize2 } from "lucide-react";
-
-const NAV = [
-  { href: "/",          Icon: Home,            label: "Home"      },
-  { href: "/dashboard", Icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/overview", Icon: Target,          label: "Overview"  },
-  { href: "/notes",    Icon: FileText,        label: "Notes"     },
-  { href: "/finance",  Icon: Wallet,          label: "Finance"   },
-  { href: "/gym",      Icon: Dumbbell,        label: "Gym"       },
-  { href: "/news",     Icon: Newspaper,       label: "News"      },
-  { href: "/films",    Icon: Clapperboard,    label: "Films"     },
-  { href: "/travel",   Icon: Globe,           label: "Travel"    },
-  { href: "/prayer",   Icon: Moon,            label: "Prayer"    },
-];
+import { Search, Settings, Maximize2 } from "lucide-react";
 
 export function Sidebar() {
   const C = useTheme();
@@ -30,8 +18,8 @@ export function Sidebar() {
   const PINNED = new Set(["/", "/dashboard"]);
 
   const orderedNav = [
-    ...NAV.filter(n => PINNED.has(n.href)),
-    ...[...NAV.filter(n => !PINNED.has(n.href))].sort((a, b) => {
+    ...NAV_ITEMS.filter(n => PINNED.has(n.href)),
+    ...[...NAV_ITEMS.filter(n => !PINNED.has(n.href))].sort((a, b) => {
       const order = global.moduleOrder;
       const ai = order.indexOf(MODULES.find(m => m.route === a.href)?.id ?? "");
       const bi = order.indexOf(MODULES.find(m => m.route === b.href)?.id ?? "");
@@ -64,7 +52,7 @@ export function Sidebar() {
     }}>
       {/* Logo mark */}
       <div style={{
-        fontFamily: "'Scheherazade New',serif",
+        fontFamily: FONT_ARABIC,
         fontSize: 20,
         color: C.accent,
         marginBottom: 14,

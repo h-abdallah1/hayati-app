@@ -11,18 +11,9 @@ const parser = new XMLParser({
 
 const UA = "Mozilla/5.0 (compatible; Hayati/1.0; RSS reader)";
 
-type RawEntry = Record<string, unknown>;
+import { extractText } from "@/lib/xml";
 
-function extractText(val: unknown): string {
-  if (!val && val !== 0) return "";
-  if (typeof val === "string") return val;
-  if (typeof val === "number") return String(val);
-  if (typeof val === "object" && val !== null) {
-    const o = val as Record<string, unknown>;
-    return String(o["__cdata"] ?? o["#text"] ?? "");
-  }
-  return String(val);
-}
+type RawEntry = Record<string, unknown>;
 
 function extractPoster(description: unknown): string | undefined {
   const html = extractText(description);

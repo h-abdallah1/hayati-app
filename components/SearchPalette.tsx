@@ -3,25 +3,20 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme";
-import { LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Clapperboard, Globe, Moon, Grid2X2, Home } from "lucide-react";
+import { NAV_ITEMS, FONT_MONO } from "@/lib/constants";
+import { Target, FileText, Dumbbell } from "lucide-react";
 import type { Goal, Note } from "@/lib/types";
 
 type Kind = "page" | "goal" | "note" | "exercise";
 type Result = { kind: Kind; label: string; sub?: string; href: string; Icon: React.ElementType };
 
-const PAGES: Result[] = [
-  { kind: "page", label: "Home",      sub: "landing",  href: "/",          Icon: Home           },
-  { kind: "page", label: "Dashboard", sub: "widgets",  href: "/dashboard", Icon: LayoutDashboard },
-  { kind: "page", label: "Overview",  sub: "activity", href: "/overview",  Icon: Grid2X2        },
-  { kind: "page", label: "Goals",     sub: "targets",  href: "/goals",     Icon: Target         },
-  { kind: "page", label: "Notes",     sub: "writing",  href: "/notes",     Icon: FileText       },
-  { kind: "page", label: "Finance",   sub: "money",    href: "/finance",   Icon: Wallet         },
-  { kind: "page", label: "Gym",       sub: "fitness",  href: "/gym",       Icon: Dumbbell       },
-  { kind: "page", label: "News",      sub: "rss",      href: "/news",      Icon: Newspaper      },
-  { kind: "page", label: "Films",     sub: "log",      href: "/films",     Icon: Clapperboard   },
-  { kind: "page", label: "Travel",    sub: "world",    href: "/travel",    Icon: Globe          },
-  { kind: "page", label: "Prayer",    sub: "times",    href: "/prayer",    Icon: Moon           },
-];
+const PAGES: Result[] = NAV_ITEMS.map(n => ({
+  kind: "page" as Kind,
+  label: n.label,
+  sub: n.desc?.toLowerCase(),
+  href: n.href,
+  Icon: n.Icon,
+}));
 
 export function SearchPalette() {
   const C      = useTheme();
@@ -117,21 +112,21 @@ export function SearchPalette() {
             value={query}
             onChange={e => { setQuery(e.target.value); setSel(0); }}
             placeholder="Search pages, goals, notes, exercises…"
-            style={{ flex: 1, background: "none", border: "none", outline: "none", fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.text }}
+            style={{ flex: 1, background: "none", border: "none", outline: "none", fontFamily: FONT_MONO, fontSize: 13, color: C.text }}
           />
           {query && (
             <button onClick={() => { setQuery(""); setSel(0); inputRef.current?.focus(); }}
-              style={{ background: "none", border: "none", color: C.textFaint, cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9 }}>
+              style={{ background: "none", border: "none", color: C.textFaint, cursor: "pointer", fontFamily: FONT_MONO, fontSize: 9 }}>
               clear
             </button>
           )}
-          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, background: C.surfaceHi, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 5px" }}>esc</span>
+          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.textFaint, background: C.surfaceHi, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 5px" }}>esc</span>
         </div>
 
         {/* Results */}
         <div ref={listRef} style={{ overflowY: "auto", flex: 1 }}>
           {results.length === 0 ? (
-            <div style={{ padding: "32px 18px", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, textAlign: "center" }}>no results</div>
+            <div style={{ padding: "32px 18px", fontFamily: FONT_MONO, fontSize: 11, color: C.textFaint, textAlign: "center" }}>no results</div>
           ) : results.map((r, i) => (
             <div
               key={i}
@@ -140,9 +135,9 @@ export function SearchPalette() {
               style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 18px", background: i === clampedSel ? C.surfaceHi : "transparent", cursor: "pointer", transition: "background 0.1s" }}
             >
               <r.Icon size={13} strokeWidth={1.7} color={i === clampedSel ? C.accent : C.textFaint} style={{ flexShrink: 0 }} />
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
+              <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
               {r.sub && (
-                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{r.sub}</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.textFaint, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{r.sub}</span>
               )}
             </div>
           ))}
@@ -151,7 +146,7 @@ export function SearchPalette() {
         {/* Footer */}
         <div style={{ borderTop: `1px solid ${C.border}`, padding: "7px 18px", display: "flex", gap: 16 }}>
           {([["↑↓", "navigate"], ["↵", "open"], ["⌘K", "toggle"]] as [string, string][]).map(([key, label]) => (
-            <span key={label} style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
+            <span key={label} style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.textFaint }}>
               <span style={{ color: C.textMuted }}>{key}</span> {label}
             </span>
           ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { C_DARK, C_LIGHT } from "./design";
 
 const ThemeContext = createContext<typeof C_DARK>(C_DARK);
@@ -15,13 +15,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const palette = isDark ? C_DARK : C_LIGHT;
-  const toggle = () => setIsDark(d => {
+  const toggle = useCallback(() => setIsDark(d => {
     const next = !d;
     localStorage.setItem("hayati-dark", String(next));
     return next;
-  });
+  }), []);
+  const toggleValue = useMemo(() => ({ isDark, toggle }), [isDark, toggle]);
   return (
-    <ToggleContext.Provider value={{ isDark, toggle }}>
+    <ToggleContext.Provider value={toggleValue}>
       <ThemeContext.Provider value={palette}>
         {children}
       </ThemeContext.Provider>

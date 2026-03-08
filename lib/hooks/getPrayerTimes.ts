@@ -1,8 +1,6 @@
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
 import type { TimeFormat, PrayerMethod } from "@/lib/types";
-
-type Coords = { lat: number; lon: number; tz: string };
-const DEFAULT_COORDS: Coords = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
+import { DEFAULT_COORDS, type Coords } from "@/lib/constants";
 
 const METHOD_MAP: Record<PrayerMethod, () => ReturnType<typeof CalculationMethod.Dubai>> = {
   Dubai:                 CalculationMethod.Dubai,

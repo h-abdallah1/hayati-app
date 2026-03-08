@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection, PrayerMethod, SmsConfig } from "./types";
+import { DEFAULT_COORDS } from "./constants";
 
 // ── Global settings ──────────────────────────────────────────────────────────
 
@@ -9,7 +10,7 @@ const PRAYER_METHODS: PrayerMethod[] = ["Dubai","MuslimWorldLeague","NorthAmeric
 
 const DEFAULT_GLOBAL: GlobalSettings = {
   name: "Hussein",
-  location: { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai", label: "Sharjah, UAE" },
+  location: { ...DEFAULT_COORDS, label: "Sharjah, UAE" },
   timeFormat: "12h",
   letterboxdUsername: "",
   obsidianVaultPath: "",
@@ -80,16 +81,18 @@ export function GlobalSettingsProvider({ children }: { children: React.ReactNode
     setGlobal(readGlobal());
   }, []);
 
-  const updateGlobal = (partial: Partial<GlobalSettings>) => {
+  const updateGlobal = useCallback((partial: Partial<GlobalSettings>) => {
     setGlobal(prev => {
       const next = { ...prev, ...partial };
       try { localStorage.setItem(GLOBAL_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
-  };
+  }, []);
+
+  const value = useMemo(() => ({ global, updateGlobal }), [global, updateGlobal]);
 
   return (
-    <GlobalContext.Provider value={{ global, updateGlobal }}>
+    <GlobalContext.Provider value={value}>
       {children}
     </GlobalContext.Provider>
   );
@@ -147,16 +150,18 @@ export function PanelSettingsProvider({ children }: { children: React.ReactNode 
     setPanels(readPanels());
   }, []);
 
-  const updatePanels = (partial: Partial<PanelSettings>) => {
+  const updatePanels = useCallback((partial: Partial<PanelSettings>) => {
     setPanels(prev => {
       const next = { ...prev, ...partial };
       try { localStorage.setItem(PANELS_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
-  };
+  }, []);
+
+  const value = useMemo(() => ({ panels, updatePanels }), [panels, updatePanels]);
 
   return (
-    <PanelsContext.Provider value={{ panels, updatePanels }}>
+    <PanelsContext.Provider value={value}>
       {children}
     </PanelsContext.Provider>
   );

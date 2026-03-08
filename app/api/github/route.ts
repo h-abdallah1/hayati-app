@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const username = searchParams.get("username");
-  const token    = searchParams.get("token") ?? "";
-  const year     = Number(searchParams.get("year") ?? new Date().getFullYear());
+export async function POST(request: Request) {
+  const { username, token, year: rawYear } = (await request.json()) as {
+    username?: string;
+    token?: string;
+    year?: number;
+  };
 
   if (!username) return NextResponse.json({ days: [] });
 
+  const year = rawYear ?? new Date().getFullYear();
   const from = `${year}-01-01T00:00:00Z`;
   const to   = `${year}-12-31T23:59:59Z`;
 

@@ -16,8 +16,11 @@ export function useGithub(username: string, token: string, year?: number) {
       return;
     }
     setLoaded(false);
-    const params = new URLSearchParams({ username, token, year: String(y) });
-    fetch(`/api/github?${params}`)
+    fetch("/api/github", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, token, year: y }),
+    })
       .then(r => r.json())
       .then(d => {
         setDays(d.days ?? []);

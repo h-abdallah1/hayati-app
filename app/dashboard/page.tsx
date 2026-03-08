@@ -11,6 +11,7 @@ import {
   NewsPanel, CalendarPanel,
   GymPanel, FinancePanel, SavingsPanel, FilmsPanel, OverviewPanel,
 } from "@/components/panels";
+import { ErrorBoundary } from "@/components/ui";
 import { Responsive, useContainerWidth } from "react-grid-layout";
 import type { LayoutItem, Layout } from "react-grid-layout";
 
@@ -65,7 +66,9 @@ function HayatiInner() {
             width={width}
           >
             {visibleLayout.map((item: LayoutItem) => (
-              <div key={item.i}>{PANEL_MAP[item.i]}</div>
+              <div key={item.i}>
+                <ErrorBoundary>{PANEL_MAP[item.i]}</ErrorBoundary>
+              </div>
             ))}
           </Responsive>
         )}

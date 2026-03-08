@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-type Coords = { lat: number; lon: number; tz: string };
-const DEFAULT_COORDS: Coords = { lat: 25.3573, lon: 55.4033, tz: "Asia/Dubai" };
+import { DEFAULT_COORDS, type Coords } from "@/lib/constants";
 
 const WX_MAP: Record<number, string> = {
   0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",

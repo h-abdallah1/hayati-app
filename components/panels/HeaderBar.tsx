@@ -5,6 +5,7 @@ import { useWeather } from '@/lib/hooks';
 import { useTheme } from '@/lib/theme';
 import { formatClock } from '@/lib/time';
 import { Dot, Sep, Stat, Tag } from '@/components/ui';
+import { getGreeting, FONT_HEADING } from '@/lib/constants';
 
 export function HeaderBar({ time }: { time: Date }) {
   const C = useTheme();
@@ -13,16 +14,7 @@ export function HeaderBar({ time }: { time: Date }) {
   const h = time.getHours(),
     m = time.getMinutes(),
     s = time.getSeconds();
-  const greeting =
-    h < 5
-      ? 'Good night'
-      : h < 12
-        ? 'Good morning'
-        : h < 17
-          ? 'Good afternoon'
-          : h < 20
-            ? 'Good evening'
-            : 'Good night';
+  const greet = getGreeting(time);
   const timeStr = formatClock(time, global.timeFormat);
   const dayFrac = (h * 3600 + m * 60 + s) / 86400;
   const weekFrac = (time.getDay() || 7) / 7;
@@ -73,13 +65,13 @@ export function HeaderBar({ time }: { time: Date }) {
       >
         <span
           style={{
-            fontFamily: "'Syne',sans-serif",
+            fontFamily: FONT_HEADING,
             fontSize: 14,
             fontWeight: 700,
             color: C.textMuted,
           }}
         >
-          {greeting},&nbsp;<span style={{ color: C.text }}>{global.name}</span>
+          {greet},&nbsp;<span style={{ color: C.text }}>{global.name}</span>
         </span>
       </div>
       <div style={{ display: 'flex', gap: 16 }}>

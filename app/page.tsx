@@ -8,34 +8,14 @@ import { useTheme } from "@/lib/theme";
 import { useClock } from "@/lib/hooks";
 import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
-import {
-  LayoutDashboard, Target, FileText, Wallet,
-  Dumbbell, Newspaper, Clapperboard, Globe, Moon, Search,
-} from "lucide-react";
+import { NAV_ITEMS, FONT_MONO, FONT_HEADING, FONT_ARABIC, getGreeting } from "@/lib/constants";
+import { Search, Target, Dumbbell } from "lucide-react";
 
-const SECTIONS = [
-  { href: "/dashboard", Icon: LayoutDashboard, label: "Dashboard", desc: "Panels & widgets"    },
-  { href: "/overview",  Icon: Target,          label: "Overview",  desc: "Goals & activity"    },
-  { href: "/notes",     Icon: FileText,        label: "Notes",     desc: "Obsidian vault"      },
-  { href: "/finance",   Icon: Wallet,          label: "Finance",   desc: "Transactions"        },
-  { href: "/gym",       Icon: Dumbbell,        label: "Gym",       desc: "Workout analytics"   },
-  { href: "/news",      Icon: Newspaper,       label: "News",      desc: "RSS feeds"           },
-  { href: "/films",     Icon: Clapperboard,    label: "Films",     desc: "Letterboxd log"      },
-  { href: "/travel",    Icon: Globe,           label: "Travel",    desc: "World map"           },
-  { href: "/prayer",    Icon: Moon,            label: "Prayer",    desc: "Prayer times"        },
-];
+const SECTIONS = NAV_ITEMS.filter(n => n.href !== "/");
 
 type Result = { label: string; sub: string; href: string; kind: string; Icon: React.ElementType };
 
-const PAGE_RESULTS: Result[] = SECTIONS.map(s => ({ label: s.label, sub: s.desc, href: s.href, kind: "page", Icon: s.Icon }));
-
-function greeting(date: Date, name: string) {
-  const h = date.getHours();
-  if (h >= 5  && h < 12) return `Good morning, ${name}`;
-  if (h >= 12 && h < 17) return `Good afternoon, ${name}`;
-  if (h >= 17 && h < 21) return `Good evening, ${name}`;
-  return `Good night, ${name}`;
-}
+const PAGE_RESULTS: Result[] = SECTIONS.map(s => ({ label: s.label, sub: s.desc ?? "", href: s.href, kind: "page", Icon: s.Icon }));
 
 function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
   const C = useTheme();
@@ -60,10 +40,10 @@ function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
     >
       <Icon size={16} color={C.accent} strokeWidth={1.8} />
       <div>
-        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 12, fontWeight: 700, color: C.text }}>
+        <div style={{ fontFamily: FONT_HEADING, fontSize: 12, fontWeight: 700, color: C.text }}>
           {label}
         </div>
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginTop: 2 }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.textFaint, marginTop: 2 }}>
           {desc}
         </div>
       </div>
@@ -139,7 +119,7 @@ function InlineSearch() {
             background: "none",
             border: "none",
             outline: "none",
-            fontFamily: "'JetBrains Mono',monospace",
+            fontFamily: FONT_MONO,
             fontSize: 12,
             color: C.text,
           }}
@@ -147,7 +127,7 @@ function InlineSearch() {
         {query && (
           <button
             onMouseDown={e => { e.preventDefault(); setQuery(""); inputRef.current?.focus(); }}
-            style={{ background: "none", border: "none", color: C.textFaint, cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, padding: 0 }}
+            style={{ background: "none", border: "none", color: C.textFaint, cursor: "pointer", fontFamily: FONT_MONO, fontSize: 9, padding: 0 }}
           >
             clear
           </button>
@@ -167,7 +147,7 @@ function InlineSearch() {
           zIndex: 50,
         }}>
           {results.length === 0 ? (
-            <div style={{ padding: "12px 14px", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>
+            <div style={{ padding: "12px 14px", fontFamily: FONT_MONO, fontSize: 11, color: C.textFaint }}>
               no results
             </div>
           ) : results.map((r, i) => (
@@ -186,10 +166,10 @@ function InlineSearch() {
               }}
             >
               <r.Icon size={13} strokeWidth={1.7} color={i === clampedSel ? C.accent : C.textFaint} style={{ flexShrink: 0 }} />
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {r.label}
               </span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, flexShrink: 0 }}>
+              <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.textFaint, flexShrink: 0 }}>
                 {r.sub}
               </span>
             </div>
@@ -217,18 +197,18 @@ export default function HomePage() {
       <div style={{ maxWidth: 700, margin: "0 auto", width: "100%" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontFamily: "'Scheherazade New',serif", fontSize: 52, color: C.accent, lineHeight: 1 }}>
+          <div style={{ fontFamily: FONT_ARABIC, fontSize: 52, color: C.accent, lineHeight: 1 }}>
             ح
           </div>
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 32, fontWeight: 800, color: C.text, marginTop: 8 }}>
+          <div style={{ fontFamily: FONT_HEADING, fontSize: 32, fontWeight: 800, color: C.text, marginTop: 8 }}>
             Hayati
           </div>
-          <div style={{ fontFamily: "'Scheherazade New',serif", fontSize: 18, color: C.textMuted, marginTop: 4 }}>
+          <div style={{ fontFamily: FONT_ARABIC, fontSize: 18, color: C.textMuted, marginTop: 4 }}>
             حياتي
           </div>
           <div style={{ width: 40, height: 1, background: C.border, margin: "16px auto" }} />
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint }}>
-            {greeting(time, global.name)}
+          <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.textFaint }}>
+            {getGreeting(time)}, {global.name}
           </div>
         </div>
 

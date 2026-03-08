@@ -13,5 +13,3 @@ export const C_LIGHT = {
   text:      "#1a1a1a", textMuted: "#555555", textFaint: "#b0b0a8",
   red: "#c0392b", amber: "#c87800", teal: "#1a8a82", blue: "#2563a8",
 };
-
-export const C = C_DARK;
