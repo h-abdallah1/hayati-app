@@ -22,6 +22,7 @@ export type GlobalSettings = {
   paymentDay: number;
   financeHideIncome: boolean;
   disabledModules: string[];
+  showTicker: boolean;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

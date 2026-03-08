@@ -27,7 +27,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Sidebar />
-          <main style={{ marginLeft: 56 }}>
+          <main style={{ marginLeft: 56, paddingBottom: 28 }}>
             {children}
           </main>
         </Providers>

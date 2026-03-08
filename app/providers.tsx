@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { LayoutProvider } from "@/lib/layout";
 import { SearchPalette } from "@/components/SearchPalette";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
+import { Ticker } from "@/components/Ticker";
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -21,6 +22,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {children}
       <SearchPalette />
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <Ticker />
     </>
   );
 }

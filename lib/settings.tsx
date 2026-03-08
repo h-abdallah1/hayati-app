@@ -19,6 +19,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   paymentDay: 1,
   financeHideIncome: false,
   disabledModules: [],
+  showTicker: true,
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -47,6 +48,7 @@ function readGlobal(): GlobalSettings {
         : DEFAULT_GLOBAL.paymentDay,
       financeHideIncome: typeof parsed.financeHideIncome === "boolean" ? parsed.financeHideIncome : DEFAULT_GLOBAL.financeHideIncome,
       disabledModules: Array.isArray(parsed.disabledModules) ? parsed.disabledModules : DEFAULT_GLOBAL.disabledModules,
+      showTicker: typeof parsed.showTicker === "boolean" ? parsed.showTicker : DEFAULT_GLOBAL.showTicker,
     };
   } catch {
     return DEFAULT_GLOBAL;

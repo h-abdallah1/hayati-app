@@ -112,6 +112,22 @@ export function GeneralSection({ open }: Props) {
         </div>
       </div>
 
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={fieldLabel(C)}>Ticker bar</span>
+          <button onClick={() => updateGlobal({ showTicker: !global.showTicker })} style={{
+            background: global.showTicker ? C.accentDim : "none",
+            border: `1px solid ${global.showTicker ? C.accent : C.border}`,
+            borderRadius: 5, cursor: "pointer",
+            fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+            color: global.showTicker ? C.accent : C.textFaint,
+            padding: "3px 10px", letterSpacing: "0.3px",
+          }}>
+            {global.showTicker ? "on" : "off"}
+          </button>
+        </div>
+      </div>
+
       {/* Finance */}
       <div style={sectionHead(C)}>Finance</div>
 
