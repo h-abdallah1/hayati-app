@@ -7,6 +7,8 @@ import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
+import type { Goal } from "@/lib/types";
+import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STATUS_CYCLE } from "@/lib/goals";
 import {
   buildYearDays,
   mergeActivities,
@@ -17,6 +19,44 @@ import {
   getMonthStartCols,
   type ActivityCategory,
 } from "./helpers";
+
+// ── Year stats helpers ─────────────────────────────────────────────────────
+
+function isLeapYear(y: number): boolean {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+}
+
+function dayOfYear(date: Date): number {
+  return Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / 86400000) + 1;
+}
+
+function StatBox({
+  label, value, sub, hi, C,
+}: {
+  label: string; value: string; sub?: string; hi?: boolean;
+  C: ReturnType<typeof useTheme>;
+}) {
+  return (
+    <div>
+      <div style={{
+        fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+        color: C.textFaint, letterSpacing: "0.6px",
+        textTransform: "uppercase", marginBottom: 3,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontFamily: "'JetBrains Mono',monospace", fontSize: 20,
+        color: hi ? C.accent : C.text, lineHeight: 1,
+      }}>
+        {value}
+        {sub && (
+          <span style={{ fontSize: 11, color: C.textFaint, marginLeft: 4 }}>{sub}</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const CELL = 18;
 const GAP = 5;
@@ -55,6 +95,10 @@ export default function OverviewPage() {
   const [gymLoading, setGymLoading] = useState(false);
   const [obsidianLoading, setObsidianLoading] = useState(false);
   const { films } = useLetterboxd(settings.letterboxdUsername);
+
+  // Goals
+  const [goals, setGoals] = useState<Goal[]>([]);
+  useEffect(() => { setGoals(loadGoals()); }, []);
 
   // Tooltip
   const [tooltip, setTooltip] = useState<{ x: number; y: number; dateKey: string } | null>(null);
@@ -197,6 +241,36 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      {/* Year stats bar */}
+      {(() => {
+        const now = new Date();
+        const leap = isLeapYear(year);
+        const total = leap ? 366 : 365;
+        const today =
+          year < currentYear ? total :
+          year > currentYear ? 0 :
+          dayOfYear(now);
+        const displayDay = Math.min(today, total);
+        const pct = ((displayDay / total) * 100).toFixed(1);
+        const jan1DOW = new Date(year, 0, 1).getDay();
+        const refDate = year < currentYear ? new Date(year, 11, 31)
+                      : year > currentYear ? new Date(year, 0, 1)
+                      : now;
+        const weekNum = year < currentYear ? 52
+                      : year > currentYear ? 1
+                      : Math.ceil((today + jan1DOW) / 7);
+        const quarter = Math.ceil((refDate.getMonth() + 1) / 3);
+        return (
+          <div style={{ display: "flex", gap: 28, marginBottom: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <StatBox label="day of year" value={String(displayDay)} sub={`/ ${total}`} C={C} />
+            <StatBox label="remaining"   value={String(total - displayDay)} sub="days" C={C} />
+            <StatBox label="complete"    value={`${pct}%`} hi C={C} />
+            <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
+            <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
+          </div>
+        );
+      })()}
+
       {/* Legend */}
       <div style={{ display: "flex", gap: 20, marginBottom: 24, alignItems: "center" }}>
         {ORDERED_CATS.map(cat => {
@@ -323,84 +397,153 @@ export default function OverviewPage() {
       {/* Separator */}
       <div style={{ borderTop: `1px solid ${C.border}`, marginBottom: 24 }} />
 
-      {/* Activity Feed */}
-      <div ref={feedRef}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: C.textFaint, letterSpacing: "0.06em" }}>ACTIVITY FEED</div>
-        </div>
+      {/* Goals + Activity Feed side by side */}
+      <div style={{ display: "flex", gap: 0, alignItems: "flex-start" }}>
 
-        {/* Month filter segments */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 20 }}>
-          {[null, 0,1,2,3,4,5,6,7,8,9,10,11].map(m => {
-            const active = selectedMonth === m;
-            const label = m === null ? "All" : new Date(year, m, 1).toLocaleDateString("en-US", { month: "short" });
-            return (
-              <button
-                key={m ?? "all"}
-                onClick={() => setSelectedMonth(m)}
-                style={{
-                  fontSize: 11,
-                  padding: "3px 9px",
-                  borderRadius: 4,
-                  border: `1px solid ${active ? C.accentMid : C.border}`,
-                  background: active ? C.accentDim : "transparent",
-                  color: active ? C.accent : C.textMuted,
-                  cursor: "pointer",
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
+        {/* Goals column */}
         {(() => {
-          const visible = selectedMonth === null
-            ? feedEntries
-            : feedEntries.filter(e => new Date(e.date).getMonth() === selectedMonth);
-          if (visible.length === 0)
-            return <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>;
+          const yearGoals = goals.filter(g => goalYear(g) === year);
+          if (!yearGoals.length) return null;
+          const doneCount = yearGoals.filter(g => g.status === "done").length;
+          const pct = Math.round(doneCount / yearGoals.length * 100);
+          const cycleGoalStatus = (id: number) => {
+            const next = goals.map(g => {
+              if (g.id !== id) return g;
+              const ns = STATUS_CYCLE[g.status];
+              return { ...g, status: ns, completedAt: ns === "done" ? new Date().toISOString() : undefined };
+            });
+            setGoals(next);
+            persistGoals(next);
+          };
           return (
-            <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24, maxWidth: 560 }}>
-              {visible.map(entry => (
-                <div key={entry.date} data-date={entry.date} style={{ position: "relative", paddingBottom: 24 }}>
-                  {/* Diamond marker */}
-                  <div style={{
-                    position: "absolute", left: -29,
-                    width: 8, height: 8,
-                    borderRadius: 2,
-                    background: C.border,
-                    transform: "rotate(45deg)",
-                    top: 3,
-                  }} />
-                  {/* Date label */}
-                  <div style={{
-                    fontSize: 11, fontWeight: 600,
-                    color: C.textMuted,
-                    marginBottom: 8,
-                    fontFamily: "'Syne', sans-serif",
+            <div style={{ flex: "0 0 300px", minWidth: 0, paddingRight: 32, marginRight: 32, borderRight: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: 11, color: C.textFaint, letterSpacing: "0.06em" }}>GOALS {year}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+                  {doneCount}/{yearGoals.length} done
+                  {" "}<span style={{ color: pct >= 80 ? C.teal : pct >= 40 ? C.accent : C.textFaint }}>({pct}%)</span>
+                </span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {yearGoals.map((g, i) => (
+                  <div key={g.id} style={{
+                    display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: "8px 0",
+                    borderBottom: i < yearGoals.length - 1 ? `1px solid ${C.border}` : "none",
                   }}>
-                    {formatDateFull(entry.date)}
-                  </div>
-                  {/* Items */}
-                  {entry.items.map((item, i) => (
-                    <div key={i} style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 12,
-                      marginBottom: 6,
+                    <button
+                      onClick={() => cycleGoalStatus(g.id)}
+                      title="click to cycle status"
+                      style={{
+                        background: "none", border: "none", cursor: "pointer",
+                        fontFamily: "'JetBrains Mono',monospace", fontSize: 13,
+                        color: g.status === "done" ? C.textFaint : g.status === "active" ? C.accent : C.textMuted,
+                        padding: 0, marginTop: 1, flexShrink: 0, lineHeight: 1,
+                      }}
+                    >
+                      {STATUS_ICON[g.status]}
+                    </button>
+                    <span style={{
+                      fontFamily: "'JetBrains Mono',monospace", fontSize: 12,
+                      color: g.status === "done" ? C.textFaint : C.text,
+                      textDecoration: g.status === "done" ? "line-through" : "none",
+                      textDecorationColor: C.textFaint,
+                      flex: 1,
                     }}>
-                      {(() => { const Icon = CAT_ICONS[item.category]; return <Icon size={13} color={CAT_COLORS[item.category]} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
-                      <span style={{ color: C.textMuted }}>{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                      {g.title}
+                    </span>
+                    {g.optional && (
+                      <span style={{
+                        fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+                        color: C.textFaint, background: C.textFaint + "14",
+                        border: `1px solid ${C.textFaint}33`,
+                        borderRadius: 4, padding: "2px 6px", flexShrink: 0,
+                      }}>
+                        optional
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })()}
+
+        {/* Activity Feed column */}
+        <div ref={feedRef} style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: C.textFaint, letterSpacing: "0.06em", marginBottom: 16 }}>ACTIVITY FEED</div>
+
+          {/* Month filter segments */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 20 }}>
+            {[null, 0,1,2,3,4,5,6,7,8,9,10,11].map(m => {
+              const active = selectedMonth === m;
+              const label = m === null ? "All" : new Date(year, m, 1).toLocaleDateString("en-US", { month: "short" });
+              return (
+                <button
+                  key={m ?? "all"}
+                  onClick={() => setSelectedMonth(m)}
+                  style={{
+                    fontSize: 11,
+                    padding: "3px 9px",
+                    borderRadius: 4,
+                    border: `1px solid ${active ? C.accentMid : C.border}`,
+                    background: active ? C.accentDim : "transparent",
+                    color: active ? C.accent : C.textMuted,
+                    cursor: "pointer",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {(() => {
+            const visible = selectedMonth === null
+              ? feedEntries
+              : feedEntries.filter(e => new Date(e.date).getMonth() === selectedMonth);
+            if (visible.length === 0)
+              return <div style={{ fontSize: 12, color: C.textFaint }}>No activity recorded for {year}.</div>;
+            return (
+              <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24 }}>
+                {visible.map(entry => (
+                  <div key={entry.date} data-date={entry.date} style={{ position: "relative", paddingBottom: 24 }}>
+                    <div style={{
+                      position: "absolute", left: -29,
+                      width: 8, height: 8,
+                      borderRadius: 2,
+                      background: C.border,
+                      transform: "rotate(45deg)",
+                      top: 3,
+                    }} />
+                    <div style={{
+                      fontSize: 11, fontWeight: 600,
+                      color: C.textMuted,
+                      marginBottom: 8,
+                      fontFamily: "'Syne', sans-serif",
+                    }}>
+                      {formatDateFull(entry.date)}
+                    </div>
+                    {entry.items.map((item, i) => (
+                      <div key={i} style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: 12,
+                        marginBottom: 6,
+                      }}>
+                        {(() => { const Icon = CAT_ICONS[item.category]; return <Icon size={13} color={CAT_COLORS[item.category]} strokeWidth={1.8} style={{ flexShrink: 0 }} />; })()}
+                        <span style={{ color: C.textMuted }}>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
       </div>
 
       {/* Tooltip */}
