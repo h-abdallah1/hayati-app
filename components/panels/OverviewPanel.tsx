@@ -160,7 +160,7 @@ export function OverviewPanel() {
             <div style={{
               fontSize: 9, color: C.textFaint,
               display: "flex", alignItems: "center", justifyContent: "flex-end",
-              paddingRight: 4, userSelect: "none", height: sq,
+              paddingRight: 4, userSelect: "none", aspectRatio: "1",
               visibility: rowIdx % 2 === 0 ? "visible" : "hidden",
             }}>
               {dow}
@@ -170,7 +170,7 @@ export function OverviewPanel() {
             {Array.from({ length: totalCols }, (_, colIdx) => {
               const dayIndex = colIdx * 7 + rowIdx - jan1dow;
               if (dayIndex < 0 || dayIndex >= days.length) {
-                return <div key={colIdx} style={{ height: sq }} />;
+                return <div key={colIdx} style={{ aspectRatio: "1" }} />;
               }
               const dateKey    = toDateKey(days[dayIndex]);
               const cats       = activityMap.get(dateKey);
@@ -178,10 +178,11 @@ export function OverviewPanel() {
               const isToday    = dateKey === todayKey;
               return (
                 <div key={colIdx} title={dateKey} style={{
-                  height: sq, borderRadius: BR,
+                  aspectRatio: "1", borderRadius: BR,
                   background: C.surface,
                   border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${activeCats.length ? "transparent" : C.border}`,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
+                  overflow: "hidden",
                 }}>
                   {activeCats.map(cat => {
                     const Icon = CAT_ICONS[cat];
