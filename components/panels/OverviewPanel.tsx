@@ -1,52 +1,85 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import Link from "next/link";
-import { Dumbbell, Clapperboard, Target } from "lucide-react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { Dumbbell, Clapperboard, FileText, Target } from "lucide-react";
 import { useTheme } from "@/lib/theme";
-import { usePanelSize } from "@/lib/hooks";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { Panel, Tag } from "@/components/ui";
 import { load as loadGoals, goalYear } from "@/lib/goals";
+import {
+  buildYearDays, mergeActivities, toDateKey, getMonthStartCols,
+  type ActivityCategory,
+} from "@/app/overview/helpers";
+import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 
-function isLeapYear(y: number) {
-  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-}
-function dayOfYear(d: Date) {
-  return Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000) + 1;
-}
+const CAT_COLORS: Record<ActivityCategory, string> = {
+  gym:  "#4a9eff",
+  film: "#ff6b6b",
+  note: "#f5a623",
+};
+
+const CAT_ICONS = {
+  gym:  Dumbbell,
+  film: Clapperboard,
+  note: FileText,
+} as const;
+
+const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note"];
+const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const DOW_W = 20; // px for day-label column
+const GAP   = 3;
 
 export function OverviewPanel() {
   const C = useTheme();
-  const ref = useRef<HTMLDivElement>(null);
-  const { height } = usePanelSize(ref);
   const { global: settings } = useGlobalSettings();
   const { films } = useLetterboxd(settings.letterboxdUsername);
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const leap = isLeapYear(year);
-  const total = leap ? 366 : 365;
-  const today = dayOfYear(now);
-  const pct = ((today / total) * 100).toFixed(1);
-  const remaining = total - today;
+  const year       = new Date().getFullYear();
+  const yearStart  = `${year}-01-01`;
+  const yearEnd    = `${year + 1}-01-01`;
 
-  // Gym sessions this year
-  const [gymCount, setGymCount] = useState<number | null>(null);
+  // Measure grid container width → derive cell size
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [sq, setSq] = useState(11);
   useEffect(() => {
-    fetch("/api/hevy")
-      .then(r => r.json())
-      .then(d => setGymCount(d.count ?? null))
-      .catch(() => {});
+    const el = gridRef.current;
+    if (!el) return;
+    const measure = () => {
+      const cols = 53;
+      const avail = el.offsetWidth - DOW_W - GAP - cols * GAP;
+      setSq(Math.max(6, Math.min(14, Math.floor(avail / cols))));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  // Films this year
-  const yearStart = `${year}-01-01`;
-  const yearEnd   = `${year + 1}-01-01`;
-  const filmCount = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).length;
+  // Fetch gym workouts
+  const [gymWorkouts, setGymWorkouts] = useState<HevyWorkoutFull[]>([]);
+  const [loading, setLoading] = useState(false);
+  const fetchGym = useCallback(() => {
+    setLoading(true);
+    fetch(`/api/hevy/workouts?year=${year}`)
+      .then(r => r.json())
+      .then(d => setGymWorkouts(d.workouts ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [year]);
+  useEffect(() => { fetchGym(); }, [fetchGym]);
 
-  // Goals this year
+  // Fetch obsidian notes
+  const [obsidianFiles, setObsidianFiles] = useState<{ mtime: number }[]>([]);
+  useEffect(() => {
+    if (!settings.obsidianVaultPath) { setObsidianFiles([]); return; }
+    fetch(`/api/obsidian/files?vault=${encodeURIComponent(settings.obsidianVaultPath)}`)
+      .then(r => r.json())
+      .then(d => setObsidianFiles(d.files ?? []))
+      .catch(() => {});
+  }, [settings.obsidianVaultPath]);
+
+  // Goals
   const [goalsDone, setGoalsDone]   = useState(0);
   const [goalsTotal, setGoalsTotal] = useState(0);
   useEffect(() => {
@@ -55,75 +88,109 @@ export function OverviewPanel() {
     setGoalsDone(all.filter(g => g.status === "done").length);
   }, [year]);
 
-  const sm = height > 0 && height < 160;
+  // Build activity map
+  const gymDates  = gymWorkouts.filter(w => w.date >= yearStart && w.date < yearEnd).map(w => w.date);
+  const filmDates = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).map(f => f.watchedDate);
+  const noteDates = obsidianFiles.map(f => toDateKey(new Date(f.mtime))).filter(d => d >= yearStart && d < yearEnd);
+  const activityMap = mergeActivities(gymDates, filmDates, noteDates);
 
-  const statRow = [
-    { icon: <Dumbbell size={10} strokeWidth={2} color={C.accent} />,      label: "gym",   val: gymCount ?? "—", href: "/gym"      },
-    { icon: <Clapperboard size={10} strokeWidth={2} color="#ff6b6b" />,   label: "films", val: filmCount,       href: "/films"    },
-    { icon: <Target size={10} strokeWidth={2} color={C.textMuted} />,     label: "goals", val: goalsTotal ? `${goalsDone}/${goalsTotal}` : "—", href: "/overview" },
-  ];
+  // Grid geometry
+  const days      = buildYearDays(year);
+  const jan1      = new Date(year, 0, 1);
+  const jan1dow   = (jan1.getDay() + 6) % 7; // Mon=0
+  const totalCols = Math.ceil((days.length + jan1dow) / 7);
+  const monthCols = getMonthStartCols(year);
+  const todayKey  = toDateKey(new Date());
+  const step      = sq + GAP;
+  const BR        = Math.max(1, Math.round(sq * 0.2));
 
   return (
-    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: sm ? 14 : 20 }}>
-      <div className="hayati-drag-handle" style={{ marginBottom: sm ? 8 : 14 }}>
-        <Tag color={C.textFaint}>Overview</Tag>
-      </div>
-
-      {/* Big % */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: sm ? 8 : 12 }}>
-        <span style={{
-          fontFamily: "'Syne',sans-serif", fontSize: sm ? 28 : 42,
-          fontWeight: 800, color: C.accent, lineHeight: 1,
-        }}>
-          {pct}%
-        </span>
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
-          {year}
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: sm ? 10 : 14 }}>
-        <div style={{
-          height: "100%", width: `${pct}%`,
-          background: C.accent, borderRadius: 2,
-          boxShadow: `0 0 8px ${C.accent}55`,
-          transition: "width .3s",
-        }} />
-      </div>
-
-      {/* Day / remaining */}
-      {!sm && (
-        <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
+    <Panel style={{ display: "flex", flexDirection: "column", padding: 16 }}>
+      {/* Header row */}
+      <div className="hayati-drag-handle" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <Tag color={C.textFaint}>Overview {year}</Tag>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          {/* Stats */}
           {[
-            { label: "day",       val: String(today),      unit: `/ ${total}` },
-            { label: "remaining", val: String(remaining),  unit: "days"       },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>
-                {s.label}
-              </div>
-              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: C.text, lineHeight: 1 }}>
-                {s.val}
-                <span style={{ fontSize: 9, marginLeft: 3, color: C.textFaint }}>{s.unit}</span>
-              </div>
+            { icon: <Dumbbell size={9} strokeWidth={2} color={CAT_COLORS.gym}  />, val: gymDates.length  },
+            { icon: <Clapperboard size={9} strokeWidth={2} color={CAT_COLORS.film} />, val: filmDates.length },
+            { icon: <FileText size={9} strokeWidth={2} color={CAT_COLORS.note} />, val: noteDates.length },
+            { icon: <Target size={9} strokeWidth={2} color={C.textMuted} />, val: goalsTotal ? `${goalsDone}/${goalsTotal}` : "—" },
+          ].map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textMuted }}>
+              {s.icon}{s.val}
             </div>
           ))}
+          {loading && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>loading…</span>}
         </div>
-      )}
+      </div>
 
-      {/* Activity stats */}
-      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: sm ? 8 : 12, marginTop: "auto", display: "flex", gap: sm ? 12 : 20 }}>
-        {statRow.map(s => (
-          <Link key={s.label} href={s.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase" }}>
-              {s.icon}{s.label}
-            </div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: sm ? 14 : 18, color: C.textMuted, lineHeight: 1 }}>
-              {s.val}
-            </div>
-          </Link>
-        ))}
+      {/* Grid */}
+      <div ref={gridRef} style={{ width: "100%", overflow: "hidden" }}>
+        {/* Month labels */}
+        <div style={{ paddingLeft: DOW_W + GAP, position: "relative", height: 13, marginBottom: 4 }}>
+          {monthCols.map(({ col, label }) => (
+            <span key={label} style={{
+              position: "absolute", left: col * step,
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+              color: C.textFaint, letterSpacing: "0.2px", userSelect: "none",
+            }}>
+              {label.toLowerCase()}
+            </span>
+          ))}
+        </div>
+
+        {/* Rows */}
+        <div style={{ display: "flex", gap: GAP, alignItems: "flex-start" }}>
+          {/* Day-of-week labels */}
+          <div style={{ display: "grid", gridTemplateRows: `repeat(7, ${sq}px)`, gap: GAP, width: DOW_W, flexShrink: 0 }}>
+            {DOW_LABELS.map((l, i) => (
+              <div key={i} style={{
+                height: sq, display: "flex", alignItems: "center", justifyContent: "flex-end",
+                paddingRight: 4,
+                fontFamily: "'JetBrains Mono',monospace",
+                fontSize: Math.min(9, Math.max(7, Math.round(sq * 0.65))),
+                color: i % 2 === 0 ? C.textFaint : "transparent",
+                userSelect: "none",
+              }}>
+                {l}
+              </div>
+            ))}
+          </div>
+
+          {/* Cells */}
+          <div style={{
+            display: "grid",
+            gridTemplateRows: `repeat(7, ${sq}px)`,
+            gridAutoColumns: `${sq}px`,
+            gridAutoFlow: "column",
+            gap: GAP,
+          }}>
+            {Array.from({ length: jan1dow }).map((_, i) => (
+              <div key={`pad${i}`} style={{ width: sq, height: sq }} />
+            ))}
+            {days.map((date, i) => {
+              const dateKey    = toDateKey(date);
+              const cats       = activityMap.get(dateKey);
+              const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
+              const isToday    = dateKey === todayKey;
+              return (
+                <div key={i} title={dateKey} style={{
+                  width: sq, height: sq, borderRadius: BR,
+                  background: C.surface,
+                  border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${activeCats.length ? "transparent" : C.border}`,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
+                }}>
+                  {activeCats.map(cat => {
+                    const Icon = CAT_ICONS[cat];
+                    const sz = activeCats.length === 1 ? Math.max(5, sq - 4) : activeCats.length === 2 ? Math.max(4, sq - 6) : Math.max(3, sq - 8);
+                    return <Icon key={cat} size={sz} color={CAT_COLORS[cat]} strokeWidth={2} style={{ flexShrink: 0 }} />;
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </Panel>
   );
