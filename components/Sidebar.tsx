@@ -6,7 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
 import { useState } from "react";
-import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Globe, Settings } from "lucide-react";
+import { Home, LayoutDashboard, Target, FileText, Wallet, Dumbbell, Newspaper, Moon, Search, Clapperboard, Globe, Settings, Maximize2 } from "lucide-react";
 
 const NAV = [
   { href: "/",          Icon: Home,            label: "Home"      },
@@ -24,7 +24,7 @@ const NAV = [
 export function Sidebar() {
   const C = useTheme();
   const path = usePathname();
-  const { global } = useGlobalSettings();
+  const { global, updateGlobal } = useGlobalSettings();
   const [hovered, setHovered] = useState<string | null>(null);
 
   const PINNED = new Set(["/", "/dashboard"]);
@@ -103,6 +103,22 @@ export function Sidebar() {
 
       {/* Bottom buttons */}
       <div style={{ marginTop: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+        <button
+          onClick={() => updateGlobal({ fullscreen: true })}
+          title="Fullscreen (F)"
+          onMouseEnter={() => setHovered("fullscreen")}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 38, height: 36, borderRadius: 7,
+            background: hovered === "fullscreen" ? C.surfaceHi : "transparent",
+            border: "1px solid transparent",
+            color: hovered === "fullscreen" ? C.textMuted : C.textFaint,
+            cursor: "pointer",
+          }}
+        >
+          <Maximize2 size={15} strokeWidth={1.7} />
+        </button>
         <button
           onClick={openSearch}
           title="Search (⌘K)"

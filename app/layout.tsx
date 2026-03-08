@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "react-grid-layout/css/styles.css";
 import { Providers } from "./providers";
-import { Sidebar } from "@/components/Sidebar";
+import { LayoutShell } from "@/components/LayoutShell";
 
 export const metadata: Metadata = {
   title: "Hayati · حياتي",
@@ -26,10 +26,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <Sidebar />
-          <main style={{ marginLeft: 56, paddingBottom: 28 }}>
-            {children}
-          </main>
+          <LayoutShell>{children}</LayoutShell>
         </Providers>
       </body>
     </html>

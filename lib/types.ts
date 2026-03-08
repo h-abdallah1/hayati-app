@@ -26,6 +26,7 @@ export type GlobalSettings = {
   showTicker: boolean;
   githubUsername: string;
   githubToken: string;
+  fullscreen: boolean;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

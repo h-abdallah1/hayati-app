@@ -23,6 +23,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   showTicker: true,
   githubUsername: "",
   githubToken: "",
+  fullscreen: false,
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -55,6 +56,7 @@ function readGlobal(): GlobalSettings {
       showTicker: typeof parsed.showTicker === "boolean" ? parsed.showTicker : DEFAULT_GLOBAL.showTicker,
       githubUsername: typeof parsed.githubUsername === "string" ? parsed.githubUsername : DEFAULT_GLOBAL.githubUsername,
       githubToken: typeof parsed.githubToken === "string" ? parsed.githubToken : DEFAULT_GLOBAL.githubToken,
+      fullscreen: typeof parsed.fullscreen === "boolean" ? parsed.fullscreen : DEFAULT_GLOBAL.fullscreen,
     };
   } catch {
     return DEFAULT_GLOBAL;
