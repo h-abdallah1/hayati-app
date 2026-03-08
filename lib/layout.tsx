@@ -34,7 +34,12 @@ function readLayout(): LayoutItem[] {
     if (!valid) return DEFAULT_LAYOUT;
     // Add any panels from DEFAULT_LAYOUT that are missing from the stored layout
     const missing = DEFAULT_LAYOUT.filter(d => !parsed.find(p => p.i === d.i));
-    return [...parsed, ...missing];
+    const merged = [...parsed, ...missing];
+    // Force fixed constraints for certain panels regardless of stored value
+    const FORCED: Partial<Record<string, Partial<LayoutItem>>> = {
+      overview: { w: 4 },
+    };
+    return merged.map(item => FORCED[item.i] ? { ...item, ...FORCED[item.i] } : item);
   } catch { return DEFAULT_LAYOUT; }
 }
 
