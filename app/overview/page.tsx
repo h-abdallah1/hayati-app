@@ -95,7 +95,7 @@ export default function OverviewPage() {
   const [obsidianFiles, setObsidianFiles] = useState<ObsidianFile[]>([]);
   const [gymLoading, setGymLoading] = useState(false);
   const [obsidianLoading, setObsidianLoading] = useState(false);
-  const { films } = useLetterboxd(settings.letterboxdUsername);
+  const { films, loaded: filmsLoaded } = useLetterboxd(settings.letterboxdUsername);
 
   // Goals
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -208,7 +208,7 @@ export default function OverviewPage() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
-  const loading = gymLoading || obsidianLoading;
+  const loading = gymLoading || obsidianLoading || !filmsLoaded;
 
   return (
     <div style={{
@@ -271,9 +271,9 @@ export default function OverviewPage() {
             <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
             <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
-            <StatBox label="gym"   value={String(gymDates.length)}  icon={<Dumbbell   size={11} color={CAT_COLORS.gym}  strokeWidth={2} />} C={C} />
-            <StatBox label="films" value={String(filmDates.length)} icon={<Clapperboard size={11} color={CAT_COLORS.film} strokeWidth={2} />} C={C} />
-            <StatBox label="notes" value={String(noteDates.length)} icon={<FileText   size={11} color={CAT_COLORS.note} strokeWidth={2} />} C={C} />
+            <StatBox label="gym"   value={loading ? "—" : String(gymDates.length)}  icon={<Dumbbell   size={11} color={CAT_COLORS.gym}  strokeWidth={2} />} C={C} />
+            <StatBox label="films" value={loading ? "—" : String(filmDates.length)} icon={<Clapperboard size={11} color={CAT_COLORS.film} strokeWidth={2} />} C={C} />
+            <StatBox label="notes" value={loading ? "—" : String(noteDates.length)} icon={<FileText   size={11} color={CAT_COLORS.note} strokeWidth={2} />} C={C} />
           </div>
         );
       })()}
@@ -384,9 +384,12 @@ export default function OverviewPage() {
           ))}
         </div>
         {loading && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-            <span style={{ fontSize: 10, color: C.textFaint }}>loading…</span>
-          </div>
+          <>
+            <style>{`@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }`}</style>
+            <div style={{ textAlign: "center", marginTop: 8, fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint }}>
+              <span style={{ animation: "pulse 1.2s ease-in-out infinite" }}>loading</span>
+            </div>
+          </>
         )}
       </div>
 
@@ -522,7 +525,17 @@ export default function OverviewPage() {
             })}
           </div>
 
-          {(() => {
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ width: 36, height: 10, borderRadius: 3, background: C.border, flexShrink: 0 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                  <div style={{ width: "40%", height: 10, borderRadius: 3, background: C.border }} />
+                  <div style={{ width: "65%", height: 10, borderRadius: 3, background: C.border }} />
+                </div>
+              </div>
+            ))
+          ) : (() => {
             const visible = selectedMonth === null
               ? feedEntries
               : feedEntries.filter(e => new Date(e.date).getMonth() === selectedMonth);
