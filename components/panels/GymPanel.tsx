@@ -99,7 +99,7 @@ export function GymPanel() {
       {(height === 0 || height >= 175) && (
         <div style={{ display: "flex", gap: 20, marginBottom: last ? 14 : 0 }}>
           {[
-            { label: "streak",    val: String(streak),                         unit: "days",  color: streak > 0 ? C.amber : C.textFaint },
+            { label: "streak",    val: String(streak),                         unit: "wks",   color: streak > 0 ? C.amber : C.textFaint },
             { label: "remaining", val: String(Math.max(0, YEAR_GOAL - count)), unit: "left",  color: C.textMuted },
             { label: "today",     val: loggedToday ? "✓" : "—",               unit: "",      color: loggedToday ? C.accent : C.textFaint },
           ].map(s => (

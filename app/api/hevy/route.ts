@@ -16,17 +16,30 @@ interface HevyResponse {
   workouts: HevyWorkout[];
 }
 
-function calcStreak(dates: string[]): number {
-  const set  = new Set(dates);
-  const today = new Date().toISOString().split("T")[0];
-  let streak  = 0;
-  const d     = new Date();
-  if (!set.has(today)) d.setDate(d.getDate() - 1);
-  while (true) {
-    const s = d.toISOString().split("T")[0];
-    if (!set.has(s)) break;
+function getISOWeek(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay() || 7; // Mon=1 ... Sun=7
+  d.setDate(d.getDate() + 4 - day);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function calcWeekStreak(dates: string[]): number {
+  const weeks = new Set(dates.map(getISOWeek));
+  const todayWeek = getISOWeek(new Date().toISOString().split("T")[0]);
+  let streak = 0;
+  const d = new Date();
+  let currentWeek = todayWeek;
+  // If current week has no workout yet, start checking from last week
+  if (!weeks.has(currentWeek)) {
+    d.setDate(d.getDate() - 7);
+    currentWeek = getISOWeek(d.toISOString().split("T")[0]);
+  }
+  while (weeks.has(currentWeek)) {
     streak++;
-    d.setDate(d.getDate() - 1);
+    d.setDate(d.getDate() - 7);
+    currentWeek = getISOWeek(d.toISOString().split("T")[0]);
   }
   return streak;
 }
@@ -75,7 +88,7 @@ export async function GET() {
   }
 
   const today  = new Date().toISOString().split("T")[0];
-  const unique = [...new Set(dates)]; // dedupe same-day sessions
+  const uniqueDates = [...new Set(dates)]; // dedupe for day-level display
 
   // Build past-7-days array (today + 6 days back)
   const week: string[] = [];
@@ -87,11 +100,11 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    count:       unique.length,
-    streak:      calcStreak(unique),
-    loggedToday: unique.includes(today),
+    count:       dates.length,            // total sessions (not deduplicated)
+    streak:      calcWeekStreak(dates),   // consecutive weeks with at least 1 session
+    loggedToday: uniqueDates.includes(today),
     lastWorkout,
-    week,                          // ["2026-02-24", ..., "2026-03-02"]
-    workoutDates: unique,          // all 2026 dates for client-side lookup
+    week,
+    workoutDates: uniqueDates,            // unique dates for the 7-day dot display
   });
 }
