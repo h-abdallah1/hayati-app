@@ -12,8 +12,7 @@ export const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: "news",     x: 2, y: 0,  w: 2, h: 6  },
   { i: "reading",  x: 2, y: 6,  w: 2, h: 5  },
   { i: "films",    x: 2, y: 11, w: 2, h: 5  },
-  { i: "github",   x: 0, y: 22, w: 1, h: 6  },
-  { i: "overview", x: 0, y: 28, w: 4, h: 6  },
+  { i: "overview", x: 0, y: 22, w: 4, h: 6  },
 ];
 
 const LAYOUT_KEY = "hayati-layout";
