@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Dumbbell, Clapperboard, FileText, GitMerge } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
+import { useGithub } from "@/lib/hooks/useGithub";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import type { Goal } from "@/lib/types";
@@ -33,7 +34,7 @@ function dayOfYear(date: Date): number {
 function StatBox({
   label, value, sub, hi, icon, C,
 }: {
-  label: string; value: string; sub?: string; hi?: boolean; icon?: JSX.Element;
+  label: string; value: string; sub?: string; hi?: boolean; icon?: React.ReactNode;
   C: ReturnType<typeof useTheme>;
 }) {
   return (
@@ -65,23 +66,26 @@ const STRIP_H = 5;
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym: "#4a9eff",
-  film: "#ff6b6b",
-  note: "#f5a623",
+  gym:    "#4a9eff",
+  film:   "#ff6b6b",
+  note:   "#f5a623",
+  commit: "#22c55e",
 };
 
 const CAT_LABELS: Record<ActivityCategory, string> = {
-  gym: "Gym",
-  film: "Film",
-  note: "Note",
+  gym:    "Gym",
+  film:   "Film",
+  note:   "Note",
+  commit: "Commit",
 };
 
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note"];
+const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit"];
 
 const CAT_ICONS = {
-  gym:  Dumbbell,
-  film: Clapperboard,
-  note: FileText,
+  gym:    Dumbbell,
+  film:   Clapperboard,
+  note:   FileText,
+  commit: GitMerge,
 } as const;
 
 export default function OverviewPage() {
@@ -96,6 +100,7 @@ export default function OverviewPage() {
   const [gymLoading, setGymLoading] = useState(false);
   const [obsidianLoading, setObsidianLoading] = useState(false);
   const { films, loaded: filmsLoaded } = useLetterboxd(settings.letterboxdUsername);
+  const { days: commitDays, loaded: githubLoaded } = useGithub(settings.githubUsername, settings.githubToken, year);
 
   // Goals
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -155,7 +160,11 @@ export default function OverviewPage() {
     })
     .filter(d => d >= yearStart && d < yearEnd);
 
-  const activityMap = mergeActivities(gymDates, filmDates, noteDates);
+  const commitDates = commitDays
+    .filter(d => d.date >= yearStart && d.date < yearEnd)
+    .map(d => d.date);
+
+  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates);
 
   // Feed detail records
   const gymDetailMap = new Map<string, string>();
@@ -192,7 +201,19 @@ export default function OverviewPage() {
     names.map(label => ({ date, label }))
   );
 
-  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails);
+  // Commit details for activity feed: group by date → "N commits"
+  const commitDetailMap = new Map<string, number>();
+  for (const d of commitDays) {
+    if (d.date >= yearStart && d.date < yearEnd) {
+      commitDetailMap.set(d.date, (commitDetailMap.get(d.date) ?? 0) + d.count);
+    }
+  }
+  const commitDetails = [...commitDetailMap.entries()].map(([date, count]) => ({
+    date,
+    label: `${count} commit${count !== 1 ? "s" : ""}`,
+  }));
+
+  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails);
 
   // Grid construction
   const days = buildYearDays(year);
@@ -208,7 +229,7 @@ export default function OverviewPage() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
-  const loading = gymLoading || obsidianLoading || !filmsLoaded;
+  const loading = gymLoading || obsidianLoading || !filmsLoaded || (!!settings.githubUsername && !githubLoaded);
 
   return (
     <div style={{
@@ -271,9 +292,12 @@ export default function OverviewPage() {
             <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
             <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
-            <StatBox label="gym"   value={loading ? "—" : String(gymDates.length)}  icon={<Dumbbell   size={11} color={CAT_COLORS.gym}  strokeWidth={2} />} C={C} />
-            <StatBox label="films" value={loading ? "—" : String(filmDates.length)} icon={<Clapperboard size={11} color={CAT_COLORS.film} strokeWidth={2} />} C={C} />
-            <StatBox label="notes" value={loading ? "—" : String(noteDates.length)} icon={<FileText   size={11} color={CAT_COLORS.note} strokeWidth={2} />} C={C} />
+            <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
+            <StatBox label="films"   value={loading ? "—" : String(filmDates.length)}   icon={<Clapperboard  size={11} color={CAT_COLORS.film}   strokeWidth={2} />} C={C} />
+            <StatBox label="notes"   value={loading ? "—" : String(noteDates.length)}   icon={<FileText      size={11} color={CAT_COLORS.note}   strokeWidth={2} />} C={C} />
+            {settings.githubUsername && (
+              <StatBox label="commits" value={loading ? "—" : String(commitDates.length)} icon={<GitMerge    size={11} color={CAT_COLORS.commit} strokeWidth={2} />} C={C} />
+            )}
           </div>
         );
       })()}

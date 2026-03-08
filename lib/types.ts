@@ -24,6 +24,8 @@ export type GlobalSettings = {
   disabledModules: string[];
   moduleOrder: string[];
   showTicker: boolean;
+  githubUsername: string;
+  githubToken: string;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];
@@ -57,4 +59,9 @@ export type FilmEntry = {
   poster?: string;
   url?: string;
   review?: string;
+};
+
+export type GithubDay = {
+  date: string;  // YYYY-MM-DD
+  count: number; // total contributions that day
 };

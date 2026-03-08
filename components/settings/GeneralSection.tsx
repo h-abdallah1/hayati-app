@@ -10,8 +10,12 @@ export function GeneralSection() {
   const { isDark, toggle } = useThemeToggle();
   const { global, updateGlobal } = useGlobalSettings();
   const [nameVal, setNameVal] = useState(global.name);
+  const [githubUser, setGithubUser] = useState(global.githubUsername);
+  const [githubTok, setGithubTok] = useState(global.githubToken);
 
   const saveName = () => { const v = nameVal.trim(); if (v) updateGlobal({ name: v }); };
+  const saveGithubUser = () => updateGlobal({ githubUsername: githubUser.trim() });
+  const saveGithubTok  = () => updateGlobal({ githubToken: githubTok.trim() });
 
   return (
     <>
@@ -76,6 +80,37 @@ export function GeneralSection() {
             {global.showTicker ? "on" : "off"}
           </button>
         </div>
+      </div>
+      <div style={{ marginTop: 20, marginBottom: 6 }}>
+        <span style={sectionHead(C)}>GitHub</span>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Username</span>
+        <input
+          value={githubUser}
+          onChange={e => setGithubUser(e.target.value)}
+          onBlur={saveGithubUser}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveGithubUser()}
+          placeholder="e.g. torvalds"
+          style={inputStyle(C)}
+        />
+      </div>
+
+      <div style={{ marginBottom: 4 }}>
+        <span style={fieldLabel(C)}>Personal access token</span>
+        <input
+          type="password"
+          value={githubTok}
+          onChange={e => setGithubTok(e.target.value)}
+          onBlur={saveGithubTok}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveGithubTok()}
+          placeholder="ghp_..."
+          style={inputStyle(C)}
+        />
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginBottom: 12, lineHeight: 1.5 }}>
+        Generate at github.com/settings/tokens (read:user scope)
       </div>
     </>
   );

@@ -9,3 +9,4 @@ export { FinancePanel } from "./FinancePanel";
 export { SavingsPanel } from "./SavingsPanel";
 export { FilmsPanel }    from "./FilmsPanel";
 export { OverviewPanel } from "./OverviewPanel";
+export { GithubPanel }  from "./GithubPanel";

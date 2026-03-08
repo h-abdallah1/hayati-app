@@ -21,6 +21,8 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   disabledModules: [],
   moduleOrder: [],
   showTicker: true,
+  githubUsername: "",
+  githubToken: "",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -51,6 +53,8 @@ function readGlobal(): GlobalSettings {
       disabledModules: Array.isArray(parsed.disabledModules) ? parsed.disabledModules : DEFAULT_GLOBAL.disabledModules,
       moduleOrder: Array.isArray(parsed.moduleOrder) ? parsed.moduleOrder : DEFAULT_GLOBAL.moduleOrder,
       showTicker: typeof parsed.showTicker === "boolean" ? parsed.showTicker : DEFAULT_GLOBAL.showTicker,
+      githubUsername: typeof parsed.githubUsername === "string" ? parsed.githubUsername : DEFAULT_GLOBAL.githubUsername,
+      githubToken: typeof parsed.githubToken === "string" ? parsed.githubToken : DEFAULT_GLOBAL.githubToken,
     };
   } catch {
     return DEFAULT_GLOBAL;

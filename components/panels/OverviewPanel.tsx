@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, Target } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, Target, GitMerge } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
+import { useGithub } from "@/lib/hooks/useGithub";
 import { Panel, Tag } from "@/components/ui";
 import { load as loadGoals, goalYear } from "@/lib/goals";
 import {
@@ -14,18 +15,20 @@ import {
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 
 const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym:  "#4a9eff",
-  film: "#ff6b6b",
-  note: "#f5a623",
+  gym:    "#4a9eff",
+  film:   "#ff6b6b",
+  note:   "#f5a623",
+  commit: "#22c55e",
 };
 
 const CAT_ICONS = {
-  gym:  Dumbbell,
-  film: Clapperboard,
-  note: FileText,
+  gym:    Dumbbell,
+  film:   Clapperboard,
+  note:   FileText,
+  commit: GitMerge,
 } as const;
 
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note"];
+const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit"];
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 const DOW_W = 20; // px for day-label column
 const GAP   = 3;
@@ -33,9 +36,9 @@ const GAP   = 3;
 export function OverviewPanel() {
   const C = useTheme();
   const { global: settings } = useGlobalSettings();
-  const { films } = useLetterboxd(settings.letterboxdUsername);
-
   const year       = new Date().getFullYear();
+  const { films } = useLetterboxd(settings.letterboxdUsername);
+  const { days: commitDays } = useGithub(settings.githubUsername, settings.githubToken, year);
   const yearStart  = `${year}-01-01`;
   const yearEnd    = `${year + 1}-01-01`;
 
@@ -89,10 +92,11 @@ export function OverviewPanel() {
   }, [year]);
 
   // Build activity map
-  const gymDates  = gymWorkouts.filter(w => w.date >= yearStart && w.date < yearEnd).map(w => w.date);
-  const filmDates = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).map(f => f.watchedDate);
-  const noteDates = obsidianFiles.map(f => toDateKey(new Date(f.mtime))).filter(d => d >= yearStart && d < yearEnd);
-  const activityMap = mergeActivities(gymDates, filmDates, noteDates);
+  const gymDates    = gymWorkouts.filter(w => w.date >= yearStart && w.date < yearEnd).map(w => w.date);
+  const filmDates   = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).map(f => f.watchedDate);
+  const noteDates   = obsidianFiles.map(f => toDateKey(new Date(f.mtime))).filter(d => d >= yearStart && d < yearEnd);
+  const commitDates = commitDays.filter(d => d.date >= yearStart && d.date < yearEnd).map(d => d.date);
+  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates);
 
   // Grid geometry
   const days      = buildYearDays(year);
@@ -114,6 +118,7 @@ export function OverviewPanel() {
             { icon: <Dumbbell size={9} strokeWidth={2} color={CAT_COLORS.gym}  />, val: gymDates.length  },
             { icon: <Clapperboard size={9} strokeWidth={2} color={CAT_COLORS.film} />, val: filmDates.length },
             { icon: <FileText size={9} strokeWidth={2} color={CAT_COLORS.note} />, val: noteDates.length },
+            ...(settings.githubUsername ? [{ icon: <GitMerge size={9} strokeWidth={2} color={CAT_COLORS.commit} />, val: commitDates.length }] : []),
             { icon: <Target size={9} strokeWidth={2} color={C.textMuted} />, val: goalsTotal ? `${goalsDone}/${goalsTotal}` : "—" },
           ].map((s, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textMuted }}>

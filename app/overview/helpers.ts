@@ -1,4 +1,4 @@
-export type ActivityCategory = "gym" | "film" | "note";
+export type ActivityCategory = "gym" | "film" | "note" | "commit";
 
 export type DayActivity = {
   date: string; // YYYY-MM-DD
@@ -36,7 +36,8 @@ export function buildYearDays(year: number): Date[] {
 export function mergeActivities(
   gymDates: string[],
   filmDates: string[],
-  noteDates: string[]
+  noteDates: string[],
+  commitDates?: string[]
 ): Map<string, Set<ActivityCategory>> {
   const map = new Map<string, Set<ActivityCategory>>();
 
@@ -45,9 +46,10 @@ export function mergeActivities(
     map.get(date)!.add(cat);
   }
 
-  for (const d of gymDates) add(d, "gym");
-  for (const d of filmDates) add(d, "film");
-  for (const d of noteDates) add(d, "note");
+  for (const d of gymDates)    add(d, "gym");
+  for (const d of filmDates)   add(d, "film");
+  for (const d of noteDates)   add(d, "note");
+  if (commitDates) for (const d of commitDates) add(d, "commit");
 
   return map;
 }
@@ -60,7 +62,8 @@ export function buildActivityFeed(
   activityMap: Map<string, Set<ActivityCategory>>,
   gymDetails: { date: string; label: string }[],
   filmDetails: { date: string; label: string }[],
-  noteDetails: { date: string; label: string }[]
+  noteDetails: { date: string; label: string }[],
+  commitDetails?: { date: string; label: string }[]
 ): ActivityFeedEntry[] {
   const byDate = new Map<string, { category: ActivityCategory; label: string }[]>();
 
@@ -69,9 +72,10 @@ export function buildActivityFeed(
     byDate.get(date)!.push({ category, label });
   }
 
-  for (const { date, label } of gymDetails) addEntry(date, "gym", label);
-  for (const { date, label } of filmDetails) addEntry(date, "film", label);
-  for (const { date, label } of noteDetails) addEntry(date, "note", label);
+  for (const { date, label } of gymDetails)  addEntry(date, "gym",    label);
+  for (const { date, label } of filmDetails) addEntry(date, "film",   label);
+  for (const { date, label } of noteDetails) addEntry(date, "note",   label);
+  if (commitDetails) for (const { date, label } of commitDetails) addEntry(date, "commit", label);
 
   // Only include dates that are in the activity map
   const entries: ActivityFeedEntry[] = [];
