@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTheme } from "@/lib/theme";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import { SPLIT_CAT, GOAL } from "../helpers";
+import { SPLIT_CAT } from "../helpers";
 import { Sparkline, Empty } from "../components/shared";
 
 function SectionLabel({ label, C }: { label: string; C: ReturnType<typeof useTheme> }) {
@@ -14,9 +14,9 @@ function SectionLabel({ label, C }: { label: string; C: ReturnType<typeof useThe
   );
 }
 
-export function OverviewTab({ workouts, count, streak, avgPerWeek, progress, selectedYear, C }: {
+export function OverviewTab({ workouts, count, streak, avgPerWeek, selectedYear, C }: {
   workouts: HevyWorkoutFull[];
-  count: number; streak: number; avgPerWeek: string; progress: number; selectedYear: number;
+  count: number; streak: number; avgPerWeek: string; selectedYear: number;
   C: ReturnType<typeof useTheme>;
 }) {
   const curYear   = new Date().getFullYear();
@@ -67,16 +67,12 @@ export function OverviewTab({ workouts, count, streak, avgPerWeek, progress, sel
           <SectionLabel label="progress" C={C} />
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
             <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 52, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{count}</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.textFaint }}>/ {GOAL}</span>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 13, color: C.textFaint }}>sessions</span>
           </div>
-          <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 14 }}>
-            <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 10px ${C.accent}55`, transition: "width .4s" }} />
-          </div>
-          <div style={{ display: "flex", gap: 24 }}>
+          <div style={{ display: "flex", gap: 24, marginTop: 4 }}>
             {[
-              { label: "streak",    val: String(streak),                    unit: "days", color: streak > 0 ? C.amber : C.textMuted },
-              { label: "avg/week",  val: avgPerWeek,                        unit: "",     color: C.textMuted },
-              { label: "remaining", val: String(Math.max(0, GOAL - count)), unit: "left", color: C.textMuted },
+              { label: "streak",   val: String(streak), unit: "wks", color: streak > 0 ? C.amber : C.textMuted },
+              { label: "avg/week", val: avgPerWeek,     unit: "",    color: C.textMuted },
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>

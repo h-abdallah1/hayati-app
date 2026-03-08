@@ -5,8 +5,6 @@ import { useTheme } from "@/lib/theme";
 import { usePanelSize } from "@/lib/hooks";
 import { Panel, Tag } from "@/components/ui";
 
-const YEAR_GOAL = 200;
-
 type HevyData = {
   count: number;
   streak: number;
@@ -40,7 +38,6 @@ export function GymPanel() {
   const streak       = data?.streak       ?? 0;
   const loggedToday  = data?.loggedToday  ?? false;
   const last         = data?.lastWorkout  ?? null;
-  const progress     = Math.min(100, (count / YEAR_GOAL) * 100);
   const week         = data?.week         ?? [];
   const workoutSet   = new Set(data?.workoutDates ?? []);
   const today        = new Date().toISOString().split("T")[0];
@@ -64,11 +61,7 @@ export function GymPanel() {
         <span style={{ fontFamily: "'Syne',sans-serif", fontSize: sm ? 28 : 42, fontWeight: 800, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
           {loading ? "—" : count}
         </span>
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>/ {YEAR_GOAL}</span>
-      </div>
-
-      <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: sm ? 10 : 16 }}>
-        <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 8px ${C.accent}55`, transition: "width .3s" }} />
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>sessions</span>
       </div>
 
       {/* 7-day strip */}
@@ -99,9 +92,8 @@ export function GymPanel() {
       {(height === 0 || height >= 175) && (
         <div style={{ display: "flex", gap: 20, marginBottom: last ? 14 : 0 }}>
           {[
-            { label: "streak",    val: String(streak),                         unit: "wks",   color: streak > 0 ? C.amber : C.textFaint },
-            { label: "remaining", val: String(Math.max(0, YEAR_GOAL - count)), unit: "left",  color: C.textMuted },
-            { label: "today",     val: loggedToday ? "✓" : "—",               unit: "",      color: loggedToday ? C.accent : C.textFaint },
+            { label: "streak", val: String(streak),             unit: "wks", color: streak > 0 ? C.amber : C.textFaint },
+            { label: "today",  val: loggedToday ? "✓" : "—", unit: "",    color: loggedToday ? C.accent : C.textFaint },
           ].map(s => (
             <div key={s.label}>
               <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 8, color: C.textFaint, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>

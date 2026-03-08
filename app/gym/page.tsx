@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import { isLeapYear, dayOfYear, calcStreak, GOAL } from "./helpers";
+import { isLeapYear, dayOfYear, calcStreak } from "./helpers";
 import { GymHeatmap } from "./components/GymHeatmap";
 import { WorkoutRow } from "./components/WorkoutRow";
 import { Pager, GymSkeleton } from "./components/shared";
@@ -79,7 +79,6 @@ export default function GymPage() {
   const today      = new Date().toISOString().split("T")[0];
   const loggedToday = selectedYear === curYear && workoutSet.has(today);
   const streak      = selectedYear === curYear ? calcStreak(dates) : 0;
-  const progress    = Math.min(100, (count / GOAL) * 100);
   const now         = new Date();
   const weeksInYear = selectedYear === curYear
     ? Math.max(1, Math.ceil((dayOfYear(now) + new Date(curYear, 0, 1).getDay()) / 7))
@@ -137,10 +136,9 @@ export default function GymPage() {
             {/* Stats row */}
             <div style={{ display: "flex", gap: 28, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
               {[
-                { label: "sessions",   value: String(count),   sub: selectedYear === curYear ? `/ ${GOAL}` : undefined, hi: true },
-                ...(selectedYear === curYear ? [{ label: "streak",    value: String(streak), sub: "days",     hi: false }] : []),
-                { label: "avg / week", value: avgPerWeek,       sub: "sessions", hi: false },
-                ...(selectedYear === curYear ? [{ label: "remaining", value: String(Math.max(0, GOAL - count)), sub: "left", hi: false }] : []),
+                { label: "sessions",   value: String(count), sub: undefined,    hi: true  },
+                ...(selectedYear === curYear ? [{ label: "streak", value: String(streak), sub: "wks", hi: false }] : []),
+                { label: "avg / week", value: avgPerWeek,    sub: "sessions",   hi: false },
               ].map(s => (
                 <div key={s.label}>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 3 }}>{s.label}</div>
@@ -151,12 +149,6 @@ export default function GymPage() {
                 </div>
               ))}
             </div>
-
-            {selectedYear === curYear && (
-              <div style={{ height: 3, background: C.border, borderRadius: 2, marginBottom: 28 }}>
-                <div style={{ height: "100%", width: `${progress}%`, background: C.accent, borderRadius: 2, boxShadow: `0 0 10px ${C.accent}55`, transition: "width .4s" }} />
-              </div>
-            )}
 
             <GymHeatmap workouts={workouts} year={selectedYear} />
 
@@ -175,7 +167,7 @@ export default function GymPage() {
             </div>
 
             {/* Tab content */}
-            {tab === "overview"  && <OverviewTab  workouts={workouts} count={count} streak={streak} avgPerWeek={avgPerWeek} progress={progress} selectedYear={selectedYear} C={C} />}
+            {tab === "overview"  && <OverviewTab  workouts={workouts} count={count} streak={streak} avgPerWeek={avgPerWeek} selectedYear={selectedYear} C={C} />}
             {tab === "sessions"  && (() => {
               const pageCount = Math.ceil(count / PAGE_SIZE);
               const paged     = workouts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
