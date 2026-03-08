@@ -7,4 +7,5 @@ export { CalendarPanel }from "./CalendarPanel";
 export { GymPanel }     from "./GymPanel";
 export { FinancePanel } from "./FinancePanel";
 export { SavingsPanel } from "./SavingsPanel";
-export { FilmsPanel }  from "./FilmsPanel";
+export { FilmsPanel }    from "./FilmsPanel";
+export { OverviewPanel } from "./OverviewPanel";
