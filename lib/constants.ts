@@ -1,6 +1,6 @@
 import {
   Home, LayoutDashboard, Target, FileText,
-  Dumbbell, Newspaper, Clapperboard, Globe, Moon,
+  Dumbbell, Newspaper, Clapperboard, Globe, Moon, BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/gym",       Icon: Dumbbell,        label: "Gym",       desc: "Workout analytics"  },
   { href: "/news",      Icon: Newspaper,       label: "News",      desc: "RSS feeds"          },
   { href: "/films",     Icon: Clapperboard,    label: "Films",     desc: "Letterboxd log"     },
+  { href: "/reading",   Icon: BookOpen,        label: "Reading",   desc: "Book log"           },
   { href: "/travel",    Icon: Globe,           label: "Travel",    desc: "World map"          },
   { href: "/prayer",    Icon: Moon,            label: "Prayer",    desc: "Prayer times"       },
 ];

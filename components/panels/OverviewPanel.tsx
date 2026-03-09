@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, Target, GitMerge } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, Target, GitMerge, BookOpen } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
+import { load as loadBooks } from "@/lib/books";
+import type { ReadingEntry } from "@/lib/types";
 import { Panel, Tag } from "@/components/ui";
 import { load as loadGoals, goalYear } from "@/lib/goals";
 import {
@@ -15,20 +17,22 @@ import {
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 
 const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym:    "#4a9eff",
-  film:   "#ff6b6b",
-  note:   "#f5a623",
-  commit: "#22c55e",
+  gym:     "#4a9eff",
+  film:    "#ff6b6b",
+  note:    "#f5a623",
+  commit:  "#22c55e",
+  reading: "#a78bfa",
 };
 
 const CAT_ICONS = {
-  gym:    Dumbbell,
-  film:   Clapperboard,
-  note:   FileText,
-  commit: GitMerge,
+  gym:     Dumbbell,
+  film:    Clapperboard,
+  note:    FileText,
+  commit:  GitMerge,
+  reading: BookOpen,
 } as const;
 
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit"];
+const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 const DOW_W = 20; // px for day-label column
 const GAP   = 3;
@@ -39,6 +43,8 @@ export function OverviewPanel() {
   const year       = new Date().getFullYear();
   const { films } = useLetterboxd(settings.letterboxdUsername);
   const { days: commitDays } = useGithub(settings.githubUsername, settings.githubToken, year);
+  const [books, setBooks] = useState<ReadingEntry[]>([]);
+  useEffect(() => { setBooks(loadBooks()); }, []);
   const yearStart  = `${year}-01-01`;
   const yearEnd    = `${year + 1}-01-01`;
 
@@ -92,11 +98,12 @@ export function OverviewPanel() {
   }, [year]);
 
   // Build activity map
-  const gymDates    = gymWorkouts.filter(w => w.date >= yearStart && w.date < yearEnd).map(w => w.date);
-  const filmDates   = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).map(f => f.watchedDate);
-  const noteDates   = obsidianFiles.map(f => toDateKey(new Date(f.mtime))).filter(d => d >= yearStart && d < yearEnd);
-  const commitDates = commitDays.filter(d => d.date >= yearStart && d.date < yearEnd).map(d => d.date);
-  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates);
+  const gymDates     = gymWorkouts.filter(w => w.date >= yearStart && w.date < yearEnd).map(w => w.date);
+  const filmDates    = films.filter(f => f.watchedDate >= yearStart && f.watchedDate < yearEnd).map(f => f.watchedDate);
+  const noteDates    = obsidianFiles.map(f => toDateKey(new Date(f.mtime))).filter(d => d >= yearStart && d < yearEnd);
+  const commitDates  = commitDays.filter(d => d.date >= yearStart && d.date < yearEnd).map(d => d.date);
+  const readingDates = books.filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd).map(b => b.finishedDate);
+  const activityMap  = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
 
   // Grid geometry
   const days      = buildYearDays(year);

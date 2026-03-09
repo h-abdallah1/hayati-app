@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, GitMerge } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import type { Goal } from "@/lib/types";
+import type { Goal, ReadingEntry } from "@/lib/types";
 import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STATUS_CYCLE } from "@/lib/goals";
+import { load as loadBooks } from "@/lib/books";
+import { calcStreak } from "@/app/gym/helpers";
 import {
   buildYearDays,
   mergeActivities,
@@ -66,26 +68,29 @@ const STRIP_H = 5;
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym:    "#4a9eff",
-  film:   "#ff6b6b",
-  note:   "#f5a623",
-  commit: "#22c55e",
+  gym:     "#4a9eff",
+  film:    "#ff6b6b",
+  note:    "#f5a623",
+  commit:  "#22c55e",
+  reading: "#a78bfa",
 };
 
 const CAT_LABELS: Record<ActivityCategory, string> = {
-  gym:    "Gym",
-  film:   "Film",
-  note:   "Note",
-  commit: "Commit",
+  gym:     "Gym",
+  film:    "Film",
+  note:    "Note",
+  commit:  "Commit",
+  reading: "Reading",
 };
 
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit"];
+const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
 
 const CAT_ICONS = {
-  gym:    Dumbbell,
-  film:   Clapperboard,
-  note:   FileText,
-  commit: GitMerge,
+  gym:     Dumbbell,
+  film:    Clapperboard,
+  note:    FileText,
+  commit:  GitMerge,
+  reading: BookOpen,
 } as const;
 
 export default function OverviewPage() {
@@ -105,6 +110,10 @@ export default function OverviewPage() {
   // Goals
   const [goals, setGoals] = useState<Goal[]>([]);
   useEffect(() => { setGoals(loadGoals()); }, []);
+
+  // Books (manual localStorage — read-only here, logging is on /reading)
+  const [books, setBooks] = useState<ReadingEntry[]>([]);
+  useEffect(() => { setBooks(loadBooks()); }, []);
   const [addingGoal, setAddingGoal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
 
@@ -164,7 +173,13 @@ export default function OverviewPage() {
   const commitDates = filteredCommitDays.map(d => d.date);
   const totalCommits = filteredCommitDays.reduce((sum, d) => sum + d.count, 0);
 
-  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates);
+  const readingDates = books
+    .filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd)
+    .map(b => b.finishedDate);
+
+  const gymStreak = calcStreak(gymDates);
+
+  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
 
   // Feed detail records
   const gymDetailMap = new Map<string, string>();
@@ -213,7 +228,14 @@ export default function OverviewPage() {
     label: `${count} commit${count !== 1 ? "s" : ""}`,
   }));
 
-  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails);
+  const readingDetails = books
+    .filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd)
+    .map(b => ({
+      date: b.finishedDate,
+      label: `${b.title}${b.author ? ` · ${b.author}` : ""}`,
+    }));
+
+  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails, readingDetails);
 
   // Grid construction
   const days = buildYearDays(year);
@@ -292,11 +314,14 @@ export default function OverviewPage() {
             <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
             <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
-            <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
+            <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    sub={!loading && gymStreak > 0 ? `${gymStreak}d streak` : undefined} icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
             <StatBox label="films"   value={loading ? "—" : String(filmDates.length)}   icon={<Clapperboard  size={11} color={CAT_COLORS.film}   strokeWidth={2} />} C={C} />
             <StatBox label="notes"   value={loading ? "—" : String(noteDates.length)}   icon={<FileText      size={11} color={CAT_COLORS.note}   strokeWidth={2} />} C={C} />
             {settings.githubUsername && (
               <StatBox label="commits" value={loading ? "—" : String(totalCommits)} icon={<GitMerge    size={11} color={CAT_COLORS.commit} strokeWidth={2} />} C={C} />
+            )}
+            {readingDates.length > 0 && (
+              <StatBox label="books" value={String(readingDates.length)} icon={<BookOpen size={11} color={CAT_COLORS.reading} strokeWidth={2} />} C={C} />
             )}
           </div>
         );
@@ -515,6 +540,7 @@ export default function OverviewPage() {
                   <button onClick={() => { setNewGoalTitle(""); setAddingGoal(false); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint, padding: "0 4px" }}>✕</button>
                 </div>
               ) : null}
+
             </div>
           );
         })()}

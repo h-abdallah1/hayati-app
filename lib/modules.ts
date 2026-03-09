@@ -15,7 +15,7 @@ export const MODULES: ModuleDef[] = [
   { id: "news",     label: "News",     description: "RSS news feeds from custom sources",      panels: ["news"],              route: "/news",    icon: Newspaper    },
   { id: "prayer",   label: "Prayer",   description: "Daily prayer times and Quran verse",      panels: ["prayer","quran"],    route: "/prayer",  icon: Moon         },
   { id: "calendar", label: "Calendar", description: "Events from iCal and CalDAV feeds",       panels: ["calendar"],                             icon: Calendar     },
-  { id: "reading",  label: "Reading",  description: "Book and reading list tracker",            panels: ["reading"],                              icon: BookOpen     },
+  { id: "reading",  label: "Reading",  description: "Book and reading list tracker",            panels: ["reading"],          route: "/reading",  icon: BookOpen     },
   { id: "overview", label: "Overview", description: "Year progress, activity counts and goals", panels: ["overview"],          route: "/overview", icon: Target     },
   { id: "notes",    label: "Notes",    description: "Quick notes and Obsidian vault sync",      panels: [],                    route: "/notes",   icon: FileText     },
   { id: "travel",   label: "Travel",   description: "World map and visited countries tracker",  panels: [],                    route: "/travel",  icon: Globe        },

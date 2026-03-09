@@ -39,6 +39,7 @@ function FilmsSection() {
   );
 }
 
+
 function NotesSection() {
   const C = useTheme();
   const { global, updateGlobal } = useGlobalSettings();

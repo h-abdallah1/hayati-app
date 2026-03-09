@@ -1,4 +1,4 @@
-export type ActivityCategory = "gym" | "film" | "note" | "commit";
+export type ActivityCategory = "gym" | "film" | "note" | "commit" | "reading";
 
 export type DayActivity = {
   date: string; // YYYY-MM-DD
@@ -37,7 +37,8 @@ export function mergeActivities(
   gymDates: string[],
   filmDates: string[],
   noteDates: string[],
-  commitDates?: string[]
+  commitDates?: string[],
+  readingDates?: string[]
 ): Map<string, Set<ActivityCategory>> {
   const map = new Map<string, Set<ActivityCategory>>();
 
@@ -50,6 +51,7 @@ export function mergeActivities(
   for (const d of filmDates)   add(d, "film");
   for (const d of noteDates)   add(d, "note");
   if (commitDates) for (const d of commitDates) add(d, "commit");
+  if (readingDates) for (const d of readingDates) add(d, "reading");
 
   return map;
 }
@@ -63,7 +65,8 @@ export function buildActivityFeed(
   gymDetails: { date: string; label: string }[],
   filmDetails: { date: string; label: string }[],
   noteDetails: { date: string; label: string }[],
-  commitDetails?: { date: string; label: string }[]
+  commitDetails?: { date: string; label: string }[],
+  readingDetails?: { date: string; label: string }[]
 ): ActivityFeedEntry[] {
   const byDate = new Map<string, { category: ActivityCategory; label: string }[]>();
 
@@ -76,6 +79,7 @@ export function buildActivityFeed(
   for (const { date, label } of filmDetails) addEntry(date, "film",   label);
   for (const { date, label } of noteDetails) addEntry(date, "note",   label);
   if (commitDetails) for (const { date, label } of commitDetails) addEntry(date, "commit", label);
+  if (readingDetails) for (const { date, label } of readingDetails) addEntry(date, "reading", label);
 
   // Only include dates that are in the activity map
   const entries: ActivityFeedEntry[] = [];

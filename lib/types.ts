@@ -60,3 +60,11 @@ export type GithubDay = {
   date: string;  // YYYY-MM-DD
   count: number; // total contributions that day
 };
+
+export type ReadingEntry = {
+  title: string;
+  author?: string;
+  finishedDate: string; // YYYY-MM-DD
+  url?: string;
+  cover?: string; // Open Library cover URL
+};
