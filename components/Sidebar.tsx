@@ -7,13 +7,15 @@ import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
 import { NAV_ITEMS, FONT_ARABIC } from "@/lib/constants";
 import { useState } from "react";
-import { Search, Settings, Maximize2 } from "lucide-react";
+import { Search, Settings, Maximize2, Bot } from "lucide-react";
+import { useAssistant } from "@/app/providers";
 
 export function Sidebar() {
   const C = useTheme();
   const path = usePathname();
   const { global, updateGlobal } = useGlobalSettings();
   const [hovered, setHovered] = useState<string | null>(null);
+  const { open: assistantOpen, toggle: toggleAssistant } = useAssistant();
 
   const PINNED = new Set(["/", "/dashboard"]);
 
@@ -91,6 +93,22 @@ export function Sidebar() {
 
       {/* Bottom buttons */}
       <div style={{ marginTop: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+        <button
+          onClick={toggleAssistant}
+          title="AI Assistant"
+          onMouseEnter={() => setHovered("assistant")}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 38, height: 36, borderRadius: 7,
+            background: assistantOpen ? C.accentDim : hovered === "assistant" ? C.surfaceHi : "transparent",
+            border: `1px solid ${assistantOpen ? C.accent : "transparent"}`,
+            color: assistantOpen ? C.accent : hovered === "assistant" ? C.textMuted : C.textFaint,
+            cursor: "pointer",
+          }}
+        >
+          <Bot size={15} strokeWidth={assistantOpen ? 2.2 : 1.7} />
+        </button>
         <button
           onClick={() => updateGlobal({ fullscreen: true })}
           title="Fullscreen (F)"

@@ -22,6 +22,8 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   githubUsername: "",
   githubToken: "",
   fullscreen: false,
+  ollamaUrl: "http://localhost:11434",
+  ollamaModel: "llama3.2:1b",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -45,6 +47,8 @@ function readGlobal(): GlobalSettings {
       githubUsername: typeof parsed.githubUsername === "string" ? parsed.githubUsername : DEFAULT_GLOBAL.githubUsername,
       githubToken: typeof parsed.githubToken === "string" ? parsed.githubToken : DEFAULT_GLOBAL.githubToken,
       fullscreen: typeof parsed.fullscreen === "boolean" ? parsed.fullscreen : DEFAULT_GLOBAL.fullscreen,
+      ollamaUrl:   typeof parsed.ollamaUrl === "string"   ? parsed.ollamaUrl   : DEFAULT_GLOBAL.ollamaUrl,
+      ollamaModel: typeof parsed.ollamaModel === "string" ? parsed.ollamaModel : DEFAULT_GLOBAL.ollamaModel,
     };
   } catch {
     return DEFAULT_GLOBAL;

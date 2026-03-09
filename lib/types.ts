@@ -8,6 +8,11 @@ export type NewsFeed = { url: string; label: string };
 export type TimeFormat = "12h" | "24h";
 export type MapProjection = "equirectangular" | "naturalEarth" | "mercator" | "robinson" | "winkel3" | "mollweide" | "patterson";
 export type PrayerMethod = "Dubai" | "MuslimWorldLeague" | "NorthAmerica" | "Egyptian" | "Karachi" | "Kuwait" | "Qatar" | "Singapore" | "Turkey" | "MoonsightingCommittee";
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
 export type GlobalSettings = {
   name: string;
   location: LocationCoords;
@@ -22,6 +27,8 @@ export type GlobalSettings = {
   githubUsername: string;
   githubToken: string;
   fullscreen: boolean;
+  ollamaUrl: string;
+  ollamaModel: string;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

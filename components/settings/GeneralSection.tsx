@@ -12,10 +12,14 @@ export function GeneralSection() {
   const [nameVal, setNameVal] = useState(global.name);
   const [githubUser, setGithubUser] = useState(global.githubUsername);
   const [githubTok, setGithubTok] = useState(global.githubToken);
+  const [ollamaUrl, setOllamaUrl] = useState(global.ollamaUrl);
+  const [ollamaModel, setOllamaModel] = useState(global.ollamaModel);
 
   const saveName = () => { const v = nameVal.trim(); if (v) updateGlobal({ name: v }); };
-  const saveGithubUser = () => updateGlobal({ githubUsername: githubUser.trim() });
-  const saveGithubTok  = () => updateGlobal({ githubToken: githubTok.trim() });
+  const saveGithubUser  = () => updateGlobal({ githubUsername: githubUser.trim() });
+  const saveGithubTok   = () => updateGlobal({ githubToken: githubTok.trim() });
+  const saveOllamaUrl   = () => { const v = ollamaUrl.trim(); if (v) updateGlobal({ ollamaUrl: v }); };
+  const saveOllamaModel = () => { const v = ollamaModel.trim(); if (v) updateGlobal({ ollamaModel: v }); };
 
   return (
     <>
@@ -111,6 +115,37 @@ export function GeneralSection() {
       </div>
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginBottom: 12, lineHeight: 1.5 }}>
         Generate at github.com/settings/tokens (read:user scope)
+      </div>
+
+      <div style={{ marginTop: 20, marginBottom: 6 }}>
+        <span style={sectionHead(C)}>Local AI (Ollama)</span>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Ollama URL</span>
+        <input
+          value={ollamaUrl}
+          onChange={e => setOllamaUrl(e.target.value)}
+          onBlur={saveOllamaUrl}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveOllamaUrl()}
+          placeholder="http://localhost:11434"
+          style={inputStyle(C)}
+        />
+      </div>
+
+      <div style={{ marginBottom: 4 }}>
+        <span style={fieldLabel(C)}>Model name</span>
+        <input
+          value={ollamaModel}
+          onChange={e => setOllamaModel(e.target.value)}
+          onBlur={saveOllamaModel}
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && saveOllamaModel()}
+          placeholder="llama3.2:1b"
+          style={inputStyle(C)}
+        />
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginBottom: 12, lineHeight: 1.5 }}>
+        Run locally with: ollama pull {ollamaModel || "llama3.2"}
       </div>
     </>
   );
