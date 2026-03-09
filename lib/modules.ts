@@ -1,4 +1,4 @@
-import { Dumbbell, Clapperboard, Newspaper, Moon, Calendar, BookOpen, FileText, Globe, Target, type LucideIcon } from "lucide-react";
+import { Dumbbell, Clapperboard, Newspaper, Moon, Calendar, BookOpen, FileText, Globe, Target, Tv2, type LucideIcon } from "lucide-react";
 
 export type ModuleDef = {
   id: string;
@@ -19,6 +19,7 @@ export const MODULES: ModuleDef[] = [
   { id: "overview", label: "Overview", description: "Year progress, activity counts and goals", panels: ["overview"],          route: "/overview", icon: Target     },
   { id: "notes",    label: "Notes",    description: "Quick notes and Obsidian vault sync",      panels: [],                    route: "/notes",   icon: FileText     },
   { id: "travel",   label: "Travel",   description: "World map and visited countries tracker",  panels: [],                    route: "/travel",  icon: Globe        },
+  { id: "ascii",    label: "ASCII Art", description: "Rotating anime ASCII art panel",           panels: ["ascii"],                                icon: Tv2          },
 ];
 
 export function getHiddenPanels(disabledModules: string[]): string[] {
