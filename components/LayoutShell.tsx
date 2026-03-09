@@ -3,10 +3,14 @@
 import { useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { useGlobalSettings } from "@/lib/settings";
+import { useAssistant } from "@/app/providers";
+
+const DRAWER_WIDTH = 480;
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { global, updateGlobal } = useGlobalSettings();
   const fullscreen = global.fullscreen;
+  const { open: assistantOpen } = useAssistant();
 
   // Toggle with F key when not typing in an input/textarea
   useEffect(() => {
@@ -24,7 +28,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!fullscreen && <Sidebar />}
-      <main style={{ marginLeft: fullscreen ? 0 : 56, paddingBottom: 28 }}>
+      <main style={{
+        marginLeft: fullscreen ? 0 : 56,
+        marginRight: assistantOpen ? DRAWER_WIDTH : 0,
+        paddingBottom: 28,
+        transition: "margin-right 0.25s cubic-bezier(0.4,0,0.2,1)",
+      }}>
         {children}
       </main>
     </>

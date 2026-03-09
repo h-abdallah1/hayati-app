@@ -8,15 +8,120 @@ import { useClock } from "@/lib/hooks/useClock";
 import { useWeather } from "@/lib/hooks/useWeather";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
 import { getPrayerTimes } from "@/lib/hooks/getPrayerTimes";
+import { useQuranVerse } from "@/lib/hooks/useQuranVerse";
+import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
+import { useGithub } from "@/lib/hooks/useGithub";
 import { buildSystemPrompt } from "@/lib/ai-context";
-import type { Goal, CalEventFull } from "@/lib/types";
+import type { Goal, CalEventFull, GithubDay } from "@/lib/types";
 
-type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
+type Msg = { role: "user" | "assistant"; content: string; error?: boolean; timestamp: string };
 
 interface GymData {
   streak: number;
   count: number;
   loggedToday: boolean;
+  lastWorkout: { title: string; date: string; duration: number } | null;
+}
+
+function renderInline(text: string, C: Record<string, string>, mono: React.CSSProperties): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    const tok = match[0];
+    if (tok.startsWith("`")) {
+      parts.push(
+        <code key={key++} style={{ background: C.surfaceHi, borderRadius: 3, padding: "1px 4px", ...mono, fontSize: 11 }}>
+          {tok.slice(1, -1)}
+        </code>
+      );
+    } else if (tok.startsWith("**")) {
+      parts.push(<strong key={key++}>{tok.slice(2, -2)}</strong>);
+    } else {
+      parts.push(<em key={key++}>{tok.slice(1, -1)}</em>);
+    }
+    last = match.index + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function renderMarkdown(text: string, C: Record<string, string>, mono: React.CSSProperties): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const lines = text.split("\n");
+  let i = 0;
+  let key = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Fenced code block
+    if (line.trimStart().startsWith("```")) {
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trimStart().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      nodes.push(
+        <pre key={key++} style={{
+          background: C.surface, borderRadius: 6, padding: "8px 10px",
+          overflowX: "auto", margin: "4px 0", ...mono, fontSize: 11, lineHeight: 1.6,
+          whiteSpace: "pre-wrap", wordBreak: "break-all",
+        }}>
+          {codeLines.join("\n")}
+        </pre>
+      );
+      i++;
+      continue;
+    }
+    // Headings
+    if (line.startsWith("### ")) {
+      nodes.push(<div key={key++} style={{ fontWeight: 700, fontSize: 12, margin: "4px 0 2px" }}>{renderInline(line.slice(4), C, mono)}</div>);
+    } else if (line.startsWith("## ")) {
+      nodes.push(<div key={key++} style={{ fontWeight: 700, fontSize: 13, margin: "5px 0 2px" }}>{renderInline(line.slice(3), C, mono)}</div>);
+    } else if (line.startsWith("# ")) {
+      nodes.push(<div key={key++} style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 2px" }}>{renderInline(line.slice(2), C, mono)}</div>);
+    // Blockquote
+    } else if (line.startsWith("> ")) {
+      nodes.push(
+        <div key={key++} style={{
+          borderLeft: `2px solid ${C.borderHi}`, paddingLeft: 8,
+          color: C.textMuted, margin: "2px 0", fontStyle: "italic",
+        }}>
+          {renderInline(line.slice(2), C, mono)}
+        </div>
+      );
+    // Bullet
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      nodes.push(
+        <div key={key++} style={{ display: "flex", gap: 6, margin: "1px 0" }}>
+          <span style={{ color: C.textMuted, flexShrink: 0 }}>·</span>
+          <span>{renderInline(line.slice(2), C, mono)}</span>
+        </div>
+      );
+    // Empty line
+    } else if (line.trim() === "") {
+      nodes.push(<div key={key++} style={{ height: 6 }} />);
+    // Normal paragraph line
+    } else {
+      nodes.push(<div key={key++}>{renderInline(line, C, mono)}</div>);
+    }
+    i++;
+  }
+  return nodes;
+}
+
+function calcGithubStreak(days: GithubDay[]): number {
+  const set = new Set(days.filter(d => d.count > 0).map(d => d.date));
+  let streak = 0;
+  const d = new Date();
+  while (set.has(d.toISOString().split("T")[0])) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
 }
 
 export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -26,6 +131,9 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
   const now = useClock();
   const weather = useWeather(global.location);
   const { events } = useCalendarEvents(panels.calendarFeeds);
+  const quranVerse = useQuranVerse();
+  const { films } = useLetterboxd(global.letterboxdUsername);
+  const { days: githubDays, total: githubTotal } = useGithub(global.githubUsername, global.githubToken);
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -33,17 +141,29 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
   const [error, setError] = useState<string | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [gymData, setGymData] = useState<GymData | null>(null);
+  const [currentBook, setCurrentBook] = useState<{ title: string; author: string; progress: number } | null>(null);
+  const [books, setBooks] = useState<{ title: string; author?: string; finishedDate: string }[]>([]);
+  const [visitedCount, setVisitedCount] = useState(0);
 
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load goals from localStorage (SSR-safe)
+  // Load data from localStorage when drawer opens
   useEffect(() => {
     if (!open) return;
     try {
       const raw = localStorage.getItem("hayati-goals");
       if (raw) setGoals(JSON.parse(raw) as Goal[]);
+
+      const cbRaw = localStorage.getItem("hayati-current-book");
+      if (cbRaw) setCurrentBook(JSON.parse(cbRaw));
+
+      const booksRaw = localStorage.getItem("hayati-books");
+      if (booksRaw) setBooks(JSON.parse(booksRaw));
+
+      const tcRaw = localStorage.getItem("hayati-visited-countries");
+      if (tcRaw) setVisitedCount((JSON.parse(tcRaw) as unknown[]).length);
     } catch {}
   }, [open]);
 
@@ -85,9 +205,16 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, nowHour]);
 
+  const currentYear = new Date().getFullYear();
+
   const activeGoals = useMemo(
     () => goals.filter(g => g.status === "active"),
     [goals]
+  );
+
+  const doneGoalsThisYear = useMemo(
+    () => goals.filter(g => g.status === "done" && g.year === currentYear),
+    [goals, currentYear]
   );
 
   const systemPrompt = useMemo(() => buildSystemPrompt({
@@ -100,11 +227,21 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
     weather,
     upcomingEvents,
     activeGoals,
+    doneGoalsThisYear,
     gymStreak: gymData?.streak ?? 0,
     gymSessionsThisYear: gymData?.count ?? 0,
     gymLoggedToday: gymData?.loggedToday ?? false,
+    lastWorkout: gymData?.lastWorkout ?? null,
+    currentBook,
+    recentBooks: books.slice(-5).reverse(),
+    recentFilms: films.slice(0, 5).map(f => ({ title: f.title, year: f.year, rating: f.rating, watchedDate: f.watchedDate })),
+    githubContributionsTotal: githubTotal,
+    githubStreak: calcGithubStreak(githubDays),
+    quranVerse: quranVerse ? { translation: quranVerse.translation, ref: quranVerse.ref } : null,
+    visitedCountriesCount: visitedCount,
   }), // eslint-disable-next-line react-hooks/exhaustive-deps
-  [nowHour, weather.temp, weather.condition, upcomingEvents.length, activeGoals.length, gymData]);
+  [nowHour, weather.temp, weather.condition, upcomingEvents.length, activeGoals.length, doneGoalsThisYear.length,
+   gymData, quranVerse?.ref, films.length, githubTotal, visitedCount, currentBook?.progress, books.length]);
 
   async function send() {
     const text = input.trim();
@@ -112,8 +249,9 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
     setInput("");
     setError(null);
 
-    const userMsg: Msg = { role: "user", content: text };
-    const assistantMsg: Msg = { role: "assistant", content: "" };
+    const ts = new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    const userMsg: Msg = { role: "user", content: text, timestamp: ts };
+    const assistantMsg: Msg = { role: "assistant", content: "", timestamp: ts };
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setStreaming(true);
@@ -219,23 +357,10 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.3)",
-          zIndex: 200,
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.25s",
-        }}
-      />
-
       {/* Drawer */}
       <div style={{
         position: "fixed", top: 0, right: 0, bottom: 0,
-        width: 380,
+        width: 480,
         background: C.bg,
         borderLeft: `1px solid ${C.border}`,
         zIndex: 201,
@@ -306,7 +431,8 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
             return (
               <div key={i} style={{
                 display: "flex",
-                justifyContent: isUser ? "flex-end" : "flex-start",
+                flexDirection: "column",
+                alignItems: isUser ? "flex-end" : "flex-start",
               }}>
                 <div style={{
                   maxWidth: "88%",
@@ -316,11 +442,24 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
                   border: `1px solid ${isUser ? C.accentMid : C.border}`,
                   color: msg.error ? C.red : C.text,
                   ...mono, fontSize: 12, lineHeight: 1.65,
-                  whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}>
-                  {msg.content || (showCursor ? "" : <span style={{ color: C.textFaint }}>…</span>)}
-                  {showCursor && <span style={{ color: C.accent }}>▋</span>}
+                  {isUser ? (
+                    <span style={{ whiteSpace: "pre-wrap" }}>
+                      {msg.content}
+                    </span>
+                  ) : (
+                    <>
+                      {msg.content
+                        ? renderMarkdown(msg.content, C as Record<string, string>, mono)
+                        : (showCursor ? null : <span style={{ color: C.textFaint }}>…</span>)
+                      }
+                      {showCursor && <span style={{ color: C.accent }}>▋</span>}
+                    </>
+                  )}
+                </div>
+                <div style={{ fontSize: 9, color: C.textFaint, marginTop: 3, ...mono }}>
+                  {msg.timestamp}
                 </div>
               </div>
             );
