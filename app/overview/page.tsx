@@ -413,19 +413,28 @@ export default function OverviewPage() {
                       gap: 1,
                     }}
                   >
-                    {activeCats.map(cat => {
-                      const Icon = CAT_ICONS[cat];
-                      const sz = activeCats.length === 1 ? 11 : activeCats.length === 2 ? 7 : 5;
-                      return (
-                        <Icon
-                          key={cat}
-                          size={sz}
-                          color={CAT_COLORS[cat]}
-                          strokeWidth={activeCats.length === 1 ? 2 : 2.5}
-                          style={{ flexShrink: 0 }}
-                        />
-                      );
-                    })}
+                    {activeCats.length === 1 ? (() => {
+                      const Icon = CAT_ICONS[activeCats[0]];
+                      return <Icon size={11} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} />;
+                    })() : activeCats.length <= 4 ? (
+                      <div style={{
+                        display: "flex", flexWrap: "wrap",
+                        width: "100%", height: "100%",
+                        alignContent: "center", justifyContent: "center",
+                        gap: 1, padding: 1,
+                      }}>
+                        {activeCats.map(cat => {
+                          const Icon = CAT_ICONS[cat];
+                          return <Icon key={cat} size={6} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
+                        {activeCats.map(cat => (
+                          <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -650,17 +659,52 @@ export default function OverviewPage() {
             zIndex: 999,
             pointerEvents: "none",
             boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            minWidth: 120,
+            minWidth: 140,
+            maxWidth: 260,
           }}>
             <div style={{ color: C.textMuted, marginBottom: 4, fontWeight: 600 }}>
               {formatDateShort(tooltip.dateKey)}
             </div>
-            {activeCats.map(cat => (
-              <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat] }} />
-                <span style={{ color: CAT_COLORS[cat] }}>{CAT_LABELS[cat]}</span>
-              </div>
-            ))}
+            {activeCats.flatMap(cat => {
+              let entries: string[] = [];
+              if (cat === "gym") {
+                const v = gymDetailMap.get(tooltip.dateKey);
+                if (v) entries = [v];
+              } else if (cat === "film") {
+                entries = filmDetailMap.get(tooltip.dateKey) ?? [];
+              } else if (cat === "note") {
+                entries = noteDetailMap.get(tooltip.dateKey) ?? [];
+              } else if (cat === "commit") {
+                const n = commitDetailMap.get(tooltip.dateKey);
+                if (n != null) entries = [`${n} commit${n !== 1 ? "s" : ""}`];
+              } else if (cat === "reading") {
+                entries = readingDetails.filter(r => r.date === tooltip.dateKey).map(r => r.label);
+              }
+              const MAX = 4;
+              const overflow = entries.length > MAX ? entries.length - MAX : 0;
+              const shown = overflow ? entries.slice(0, MAX) : entries;
+              if (shown.length === 0) {
+                return [(
+                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                    <span style={{ color: CAT_COLORS[cat] }}>{CAT_LABELS[cat]}</span>
+                  </div>
+                )];
+              }
+              return [
+                ...shown.map((entry, i) => (
+                  <div key={`${cat}-${i}`} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                    <span style={{ color: C.text }}>{entry}</span>
+                  </div>
+                )),
+                ...(overflow > 0 ? [(
+                  <div key={`${cat}-more`} style={{ paddingLeft: 11, marginBottom: 2, color: C.textFaint }}>
+                    +{overflow} more
+                  </div>
+                )] : []),
+              ];
+            })}
           </div>
         );
       })()}

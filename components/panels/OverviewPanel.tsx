@@ -196,11 +196,30 @@ export function OverviewPanel() {
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
                   overflow: "hidden",
                 }}>
-                  {activeCats.map(cat => {
-                    const Icon = CAT_ICONS[cat];
-                    const sz = activeCats.length === 1 ? Math.max(5, sq - 4) : activeCats.length === 2 ? Math.max(4, sq - 6) : Math.max(3, sq - 8);
-                    return <Icon key={cat} size={sz} color={CAT_COLORS[cat]} strokeWidth={2} style={{ flexShrink: 0 }} />;
-                  })}
+                  {activeCats.length === 1 ? (() => {
+                    const Icon = CAT_ICONS[activeCats[0]];
+                    const sz = Math.max(5, sq - 4);
+                    return <Icon size={sz} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} style={{ flexShrink: 0 }} />;
+                  })() : activeCats.length <= 4 ? (
+                    <div style={{
+                      display: "flex", flexWrap: "wrap",
+                      width: "100%", height: "100%",
+                      alignContent: "center", justifyContent: "center",
+                      gap: 1, padding: 1,
+                    }}>
+                      {activeCats.map(cat => {
+                        const Icon = CAT_ICONS[cat];
+                        const sz = Math.max(4, Math.floor(sq / 2) - 1);
+                        return <Icon key={cat} size={sz} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
+                      {activeCats.map(cat => (
+                        <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
