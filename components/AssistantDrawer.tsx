@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, KeyboardEvent } from "react";
-import { Bot, X, RotateCcw, Square } from "lucide-react";
+import { Bot, X, RotateCcw, Square, Maximize2, Minimize2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { useClock } from "@/lib/hooks/useClock";
@@ -139,6 +139,7 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [gymData, setGymData] = useState<GymData | null>(null);
   const [currentBook, setCurrentBook] = useState<{ title: string; author: string; progress: number } | null>(null);
@@ -355,19 +356,21 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
 
   const mono: React.CSSProperties = { fontFamily: "'JetBrains Mono',monospace" };
 
+  const innerMaxWidth = expanded ? 720 : "100%";
+
   return (
     <>
-      {/* Drawer */}
+      {/* Drawer / Fullscreen */}
       <div style={{
-        position: "fixed", top: 0, right: 0, bottom: 0,
-        width: 480,
+        position: "fixed",
+        ...(expanded ? { inset: 0 } : { top: 0, right: 0, bottom: 0, width: 480 }),
         background: C.bg,
-        borderLeft: `1px solid ${C.border}`,
+        borderLeft: expanded ? "none" : `1px solid ${C.border}`,
         zIndex: 201,
         display: "flex",
         flexDirection: "column",
         transform: open ? "translateX(0)" : "translateX(100%)",
-        transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+        transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1), width 0.25s cubic-bezier(0.4,0,0.2,1)",
       }}>
         {/* Header */}
         <div style={{
@@ -375,6 +378,10 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
           padding: "12px 16px",
           borderBottom: `1px solid ${C.border}`,
           flexShrink: 0,
+          maxWidth: expanded ? innerMaxWidth : "100%",
+          width: "100%",
+          margin: expanded ? "0 auto" : undefined,
+          boxSizing: "border-box",
         }}>
           <Bot size={15} color={C.accent} strokeWidth={2} />
           <span style={{ ...mono, fontSize: 11, color: C.accent, fontWeight: 600, flex: 1 }}>
@@ -394,6 +401,19 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
             new chat
           </button>
           <button
+            onClick={() => setExpanded(e => !e)}
+            title={expanded ? "Drawer mode" : "Fullscreen mode"}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: C.textFaint, padding: 4, display: "flex",
+            }}
+          >
+            {expanded
+              ? <Minimize2 size={14} strokeWidth={1.7} />
+              : <Maximize2 size={14} strokeWidth={1.7} />
+            }
+          </button>
+          <button
             onClick={onClose}
             style={{
               background: "none", border: "none", cursor: "pointer",
@@ -405,84 +425,91 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
         </div>
 
         {/* Message thread */}
-        <div style={{
-          flex: 1, overflowY: "auto", padding: "16px 12px",
-          display: "flex", flexDirection: "column", gap: 12,
-        }}>
-          {messages.length === 0 && (
-            <div style={{
-              flex: 1, display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              gap: 8, paddingTop: 60,
-            }}>
-              <Bot size={28} color={C.borderHi} strokeWidth={1.5} />
-              <span style={{ ...mono, fontSize: 10, color: C.textFaint, textAlign: "center", lineHeight: 1.7 }}>
-                Ask me anything about your day —{"\n"}
-                prayers, weather, events, goals, gym.
-              </span>
-            </div>
-          )}
-
-          {messages.map((msg, i) => {
-            const isUser = msg.role === "user";
-            const isLast = i === messages.length - 1;
-            const showCursor = isLast && streaming && !isUser;
-
-            return (
-              <div key={i} style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: isUser ? "flex-end" : "flex-start",
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+          <div style={{
+            flex: 1,
+            maxWidth: innerMaxWidth,
+            width: "100%",
+            margin: expanded ? "0 auto" : undefined,
+            padding: "16px 12px",
+            display: "flex", flexDirection: "column", gap: 12,
+            boxSizing: "border-box",
+          }}>
+            {messages.length === 0 && (
+              <div style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                gap: 8, paddingTop: 60,
               }}>
-                <div style={{
-                  maxWidth: "88%",
-                  padding: "8px 12px",
-                  borderRadius: isUser ? "10px 10px 2px 10px" : "10px 10px 10px 2px",
-                  background: isUser ? C.accentDim : C.surfaceHi,
-                  border: `1px solid ${isUser ? C.accentMid : C.border}`,
-                  color: msg.error ? C.red : C.text,
-                  ...mono, fontSize: 12, lineHeight: 1.65,
-                  wordBreak: "break-word",
-                }}>
-                  {isUser ? (
-                    <span style={{ whiteSpace: "pre-wrap" }}>
-                      {msg.content}
-                    </span>
-                  ) : (
-                    <>
-                      {msg.content
-                        ? renderMarkdown(msg.content, C as Record<string, string>, mono)
-                        : (showCursor ? null : <span style={{ color: C.textFaint }}>…</span>)
-                      }
-                      {showCursor && <span style={{ color: C.accent }}>▋</span>}
-                    </>
-                  )}
-                </div>
-                <div style={{ fontSize: 9, color: C.textFaint, marginTop: 3, ...mono }}>
-                  {msg.timestamp}
-                </div>
+                <Bot size={28} color={C.borderHi} strokeWidth={1.5} />
+                <span style={{ ...mono, fontSize: 10, color: C.textFaint, textAlign: "center", lineHeight: 1.7 }}>
+                  Ask me anything about your day —{"\n"}
+                  prayers, weather, events, goals, gym.
+                </span>
               </div>
-            );
-          })}
+            )}
 
-          {error && (
-            <div style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              background: `${C.red}18`,
-              border: `1px solid ${C.red}44`,
-              ...mono, fontSize: 11, color: C.red, lineHeight: 1.6,
-            }}>
-              {error}
-              {error.includes("Cannot reach Ollama") && (
-                <div style={{ marginTop: 4, color: C.textFaint, fontSize: 10 }}>
-                  Run: <code>ollama serve</code>
+            {messages.map((msg, i) => {
+              const isUser = msg.role === "user";
+              const isLast = i === messages.length - 1;
+              const showCursor = isLast && streaming && !isUser;
+
+              return (
+                <div key={i} style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: isUser ? "flex-end" : "flex-start",
+                }}>
+                  <div style={{
+                    maxWidth: expanded ? "70%" : "88%",
+                    padding: "8px 12px",
+                    borderRadius: isUser ? "10px 10px 2px 10px" : "10px 10px 10px 2px",
+                    background: isUser ? C.accentDim : C.surfaceHi,
+                    border: `1px solid ${isUser ? C.accentMid : C.border}`,
+                    color: msg.error ? C.red : C.text,
+                    ...mono, fontSize: 12, lineHeight: 1.65,
+                    wordBreak: "break-word",
+                  }}>
+                    {isUser ? (
+                      <span style={{ whiteSpace: "pre-wrap" }}>
+                        {msg.content}
+                      </span>
+                    ) : (
+                      <>
+                        {msg.content
+                          ? renderMarkdown(msg.content, C as Record<string, string>, mono)
+                          : (showCursor ? null : <span style={{ color: C.textFaint }}>…</span>)
+                        }
+                        {showCursor && <span style={{ color: C.accent }}>▋</span>}
+                      </>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 9, color: C.textFaint, marginTop: 3, ...mono }}>
+                    {msg.timestamp}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+              );
+            })}
 
-          <div ref={bottomRef} />
+            {error && (
+              <div style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: `${C.red}18`,
+                border: `1px solid ${C.red}44`,
+                ...mono, fontSize: 11, color: C.red, lineHeight: 1.6,
+              }}>
+                {error}
+                {error.includes("Cannot reach Ollama") && (
+                  <div style={{ marginTop: 4, color: C.textFaint, fontSize: 10 }}>
+                    Run: <code>ollama serve</code>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </div>
         </div>
 
         {/* Input area */}
@@ -491,10 +518,14 @@ export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () 
           borderTop: `1px solid ${C.border}`,
           display: "flex", gap: 8, alignItems: "flex-end",
           flexShrink: 0,
+          maxWidth: expanded ? innerMaxWidth : "100%",
+          width: "100%",
+          margin: expanded ? "0 auto" : undefined,
+          boxSizing: "border-box",
         }}>
           <textarea
             ref={textareaRef}
-            rows={3}
+            rows={expanded ? 4 : 3}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
