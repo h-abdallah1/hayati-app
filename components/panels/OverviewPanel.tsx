@@ -64,11 +64,17 @@ export function OverviewPanel() {
   // Measure grid container width → derive cell size
   const gridRef = useRef<HTMLDivElement>(null);
   const [sq, setSq] = useState(11);
+  // cellPx = actual rendered 1fr cell pixel width, used for overlay positioning
+  const [cellPx, setCellPx] = useState(11);
+  const totalColsRef = useRef(53);
   useEffect(() => {
     const el = gridRef.current;
     if (!el) return;
     const measure = () => {
-      // sq drives row height only; clamp so rows look proportional to panel width
+      const tc = totalColsRef.current;
+      const actualCellW = (el.offsetWidth - DOW_W - tc * GAP) / tc;
+      setCellPx(Math.max(1, actualCellW));
+      // sq: clamped icon-size hint
       const colW = (el.offsetWidth - DOW_W - GAP) / 53;
       setSq(Math.max(6, Math.min(14, Math.floor(colW))));
     };
@@ -130,11 +136,37 @@ export function OverviewPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gymWorkouts, films, obsidianFiles, commitDays, books]);
 
+  // Streak groups
+  const streakGroups = useMemo(() => {
+    const days_ = buildYearDays(year);
+    const jan1_ = new Date(year, 0, 1);
+    const jan1dow_ = (jan1_.getDay() + 6) % 7;
+    const totalCols_ = Math.ceil((days_.length + jan1dow_) / 7);
+    const groups: { col: number; startRow: number; endRow: number }[] = [];
+    for (let col = 0; col < totalCols_; col++) {
+      let start: number | null = null;
+      for (let row = 0; row < 7; row++) {
+        const di = col * 7 + row - jan1dow_;
+        const inStreak = di >= 0 && di < days_.length && streakSet.has(toDateKey(days_[di]));
+        if (inStreak) {
+          if (start === null) start = row;
+        } else if (start !== null) {
+          groups.push({ col, startRow: start, endRow: row - 1 });
+          start = null;
+        }
+      }
+      if (start !== null) groups.push({ col, startRow: start, endRow: 6 });
+    }
+    return groups;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streakSet, year]);
+
   // Grid geometry
   const days      = buildYearDays(year);
   const jan1      = new Date(year, 0, 1);
   const jan1dow   = (jan1.getDay() + 6) % 7; // Mon=0
   const totalCols = Math.ceil((days.length + jan1dow) / 7);
+  totalColsRef.current = totalCols;
   const monthCols = getMonthStartCols(year);
   const todayKey  = toDateKey(new Date());
   const BR        = Math.max(1, Math.round(sq * 0.2));
@@ -186,6 +218,7 @@ export function OverviewPanel() {
         </div>
 
         {/* Rows — DOW labels + cell grid share the same column template */}
+        <div style={{ position: "relative" }}>
         {DOW_LABELS.map((dow, rowIdx) => (
           <div key={rowIdx} style={{
             display: "grid",
@@ -215,12 +248,8 @@ export function OverviewPanel() {
               const isToday     = dateKey === todayKey;
               const isStreak    = streakSet.has(dateKey);
               const isStreakTip = dateKey === streakTipKey;
-              const dow = (dayIndex + jan1dow) % 7; // 0=Mon 6=Sun
-              const hasPrevStreak = isStreak && dow > 0 && dayIndex > 0 && streakSet.has(toDateKey(days[dayIndex - 1]));
-              const hasNextStreak = isStreak && dow < 6 && dayIndex < days.length - 1 && streakSet.has(toDateKey(days[dayIndex + 1]));
-              const connW = Math.max(2, Math.round(sq * 0.35));
               const borderPaint = (() => {
-                if (isStreak) return STREAK_COLOR;
+                if (isStreak)  return C.border;
                 if (isToday)  return C.accentMid;
                 const cs = activeCats.map(c => CAT_COLORS[c]);
                 if (cs.length === 0) return C.border;
@@ -269,12 +298,6 @@ export function OverviewPanel() {
                       </div>
                     )}
                   </div>
-                  {hasPrevStreak && (
-                    <div style={{ position: "absolute", top: -GAP, left: "50%", transform: "translateX(-50%)", width: connW, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
-                  )}
-                  {hasNextStreak && (
-                    <div style={{ position: "absolute", bottom: -GAP, left: "50%", transform: "translateX(-50%)", width: connW, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
-                  )}
                   {isStreakTip && (
                     <Flame
                       size={Math.max(5, sq - 5)}
@@ -288,6 +311,19 @@ export function OverviewPanel() {
             })}
           </div>
         ))}
+        {streakGroups.map(({ col, startRow, endRow }) => (
+          <div key={`sg-${col}-${startRow}`} style={{
+            position: "absolute",
+            pointerEvents: "none",
+            left: DOW_W + GAP + col * (cellPx + GAP),
+            top: startRow * (cellPx + GAP),
+            width: cellPx,
+            height: (endRow - startRow + 1) * cellPx + (endRow - startRow) * GAP,
+            border: `1px solid ${STREAK_COLOR}`,
+            borderRadius: BR,
+          }} />
+        ))}
+        </div>
       </div>
     </Panel>
   );

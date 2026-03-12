@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
@@ -265,6 +265,25 @@ export default function OverviewPage() {
   const totalCols = Math.ceil((days.length + jan1dow) / 7);
   const monthCols = getMonthStartCols(year);
 
+  const streakGroups = useMemo(() => {
+    const groups: { col: number; startRow: number; endRow: number }[] = [];
+    for (let col = 0; col < totalCols; col++) {
+      let start: number | null = null;
+      for (let row = 0; row < 7; row++) {
+        const di = col * 7 + row - jan1dow;
+        const inStreak = di >= 0 && di < days.length && streakSet.has(toDateKey(days[di]));
+        if (inStreak) {
+          if (start === null) start = row;
+        } else if (start !== null) {
+          groups.push({ col, startRow: start, endRow: row - 1 });
+          start = null;
+        }
+      }
+      if (start !== null) groups.push({ col, startRow: start, endRow: 6 });
+    }
+    return groups;
+  }, [streakSet, totalCols, days, jan1dow]);
+
   // Scroll to date in feed
   const scrollToDate = useCallback((dateKey: string) => {
     if (!feedRef.current) return;
@@ -376,6 +395,7 @@ export default function OverviewPage() {
           </div>
 
           {/* Grid rows (7 rows = Mon–Sun) */}
+          <div style={{ position: "relative" }}>
           {DOW_LABELS.map((dow, rowIdx) => (
             <div key={rowIdx} style={{
               display: "grid",
@@ -410,11 +430,8 @@ export default function OverviewPage() {
                 const isToday = dateKey === toDateKey(new Date());
                 const isStreak = streakSet.has(dateKey);
                 const isStreakTip = dateKey === streakTipKey;
-                const dow = (dayIndex + jan1dow) % 7; // 0=Mon 6=Sun
-                const hasPrevStreak = isStreak && dow > 0 && dayIndex > 0 && streakSet.has(toDateKey(days[dayIndex - 1]));
-                const hasNextStreak = isStreak && dow < 6 && dayIndex < days.length - 1 && streakSet.has(toDateKey(days[dayIndex + 1]));
                 const borderPaint = (() => {
-                  if (isStreak) return STREAK_COLOR;
+                  if (isStreak)  return C.border;
                   if (isToday)  return C.accentMid;
                   const cs = activeCats.map(c => CAT_COLORS[c]);
                   if (cs.length === 0) return C.border;
@@ -477,12 +494,6 @@ export default function OverviewPage() {
                         </div>
                       )}
                     </div>
-                    {hasPrevStreak && (
-                      <div style={{ position: "absolute", top: -GAP, left: "50%", transform: "translateX(-50%)", width: 6, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
-                    )}
-                    {hasNextStreak && (
-                      <div style={{ position: "absolute", bottom: -GAP, left: "50%", transform: "translateX(-50%)", width: 6, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
-                    )}
                     {isStreakTip && (
                       <Flame
                         size={13}
@@ -496,6 +507,19 @@ export default function OverviewPage() {
               })}
             </div>
           ))}
+          {streakGroups.map(({ col, startRow, endRow }) => (
+            <div key={`sg-${col}-${startRow}`} style={{
+              position: "absolute",
+              pointerEvents: "none",
+              left: 28 + GAP + col * (CELL + GAP),
+              top: startRow * (CELL + GAP),
+              width: CELL,
+              height: (endRow - startRow + 1) * CELL + (endRow - startRow) * GAP,
+              border: `1.5px solid ${STREAK_COLOR}`,
+              borderRadius: 2,
+            }} />
+          ))}
+          </div>
         </div>
         {loading && (
           <>
