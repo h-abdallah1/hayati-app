@@ -11,10 +11,17 @@ import { sectionHead, ghostBtn } from "./styles";
 export function ModulesSection() {
   const C = useTheme();
   const { global, updateGlobal } = useGlobalSettings();
-  const { resetLayout } = useLayout();
+  const { layout, updateLayout, resetLayout } = useLayout();
 
   const dragId = useRef<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    updateLayout(layout);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
 
   const orderedIds = global.moduleOrder.length
     ? global.moduleOrder
@@ -103,7 +110,10 @@ export function ModulesSection() {
           );
         })}
       </div>
-      <button onClick={resetLayout} style={{ ...ghostBtn(C, false), marginTop: 14, width: "100%", textAlign: "center" }}>
+      <button onClick={handleSave} style={{ ...ghostBtn(C, saved), marginTop: 14, width: "100%", textAlign: "center" }}>
+        {saved ? "saved ✓" : "save layout"}
+      </button>
+      <button onClick={resetLayout} style={{ ...ghostBtn(C, false), marginTop: 6, width: "100%", textAlign: "center" }}>
         reset layout
       </button>
     </>
