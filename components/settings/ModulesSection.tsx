@@ -11,11 +11,13 @@ import { sectionHead, ghostBtn } from "./styles";
 export function ModulesSection() {
   const C = useTheme();
   const { global, updateGlobal } = useGlobalSettings();
-  const { layout, updateLayout, resetLayout } = useLayout();
+  const { layout, updateLayout, resetLayout, templates, saveTemplate, loadTemplate, deleteTemplate } = useLayout();
 
   const dragId = useRef<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateSaved, setTemplateSaved] = useState(false);
 
   const handleSave = () => {
     updateLayout(layout);
@@ -116,6 +118,83 @@ export function ModulesSection() {
       <button onClick={resetLayout} style={{ ...ghostBtn(C, false), marginTop: 6, width: "100%", textAlign: "center" }}>
         reset layout
       </button>
+
+      <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 14, paddingTop: 12 }}>
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginBottom: 8, textTransform: "lowercase" }}>
+          templates
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <input
+            value={templateName}
+            onChange={e => setTemplateName(e.target.value)}
+            placeholder="template name"
+            style={{
+              flex: 1, minWidth: 0,
+              background: "none",
+              border: `1px solid ${C.border}`,
+              borderRadius: 4,
+              padding: "4px 8px",
+              fontFamily: "'JetBrains Mono',monospace",
+              fontSize: 10,
+              color: C.text,
+              outline: "none",
+            }}
+          />
+          <button
+            disabled={!templateName.trim()}
+            onClick={() => {
+              saveTemplate(templateName);
+              setTemplateName("");
+              setTemplateSaved(true);
+              setTimeout(() => setTemplateSaved(false), 1500);
+            }}
+            style={{
+              ...ghostBtn(C, templateSaved),
+              flexShrink: 0,
+              opacity: templateName.trim() ? 1 : 0.4,
+              cursor: templateName.trim() ? "pointer" : "default",
+            }}
+          >
+            {templateSaved ? "saved ✓" : "save"}
+          </button>
+        </div>
+
+        {templates.length === 0 ? (
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 8 }}>
+            no templates saved
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 8, gap: 4 }}>
+            {templates.map(t => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{
+                  flex: 1, minWidth: 0,
+                  fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.text,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
+                  {t.name}
+                </span>
+                <button onClick={() => loadTemplate(t.id)} style={{ ...ghostBtn(C, false), flexShrink: 0 }}>
+                  load
+                </button>
+                <button
+                  onClick={() => deleteTemplate(t.id)}
+                  style={{
+                    background: "none", border: "none", padding: "3px 6px", cursor: "pointer",
+                    fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                    color: C.textFaint,
+                    borderRadius: 4,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#e05")}
+                  onMouseLeave={e => (e.currentTarget.style.color = C.textFaint)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </>
   );
 }

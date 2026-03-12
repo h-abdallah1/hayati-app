@@ -2,6 +2,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { LayoutItem } from "react-grid-layout";
 
+export type LayoutTemplate = {
+  id: string;
+  name: string;
+  layout: LayoutItem[];
+  savedAt: number;
+};
+
 const REMOVED_PANELS = new Set(["finance", "savings"]);
 
 export const DEFAULT_LAYOUT: LayoutItem[] = [
@@ -17,6 +24,17 @@ export const DEFAULT_LAYOUT: LayoutItem[] = [
 ];
 
 const LAYOUT_KEY = "hayati-layout";
+const TEMPLATES_KEY = "hayati-layout-templates";
+
+function readTemplates(): LayoutTemplate[] {
+  try {
+    const raw = localStorage.getItem(TEMPLATES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(t => t.id && t.name && Array.isArray(t.layout));
+  } catch { return []; }
+}
 
 function readLayout(): LayoutItem[] {
   try {
@@ -50,15 +68,22 @@ type LayoutCtx = {
   layout: LayoutItem[];
   updateLayout: (next: LayoutItem[]) => void;
   resetLayout: () => void;
+  templates: LayoutTemplate[];
+  saveTemplate: (name: string) => void;
+  loadTemplate: (id: string) => void;
+  deleteTemplate: (id: string) => void;
 };
 
 const LayoutContext = createContext<LayoutCtx>({
   layout: DEFAULT_LAYOUT, updateLayout: () => {}, resetLayout: () => {},
+  templates: [], saveTemplate: () => {}, loadTemplate: () => {}, deleteTemplate: () => {},
 });
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [layout, setLayout] = useState<LayoutItem[]>(DEFAULT_LAYOUT);
+  const [templates, setTemplates] = useState<LayoutTemplate[]>([]);
   useEffect(() => { setLayout(readLayout()); }, []);
+  useEffect(() => { setTemplates(readTemplates()); }, []);
 
   const updateLayout = (next: LayoutItem[]) => {
     setLayout(next);
@@ -69,8 +94,31 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.removeItem(LAYOUT_KEY); } catch {}
   };
 
+  const saveTemplate = (name: string) => {
+    const t: LayoutTemplate = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      layout: [...layout],
+      savedAt: Date.now(),
+    };
+    const next = [...templates, t];
+    setTemplates(next);
+    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next)); } catch {}
+  };
+
+  const loadTemplate = (id: string) => {
+    const t = templates.find(t => t.id === id);
+    if (t) updateLayout(t.layout);
+  };
+
+  const deleteTemplate = (id: string) => {
+    const next = templates.filter(t => t.id !== id);
+    setTemplates(next);
+    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next)); } catch {}
+  };
+
   return (
-    <LayoutContext.Provider value={{ layout, updateLayout, resetLayout }}>
+    <LayoutContext.Provider value={{ layout, updateLayout, resetLayout, templates, saveTemplate, loadTemplate, deleteTemplate }}>
       {children}
     </LayoutContext.Provider>
   );
