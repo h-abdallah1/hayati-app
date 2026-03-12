@@ -3,6 +3,7 @@
 import { useState, KeyboardEvent } from "react";
 import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
+import { ACCENT_THEMES } from "@/lib/design";
 import { inputStyle, fieldLabel, sectionHead } from "./styles";
 
 export function GeneralSection() {
@@ -50,6 +51,31 @@ export function GeneralSection() {
               {label}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Accent</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", paddingTop: 4 }}>
+          {ACCENT_THEMES.map(theme => {
+            const color = isDark ? theme.dark : theme.light;
+            const active = global.accentTheme === theme.name;
+            return (
+              <button
+                key={theme.name}
+                title={theme.label}
+                onClick={() => updateGlobal({ accentTheme: theme.name })}
+                style={{
+                  width: 18, height: 18, borderRadius: "50%",
+                  background: color,
+                  border: active ? `2px solid ${C.text}` : `2px solid transparent`,
+                  outline: active ? `2px solid ${color}` : "none",
+                  outlineOffset: 1,
+                  cursor: "pointer", padding: 0, flexShrink: 0,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 

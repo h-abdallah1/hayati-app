@@ -29,6 +29,7 @@ export type GlobalSettings = {
   fullscreen: boolean;
   ollamaUrl: string;
   ollamaModel: string;
+  accentTheme: string;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

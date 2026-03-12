@@ -17,8 +17,9 @@ export function HeaderBar({ time }: { time: Date }) {
   const greet = getGreeting(time);
   const timeStr = formatClock(time, global.timeFormat);
   const dayFrac = (h * 3600 + m * 60 + s) / 86400;
-  const weekFrac = (time.getDay() || 7) / 7;
-  const monthFrac = time.getDate() / 30;
+  const daysInMonth = new Date(time.getFullYear(), time.getMonth() + 1, 0).getDate();
+  const weekFrac = ((time.getDay() || 7) - 1 + dayFrac) / 7;
+  const monthFrac = (time.getDate() - 1 + dayFrac) / daysInMonth;
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const MONTHS = [
     'Jan',
