@@ -2,23 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import { load, persist } from "@/lib/books";
+import { loadBooks, persistBooks } from "@/lib/bookList";
 import { toDateKey } from "@/app/overview/helpers";
-import type { ReadingEntry } from "@/lib/types";
+import type { BookEntry, BookStatus } from "@/lib/types";
+
+async function fetchBookCover(title: string, author: string): Promise<string | undefined> {
+  try {
+    const q = encodeURIComponent(`intitle:${title}${author ? ` inauthor:${author}` : ""}`);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`);
+    const data = await res.json();
+    const thumb: string | undefined = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
+    if (!thumb) return undefined;
+    return thumb.replace("http://", "https://").replace("zoom=1", "zoom=2");
+  } catch { return undefined; }
+}
+
+const STATUS_CHIPS: { status: BookStatus; label: string }[] = [
+  { status: "notStarted", label: "—" },
+  { status: "reading",    label: "▶" },
+  { status: "read",       label: "✓" },
+];
 
 type ViewMode = "grid" | "timeline";
-
-async function fetchCover(title: string, author?: string): Promise<string | null> {
-  try {
-    const q = `title=${encodeURIComponent(title)}${author ? `&author=${encodeURIComponent(author)}` : ""}&limit=1&fields=cover_i`;
-    const res = await fetch(`https://openlibrary.org/search.json?${q}`);
-    const data = await res.json();
-    const coverId = data.docs?.[0]?.cover_i;
-    return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
-  } catch {
-    return null;
-  }
-}
 
 function fmtDate(d: string) {
   return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -29,71 +34,158 @@ function monthLabel(key: string) {
   return new Date(Number(y), Number(m) - 1).toLocaleString("default", { month: "long", year: "numeric" });
 }
 
+function chipColor(s: BookStatus, active: BookStatus, C: Palette): string {
+  if (s !== active) return C.border;
+  if (s === "reading") return C.accent;
+  if (s === "read") return C.teal;
+  return C.textMuted;
+}
+
 const EMPTY_FORM = { title: "", author: "", date: "", url: "" };
 
 export default function ReadingPage() {
   const C = useTheme();
-  const [books, setBooks] = useState<ReadingEntry[]>([]);
-  const [view, setView] = useState<ViewMode>("grid");
-  const [search, setSearch] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ ...EMPTY_FORM, date: toDateKey(new Date()) });
 
-  useEffect(() => { setBooks(load()); }, []);
+  const [bookList,     setBookList]     = useState<BookEntry[]>([]);
+  const [fetchingBook, setFetchingBook] = useState<string | null>(null);
+  const [editingId,    setEditingId]    = useState<string | null>(null);
+  const [editDraft,    setEditDraft]    = useState({ title: "", author: "" });
 
-  const save = () => {
-    if (!form.title.trim()) return;
-    const entry: ReadingEntry = {
-      title: form.title.trim(),
-      finishedDate: form.date || toDateKey(new Date()),
-      ...(form.author.trim() ? { author: form.author.trim() } : {}),
-      ...(form.url.trim() ? { url: form.url.trim() } : {}),
-    };
-    const next = [...books, entry];
-    setBooks(next);
-    persist(next);
-    setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) });
-    setAdding(false);
-    fetchCover(entry.title, entry.author).then(cover => {
-      if (!cover) return;
-      setBooks(prev => {
-        const patched = prev.map(b =>
-          b.title === entry.title && b.finishedDate === entry.finishedDate
-            ? { ...b, cover }
-            : b
-        );
-        persist(patched);
-        return patched;
-      });
+  // Load + migrate old "hayati-books" on mount
+  useEffect(() => {
+    const existing = loadBooks();
+    const existingTitles = new Set(existing.map(b => b.title.toLowerCase()));
+
+    try {
+      const raw = localStorage.getItem("hayati-books");
+      if (raw) {
+        const old = JSON.parse(raw) as Array<{ title: string; author?: string; finishedDate: string; url?: string; cover?: string }>;
+        const imported: BookEntry[] = old
+          .filter(r => !existingTitles.has(r.title.toLowerCase()))
+          .map(r => ({
+            id: crypto.randomUUID(),
+            title: r.title,
+            author: r.author ?? "",
+            status: "read" as const,
+            cover: r.cover,
+            addedAt: new Date(r.finishedDate).toISOString(),
+            finishedDate: r.finishedDate,
+            url: r.url,
+          }));
+        if (imported.length > 0) {
+          const merged = [...existing, ...imported];
+          persistBooks(merged);
+          setBookList(merged);
+          return;
+        }
+      }
+    } catch {}
+
+    setBookList(existing);
+  }, []);
+
+  const updateBook = (id: string, patch: Partial<BookEntry>) => {
+    const next = bookList.map(b => {
+      if (b.id !== id) return b;
+      const updated = { ...b, ...patch };
+      if (patch.status === "reading" && b.status !== "reading") {
+        updated.addedAt = new Date().toISOString();
+      }
+      if (patch.status === "read" && !updated.finishedDate) {
+        updated.finishedDate = toDateKey(new Date());
+      }
+      return updated;
     });
+    setBookList(next);
+    persistBooks(next);
   };
 
-  const del = (b: ReadingEntry) => {
-    const next = books.filter(x => !(x.title === b.title && x.finishedDate === b.finishedDate));
-    setBooks(next);
-    persist(next);
+  const deleteBook = (id: string) => {
+    const next = bookList.filter(b => b.id !== id);
+    setBookList(next);
+    persistBooks(next);
+  };
+
+  const startEdit = (b: BookEntry) => { setEditingId(b.id); setEditDraft({ title: b.title, author: b.author }); };
+  const commitEdit = async (id: string) => {
+    const title = editDraft.title.trim();
+    const author = editDraft.author.trim();
+    if (!title) return;
+    setEditingId(null);
+    setFetchingBook(id);
+    const cover = await fetchBookCover(title, author);
+    const next = bookList.map(b => b.id === id ? { ...b, title, author, cover: cover ?? b.cover } : b);
+    setBookList(next);
+    persistBooks(next);
+    setFetchingBook(null);
+  };
+  const cancelEdit = () => setEditingId(null);
+
+  // ── Log book form (adds directly as "read") ──────────────────────────────
+  const [view,         setView]         = useState<ViewMode>("grid");
+  const [search,       setSearch]       = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | BookStatus>("all");
+  const [adding,       setAdding]       = useState(false);
+  const [form,         setForm]         = useState({ ...EMPTY_FORM, date: toDateKey(new Date()) });
+
+  const saveLog = () => {
+    if (!form.title.trim()) return;
+    const title  = form.title.trim();
+    const author = form.author.trim();
+    const date   = form.date || toDateKey(new Date());
+    const url    = form.url.trim() || undefined;
+
+    const existing = bookList.find(b => b.title.toLowerCase() === title.toLowerCase());
+    if (existing) {
+      updateBook(existing.id, { status: "read", finishedDate: date, ...(url ? { url } : {}), ...(author ? { author } : {}) });
+    } else {
+      const id = crypto.randomUUID();
+      const entry: BookEntry = {
+        id, title, author, status: "read",
+        addedAt: new Date(date).toISOString(),
+        finishedDate: date,
+        url,
+      };
+      const next = [...bookList, entry];
+      setBookList(next);
+      persistBooks(next);
+      setFetchingBook(id);
+      fetchBookCover(title, author).then(cover => {
+        if (!cover) { setFetchingBook(null); return; }
+        setBookList(prev => {
+          const patched = prev.map(b => b.id === id ? { ...b, cover } : b);
+          persistBooks(patched);
+          return patched;
+        });
+        setFetchingBook(null);
+      });
+    }
+
+    setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) });
+    setAdding(false);
   };
 
   const cancel = () => { setAdding(false); setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) }); };
+  const onKey  = (e: React.KeyboardEvent) => { if (e.key === "Enter") saveLog(); if (e.key === "Escape") cancel(); };
 
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") save();
-    if (e.key === "Escape") cancel();
-  };
+  // Stats (read + finishedDate only)
+  const readBooks  = bookList.filter(b => b.status === "read" && b.finishedDate);
+  const now        = new Date();
+  const thisYear   = String(now.getFullYear());
+  const thisMonth  = `${thisYear}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const countYear  = readBooks.filter(b => b.finishedDate!.startsWith(thisYear)).length;
+  const countMonth = readBooks.filter(b => b.finishedDate!.startsWith(thisMonth)).length;
 
-  const now = new Date();
-  const thisYear = String(now.getFullYear());
-  const thisMonth = `${thisYear}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const countYear = books.filter(b => b.finishedDate.startsWith(thisYear)).length;
-  const countMonth = books.filter(b => b.finishedDate.startsWith(thisMonth)).length;
+  // All books filtered by status + search, sorted newest first
+  const filtered = bookList
+    .filter(b => statusFilter === "all" || b.status === statusFilter)
+    .filter(b => !search || b.title.toLowerCase().includes(search.toLowerCase()) || b.author?.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (b.finishedDate ?? b.addedAt).localeCompare(a.finishedDate ?? a.addedAt));
 
-  const filtered = books.filter(b =>
-    !search || b.title.toLowerCase().includes(search.toLowerCase()) || b.author?.toLowerCase().includes(search.toLowerCase())
-  );
-  const sorted = [...filtered].sort((a, b) => b.finishedDate.localeCompare(a.finishedDate));
-
-  const byMonth = sorted.reduce<Record<string, ReadingEntry[]>>((acc, b) => {
-    const key = b.finishedDate.slice(0, 7);
+  // Timeline: only books with a finishedDate
+  const datedFiltered = filtered.filter(b => !!b.finishedDate);
+  const byMonth = datedFiltered.reduce<Record<string, BookEntry[]>>((acc, b) => {
+    const key = b.finishedDate!.slice(0, 7);
     (acc[key] ??= []).push(b);
     return acc;
   }, {});
@@ -126,6 +218,12 @@ export default function ReadingPage() {
     outline: "none",
   };
 
+  const editingProps = {
+    editingId, editDraft, setEditDraft, onStartEdit: startEdit,
+    onCommitEdit: commitEdit, onCancelEdit: cancelEdit,
+    onUpdateBook: updateBook, fetchingBook,
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64 }}>
       {/* Header */}
@@ -138,23 +236,7 @@ export default function ReadingPage() {
         </button>
       </div>
 
-      {/* Stats */}
-      {books.length > 0 && (
-        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
-          {[
-            { val: books.length, label: "total" },
-            { val: countYear,    label: "this year" },
-            { val: countMonth,   label: "this month" },
-          ].map(s => (
-            <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{s.val}</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{s.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add form */}
+      {/* Log book form */}
       {adding && (
         <div style={{ marginBottom: 24, padding: "14px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginBottom: 2 }}>LOG BOOK</div>
@@ -167,15 +249,23 @@ export default function ReadingPage() {
             <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="url (optional)" onKeyDown={onKey} style={{ ...inputSt, flex: "2 1 180px" }} />
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={save} style={{ ...btnBase, color: C.accent, borderColor: C.accentMid }}>save</button>
+            <button onClick={saveLog} style={{ ...btnBase, color: C.accent, borderColor: C.accentMid }}>save</button>
             <button onClick={cancel} style={{ ...btnBase, color: C.textFaint }}>cancel</button>
           </div>
         </div>
       )}
 
       {/* Controls */}
-      {books.length > 0 && (
+      {bookList.length > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
+          {/* Status filter tabs */}
+          {(["all", "reading", "read", "notStarted"] as const).map(s => (
+            <button key={s} onClick={() => setStatusFilter(s)} style={activeBtn(statusFilter === s)}>
+              {s === "notStarted" ? "not started" : s}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 16, background: C.border, margin: "0 4px" }} />
+          {/* View mode */}
           {(["grid", "timeline"] as ViewMode[]).map(v => (
             <button key={v} onClick={() => setView(v)} style={activeBtn(view === v)}>{v}</button>
           ))}
@@ -189,18 +279,36 @@ export default function ReadingPage() {
         </div>
       )}
 
-      {/* Content */}
-      {books.length === 0 ? (
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
-          no books logged yet — click <span style={{ color: C.accent }}>+ log book</span> to add one
+      {/* Stats */}
+      {readBooks.length > 0 && (
+        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+          {[
+            { val: readBooks.length, label: "total" },
+            { val: countYear,        label: "this year" },
+            { val: countMonth,       label: "this month" },
+          ].map(s => (
+            <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{s.val}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{s.label}</span>
+            </div>
+          ))}
         </div>
-      ) : sorted.length === 0 ? (
+      )}
+
+      {/* Content */}
+      {bookList.length === 0 ? (
         <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
-          no results
+          no books yet — click <span style={{ color: C.accent }}>+ log book</span> to add one
+        </div>
+      ) : (view === "timeline" ? datedFiltered : filtered).length === 0 ? (
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
+          {view === "timeline" ? "no dated entries" : "no results"}
         </div>
       ) : view === "grid" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 16 }}>
-          {sorted.map((b, i) => <BookCard key={i} book={b} C={C} onDelete={del} />)}
+          {filtered.map(b => (
+            <BookCard key={b.id} book={b} C={C} onDelete={id => deleteBook(id)} {...editingProps} />
+          ))}
         </div>
       ) : (
         <div style={{ maxWidth: 640 }}>
@@ -214,10 +322,10 @@ export default function ReadingPage() {
                     {byMonth[month].length} book{byMonth[month].length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                {byMonth[month].map((b, i) => (
-                  <div key={i} style={{ position: "relative", paddingBottom: 20 }}>
+                {byMonth[month].map(b => (
+                  <div key={b.id} style={{ position: "relative", paddingBottom: 20 }}>
                     <div style={{ position: "absolute", left: -29, top: 10, width: 8, height: 8, borderRadius: "50%", background: "#a78bfa" }} />
-                    <BookRow book={b} C={C} onDelete={del} />
+                    <BookRow book={b} C={C} onDelete={id => deleteBook(id)} {...editingProps} />
                   </div>
                 ))}
               </div>
@@ -231,7 +339,32 @@ export default function ReadingPage() {
 
 type Palette = ReturnType<typeof useTheme>;
 
-function BookCard({ book: b, C, onDelete }: { book: ReadingEntry; C: Palette; onDelete: (b: ReadingEntry) => void }) {
+interface EditingProps {
+  editingId: string | null;
+  editDraft: { title: string; author: string };
+  setEditDraft: React.Dispatch<React.SetStateAction<{ title: string; author: string }>>;
+  onStartEdit: (b: BookEntry) => void;
+  onCommitEdit: (id: string) => void;
+  onCancelEdit: () => void;
+  onUpdateBook: (id: string, patch: Partial<BookEntry>) => void;
+  fetchingBook: string | null;
+}
+
+function BookCard({ book: b, C, onDelete, editingId, editDraft, setEditDraft, onStartEdit, onCommitEdit, onCancelEdit, onUpdateBook, fetchingBook }: { book: BookEntry; C: Palette; onDelete: (id: string) => void } & EditingProps) {
+  const isEditing = editingId === b.id;
+  const inputSt: React.CSSProperties = {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    padding: "4px 7px",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 10,
+    color: C.text,
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {/* Cover */}
@@ -240,16 +373,19 @@ function BookCard({ book: b, C, onDelete }: { book: ReadingEntry; C: Palette; on
         overflow: "hidden", background: C.surfaceHi,
         border: `1px solid ${C.border}`, position: "relative",
       }}>
-        {b.cover ? (
+        {fetchingBook === b.id ? (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>…</span>
+          </div>
+        ) : b.cover ? (
           <img src={b.cover} alt={b.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, textAlign: "center", lineHeight: 1.4 }}>{b.title}</span>
           </div>
         )}
-        {/* Delete button overlay */}
         <button
-          onClick={() => onDelete(b)}
+          onClick={() => onDelete(b.id)}
           title="delete"
           style={{
             position: "absolute", top: 4, right: 4,
@@ -266,42 +402,169 @@ function BookCard({ book: b, C, onDelete }: { book: ReadingEntry; C: Palette; on
           ×
         </button>
       </div>
+
       {/* Info */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, lineHeight: 1.4, wordBreak: "break-word" }}>
-          {b.url ? (
-            <a href={b.url} target="_blank" rel="noopener noreferrer" style={{ color: C.text, textDecoration: "none" }}
-              onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.text)}>
-              {b.title}
-            </a>
-          ) : b.title}
-        </span>
-        {b.author && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{b.author}</span>}
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{b.finishedDate}</span>
+        {isEditing ? (
+          <>
+            <input
+              autoFocus
+              value={editDraft.title}
+              onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))}
+              onKeyDown={e => { if (e.key === "Enter") onCommitEdit(b.id); if (e.key === "Escape") onCancelEdit(); }}
+              style={inputSt}
+            />
+            <input
+              value={editDraft.author}
+              onChange={e => setEditDraft(d => ({ ...d, author: e.target.value }))}
+              onKeyDown={e => { if (e.key === "Enter") onCommitEdit(b.id); if (e.key === "Escape") onCancelEdit(); }}
+              placeholder="author"
+              style={{ ...inputSt, marginTop: 2 }}
+            />
+            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+              <button onClick={() => onCommitEdit(b.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.accent }}>save</button>
+              <button onClick={onCancelEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <span
+              onClick={() => onStartEdit(b)}
+              title="click to edit"
+              style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, lineHeight: 1.4, wordBreak: "break-word", cursor: "pointer" }}
+            >
+              {b.url ? (
+                <a href={b.url} target="_blank" rel="noopener noreferrer"
+                  style={{ color: C.text, textDecoration: "none" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+                  onMouseLeave={e => (e.currentTarget.style.color = C.text)}
+                  onClick={e => e.stopPropagation()}>
+                  {b.title}
+                </a>
+              ) : b.title}
+            </span>
+            {b.author && (
+              <span
+                onClick={() => onStartEdit(b)}
+                style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, cursor: "pointer" }}
+              >
+                {b.author}
+              </span>
+            )}
+            {b.finishedDate && (
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{b.finishedDate}</span>
+            )}
+            {/* Status chips */}
+            <div style={{ display: "flex", gap: 3, marginTop: 2, flexWrap: "wrap" }}>
+              {STATUS_CHIPS.map(({ status, label }) => (
+                <button
+                  key={status}
+                  onClick={() => onUpdateBook(b.id, { status })}
+                  style={{
+                    background: b.status === status ? (status === "reading" ? C.accentDim : status === "read" ? `${C.teal}22` : C.surfaceHi) : "none",
+                    border: `1px solid ${chipColor(status, b.status, C)}`,
+                    borderRadius: 4, cursor: "pointer",
+                    fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+                    color: chipColor(status, b.status, C), padding: "2px 6px", lineHeight: 1,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function BookRow({ book: b, C, onDelete }: { book: ReadingEntry; C: Palette; onDelete: (b: ReadingEntry) => void }) {
+function BookRow({ book: b, C, onDelete, editingId, editDraft, setEditDraft, onStartEdit, onCommitEdit, onCancelEdit, onUpdateBook, fetchingBook }: { book: BookEntry; C: Palette; onDelete: (id: string) => void } & EditingProps) {
+  const isEditing = editingId === b.id;
+  const inputSt: React.CSSProperties = {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    padding: "3px 7px",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 11,
+    color: C.text,
+    outline: "none",
+  };
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ width: 36, flexShrink: 0, aspectRatio: "2/3", borderRadius: 3, overflow: "hidden", background: C.surfaceHi, border: `1px solid ${C.border}` }}>
-        {b.cover && <img src={b.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
+      {/* Cover */}
+      <div style={{ width: 36, flexShrink: 0, aspectRatio: "2/3", borderRadius: 3, overflow: "hidden", background: C.surfaceHi, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {fetchingBook === b.id
+          ? <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 7, color: C.textFaint }}>…</span>
+          : b.cover
+            ? <img src={b.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            : null
+        }
       </div>
-      <button onClick={() => onDelete(b)} title="delete" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: C.textFaint, padding: 0, flexShrink: 0, lineHeight: 1 }}>×</button>
-      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, flex: 1, minWidth: 0 }}>
-        {b.url ? (
-          <a href={b.url} target="_blank" rel="noopener noreferrer" style={{ color: C.text, textDecoration: "none" }}
-            onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.text)}>
-            {b.title}
-          </a>
-        ) : b.title}
-        {b.author && <span style={{ color: C.textFaint }}> · {b.author}</span>}
-      </span>
-      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{fmtDate(b.finishedDate)}</span>
+      {/* Delete */}
+      <button onClick={() => onDelete(b.id)} title="delete" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: C.textFaint, padding: 0, flexShrink: 0, lineHeight: 1 }}>×</button>
+      {/* Title / edit */}
+      {isEditing ? (
+        <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 6, alignItems: "center" }}>
+          <input
+            autoFocus
+            value={editDraft.title}
+            onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") onCommitEdit(b.id); if (e.key === "Escape") onCancelEdit(); }}
+            style={{ ...inputSt, flex: "2 1 0" }}
+          />
+          <input
+            value={editDraft.author}
+            onChange={e => setEditDraft(d => ({ ...d, author: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") onCommitEdit(b.id); if (e.key === "Escape") onCancelEdit(); }}
+            placeholder="author"
+            style={{ ...inputSt, flex: "1 1 0" }}
+          />
+          <button onClick={() => onCommitEdit(b.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, flexShrink: 0 }}>save</button>
+          <button onClick={onCancelEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>cancel</button>
+        </div>
+      ) : (
+        <span
+          onClick={() => onStartEdit(b)}
+          style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, flex: 1, minWidth: 0, cursor: "pointer" }}
+        >
+          {b.url ? (
+            <a href={b.url} target="_blank" rel="noopener noreferrer" style={{ color: C.text, textDecoration: "none" }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.text)}
+              onClick={e => e.stopPropagation()}>
+              {b.title}
+            </a>
+          ) : b.title}
+          {b.author && <span style={{ color: C.textFaint }}> · {b.author}</span>}
+        </span>
+      )}
+      {/* Status chips (hidden while editing) */}
+      {!isEditing && (
+        <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+          {STATUS_CHIPS.map(({ status, label }) => (
+            <button
+              key={status}
+              onClick={() => onUpdateBook(b.id, { status })}
+              style={{
+                background: b.status === status ? (status === "reading" ? C.accentDim : status === "read" ? `${C.teal}22` : C.surfaceHi) : "none",
+                border: `1px solid ${chipColor(status, b.status, C)}`,
+                borderRadius: 4, cursor: "pointer",
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                color: chipColor(status, b.status, C), padding: "3px 7px", lineHeight: 1,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Date */}
+      {b.finishedDate && (
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{fmtDate(b.finishedDate)}</span>
+      )}
     </div>
   );
 }

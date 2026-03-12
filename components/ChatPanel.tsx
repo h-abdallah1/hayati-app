@@ -13,6 +13,7 @@ import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
 import { buildSystemPrompt } from "@/lib/ai-context";
 import type { Goal, CalEventFull, GithubDay } from "@/lib/types";
+import { loadBooks } from "@/lib/bookList";
 
 type Msg = { role: "user" | "assistant"; content: string; error?: boolean; timestamp: string };
 
@@ -158,8 +159,8 @@ export function ChatPanel({ headerActions, active = true, maxWidth = "100%", inp
       if (raw) setGoals(JSON.parse(raw) as Goal[]);
       const cbRaw = localStorage.getItem("hayati-current-book");
       if (cbRaw) setCurrentBook(JSON.parse(cbRaw));
-      const booksRaw = localStorage.getItem("hayati-books");
-      if (booksRaw) setBooks(JSON.parse(booksRaw));
+      const bookEntries = loadBooks().filter(b => b.finishedDate);
+      setBooks(bookEntries.map(b => ({ title: b.title, author: b.author || undefined, finishedDate: b.finishedDate! })));
       const tcRaw = localStorage.getItem("hayati-visited-countries");
       if (tcRaw) setVisitedCount((JSON.parse(tcRaw) as unknown[]).length);
     } catch {}

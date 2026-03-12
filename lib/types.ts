@@ -76,3 +76,16 @@ export type ReadingEntry = {
   url?: string;
   cover?: string; // Open Library cover URL
 };
+
+export type BookStatus = "notStarted" | "reading" | "read";
+
+export type BookEntry = {
+  id: string;
+  title: string;
+  author: string;
+  status: BookStatus;
+  cover?: string;
+  addedAt: string; // ISO date string
+  finishedDate?: string; // YYYY-MM-DD, set when status → "read"
+  url?: string;
+};
