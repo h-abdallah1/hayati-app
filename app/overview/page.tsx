@@ -410,7 +410,17 @@ export default function OverviewPage() {
                 const isToday = dateKey === toDateKey(new Date());
                 const isStreak = streakSet.has(dateKey);
                 const isStreakTip = dateKey === streakTipKey;
-                const catColor = activeCats.length ? CAT_COLORS[activeCats[0]] : null;
+                const borderPaint = (() => {
+                  if (isStreak) return STREAK_COLOR;
+                  if (isToday)  return C.accentMid;
+                  const cs = activeCats.map(c => CAT_COLORS[c]);
+                  if (cs.length === 0) return C.border;
+                  if (cs.length === 1) return cs[0];
+                  if (cs.length === 2) return `linear-gradient(to right, ${cs[0]} 50%, ${cs[1]} 50%)`;
+                  if (cs.length === 3) return `linear-gradient(to right, ${cs[0]} 33.3%, ${cs[1]} 33.3% 66.6%, ${cs[2]} 66.6%)`;
+                  if (cs.length === 4) return `conic-gradient(from -45deg, ${cs[0]} 90deg, ${cs[1]} 180deg, ${cs[2]} 270deg, ${cs[3]} 360deg)`;
+                  return `linear-gradient(to right, ${cs.join(", ")})`;
+                })();
 
                 return (
                   <div
@@ -419,7 +429,7 @@ export default function OverviewPage() {
                     onClick={() => hasActivity && scrollToDate(dateKey)}
                     onMouseEnter={e => {
                       if (hasActivity) {
-                        const rect = (e.target as HTMLElement).getBoundingClientRect();
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                         setTooltip({ x: rect.left + window.scrollX, y: rect.bottom + window.scrollY + 4, dateKey });
                       }
                     }}
@@ -428,45 +438,42 @@ export default function OverviewPage() {
                       width: CELL,
                       height: CELL,
                       borderRadius: 2,
-                      background: C.surface,
-                      border: isStreak
-                        ? `1px solid ${STREAK_COLOR}`
-                        : isToday
-                          ? `1px solid ${C.accentMid}`
-                          : catColor
-                            ? `1px solid ${catColor}`
-                            : `1px solid ${C.border}`,
+                      background: borderPaint,
+                      padding: 1,
                       cursor: hasActivity ? "pointer" : "default",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 1,
                       position: "relative",
                       overflow: "visible",
                     }}
                   >
-                    {activeCats.length === 1 ? (() => {
-                      const Icon = CAT_ICONS[activeCats[0]];
-                      return <Icon size={11} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} />;
-                    })() : activeCats.length <= 4 ? (
-                      <div style={{
-                        display: "flex", flexWrap: "wrap",
-                        width: "100%", height: "100%",
-                        alignContent: "center", justifyContent: "center",
-                        gap: 1, padding: 1,
-                      }}>
-                        {activeCats.map(cat => {
-                          const Icon = CAT_ICONS[cat];
-                          return <Icon key={cat} size={6} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
-                        })}
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
-                        {activeCats.map(cat => (
-                          <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                        ))}
-                      </div>
-                    )}
+                    <div style={{
+                      width: "100%", height: "100%",
+                      borderRadius: 1,
+                      background: C.surface,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
+                    }}>
+                      {activeCats.length === 1 ? (() => {
+                        const Icon = CAT_ICONS[activeCats[0]];
+                        return <Icon size={11} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} />;
+                      })() : activeCats.length <= 4 ? (
+                        <div style={{
+                          display: "flex", flexWrap: "wrap",
+                          width: "100%", height: "100%",
+                          alignContent: "center", justifyContent: "center",
+                          gap: 1, padding: 1,
+                        }}>
+                          {activeCats.map(cat => {
+                            const Icon = CAT_ICONS[cat];
+                            return <Icon key={cat} size={6} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
+                          {activeCats.map(cat => (
+                            <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {isStreakTip && (
                       <Flame
                         size={13}
