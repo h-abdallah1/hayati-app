@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
@@ -290,6 +290,7 @@ export default function OverviewPage() {
             <StatBox label="week"        value={String(weekNum)} sub="/ 52" C={C} />
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
             <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
+            <StatBox label="streak" value={`${streakSet.size}d`} icon={<Flame size={11} color="#ff6b00" strokeWidth={2} />} C={C} />
             <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    sub={!loading && gymStreak > 0 ? `${gymStreak}d streak` : undefined} icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
             <StatBox label="films"   value={loading ? "—" : String(filmDates.length)}   icon={<Clapperboard  size={11} color={CAT_COLORS.film}   strokeWidth={2} />} C={C} />
             <StatBox label="notes"   value={loading ? "—" : String(noteDates.length)}   icon={<FileText      size={11} color={CAT_COLORS.note}   strokeWidth={2} />} C={C} />

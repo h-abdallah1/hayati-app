@@ -56,6 +56,7 @@ interface YearGridProps {
   // style tweaks
   monthLabelLower?: boolean;
   streakBorderWidth?: number; // default 1.5
+  loading?: boolean;
   // interactivity (all optional)
   onCellClick?: (dateKey: string, hasActivity: boolean) => void;
   tooltipContent?: (dateKey: string) => ReactNode;
@@ -72,6 +73,7 @@ export function YearGrid({
   fluid = false,
   monthLabelLower = false,
   streakBorderWidth = 1.5,
+  loading = false,
   onCellClick,
   tooltipContent,
 }: YearGridProps) {
@@ -165,6 +167,22 @@ export function YearGrid({
             const dayIndex = colIdx * 7 + rowIdx - jan1dow;
             if (dayIndex < 0 || dayIndex >= days.length) {
               return <div key={colIdx} style={fluid ? { aspectRatio: "1" } : { width: cell, height: cell }} />;
+            }
+            if (loading) {
+              return (
+                <div
+                  key={colIdx}
+                  className="gym-skel"
+                  style={{
+                    background: C.border,
+                    borderRadius: BR,
+                    aspectRatio: fluid ? "1" : undefined,
+                    width: fluid ? undefined : effectiveCellPx,
+                    height: fluid ? undefined : effectiveCellPx,
+                    animationDelay: `${colIdx * 0.02}s`,
+                  }}
+                />
+              );
             }
             const dateKey    = toDateKey(days[dayIndex]);
             const cats       = activityMap.get(dateKey);
@@ -296,7 +314,9 @@ export function YearGrid({
               overflow: "visible",
               userSelect: "none",
             }}>
-              {label}
+              {loading && mc
+                ? <span className="gym-skel" style={{ display: "block", width: 20, height: 7, background: C.border, animationDelay: `${col * 0.04}s` }} />
+                : label}
             </div>
           );
         })}
