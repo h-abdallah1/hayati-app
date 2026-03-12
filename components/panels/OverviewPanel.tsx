@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, Target, GitMerge, BookOpen } from "lucide-react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { Dumbbell, Clapperboard, FileText, Target, GitMerge, BookOpen, Flame } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
@@ -33,7 +33,20 @@ const CAT_ICONS = {
 } as const;
 
 const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
+const STREAK_COLOR = "#ff6b00";
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+
+function buildStreakSet(dates: string[]): Set<string> {
+  const dateSet = new Set(dates);
+  const set = new Set<string>();
+  const d = new Date();
+  if (!dateSet.has(toDateKey(d))) d.setDate(d.getDate() - 1);
+  while (dateSet.has(toDateKey(d))) {
+    set.add(toDateKey(d));
+    d.setDate(d.getDate() - 1);
+  }
+  return set;
+}
 const DOW_W = 20; // px for day-label column
 const GAP   = 3;
 
@@ -104,6 +117,18 @@ export function OverviewPanel() {
   const commitDates  = commitDays.filter(d => d.date >= yearStart && d.date < yearEnd).map(d => d.date);
   const readingDates = books.filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd).map(b => b.finishedDate);
   const activityMap  = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
+
+  const { streakSet, streakTipKey } = useMemo(() => {
+    const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates];
+    const set = buildStreakSet(allDates);
+    const d = new Date();
+    const tip = set.has(toDateKey(d)) ? toDateKey(d) : (() => {
+      d.setDate(d.getDate() - 1);
+      return set.has(toDateKey(d)) ? toDateKey(d) : null;
+    })();
+    return { streakSet: set, streakTipKey: tip };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gymWorkouts, films, obsidianFiles, commitDays, books]);
 
   // Grid geometry
   const days      = buildYearDays(year);
@@ -187,14 +212,24 @@ export function OverviewPanel() {
               const dateKey    = toDateKey(days[dayIndex]);
               const cats       = activityMap.get(dateKey);
               const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
-              const isToday    = dateKey === todayKey;
+              const isToday     = dateKey === todayKey;
+              const isStreak    = streakSet.has(dateKey);
+              const isStreakTip = dateKey === streakTipKey;
+              const catColor    = activeCats.length ? CAT_COLORS[activeCats[0]] : null;
               return (
                 <div key={colIdx} title={dateKey} style={{
                   aspectRatio: "1", borderRadius: BR,
                   background: C.surface,
-                  border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${activeCats.length ? "transparent" : C.border}`,
+                  border: isStreak
+                    ? `1px solid ${STREAK_COLOR}`
+                    : isToday
+                      ? `1px solid ${C.accentMid}`
+                      : catColor
+                        ? `1px solid ${catColor}`
+                        : `1px solid ${C.border}`,
+                  position: "relative",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
-                  overflow: "hidden",
+                  overflow: "visible",
                 }}>
                   {activeCats.length === 1 ? (() => {
                     const Icon = CAT_ICONS[activeCats[0]];
@@ -219,6 +254,14 @@ export function OverviewPanel() {
                         <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
                       ))}
                     </div>
+                  )}
+                  {isStreakTip && (
+                    <Flame
+                      size={Math.max(5, sq - 5)}
+                      color={STREAK_COLOR}
+                      strokeWidth={2}
+                      style={{ position: "absolute", top: -4, right: -4, flexShrink: 0 }}
+                    />
                   )}
                 </div>
               );

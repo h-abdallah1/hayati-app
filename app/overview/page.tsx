@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
@@ -64,8 +64,20 @@ function StatBox({
 
 const CELL = 18;
 const GAP = 5;
-const STRIP_H = 5;
 const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const STREAK_COLOR = "#ff6b00";
+
+function buildStreakSet(dates: string[]): Set<string> {
+  const dateSet = new Set(dates);
+  const set = new Set<string>();
+  const d = new Date();
+  if (!dateSet.has(toDateKey(d))) d.setDate(d.getDate() - 1);
+  while (dateSet.has(toDateKey(d))) {
+    set.add(toDateKey(d));
+    d.setDate(d.getDate() - 1);
+  }
+  return set;
+}
 
 const CAT_COLORS: Record<ActivityCategory, string> = {
   gym:     "#4a9eff",
@@ -180,6 +192,15 @@ export default function OverviewPage() {
   const gymStreak = calcStreak(gymDates);
 
   const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
+
+  const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates];
+  const streakSet = buildStreakSet(allDates);
+  const streakTipKey = (() => {
+    const d = new Date();
+    if (streakSet.has(toDateKey(d))) return toDateKey(d);
+    d.setDate(d.getDate() - 1);
+    return streakSet.has(toDateKey(d)) ? toDateKey(d) : null;
+  })();
 
   // Feed detail records
   const gymDetailMap = new Map<string, string>();
@@ -387,6 +408,9 @@ export default function OverviewPage() {
                 const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
                 const hasActivity = activeCats.length > 0;
                 const isToday = dateKey === toDateKey(new Date());
+                const isStreak = streakSet.has(dateKey);
+                const isStreakTip = dateKey === streakTipKey;
+                const catColor = activeCats.length ? CAT_COLORS[activeCats[0]] : null;
 
                 return (
                   <div
@@ -405,12 +429,20 @@ export default function OverviewPage() {
                       height: CELL,
                       borderRadius: 2,
                       background: C.surface,
-                      border: isToday ? `1px solid ${C.accentMid}` : `1px solid ${hasActivity ? "transparent" : C.border}`,
+                      border: isStreak
+                        ? `1px solid ${STREAK_COLOR}`
+                        : isToday
+                          ? `1px solid ${C.accentMid}`
+                          : catColor
+                            ? `1px solid ${catColor}`
+                            : `1px solid ${C.border}`,
                       cursor: hasActivity ? "pointer" : "default",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 1,
+                      position: "relative",
+                      overflow: "visible",
                     }}
                   >
                     {activeCats.length === 1 ? (() => {
@@ -434,6 +466,14 @@ export default function OverviewPage() {
                           <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
                         ))}
                       </div>
+                    )}
+                    {isStreakTip && (
+                      <Flame
+                        size={13}
+                        color={STREAK_COLOR}
+                        strokeWidth={2}
+                        style={{ position: "absolute", top: -5, right: -5, flexShrink: 0 }}
+                      />
                     )}
                   </div>
                 );
