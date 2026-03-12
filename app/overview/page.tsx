@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
@@ -13,15 +13,14 @@ import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STAT
 import { load as loadBooks } from "@/lib/books";
 import { calcStreak } from "@/app/gym/helpers";
 import {
-  buildYearDays,
   mergeActivities,
   buildActivityFeed,
   toDateKey,
   formatDateShort,
   formatDateFull,
-  getMonthStartCols,
   type ActivityCategory,
 } from "./helpers";
+import { YearGrid, CAT_COLORS, CAT_ICONS, ORDERED_CATS, buildStreakSet } from "@/components/ui";
 
 // ── Year stats helpers ─────────────────────────────────────────────────────
 
@@ -62,31 +61,6 @@ function StatBox({
   );
 }
 
-const CELL = 18;
-const GAP = 5;
-const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-const STREAK_COLOR = "#ff6b00";
-
-function buildStreakSet(dates: string[]): Set<string> {
-  const dateSet = new Set(dates);
-  const set = new Set<string>();
-  const d = new Date();
-  if (!dateSet.has(toDateKey(d))) d.setDate(d.getDate() - 1);
-  while (dateSet.has(toDateKey(d))) {
-    set.add(toDateKey(d));
-    d.setDate(d.getDate() - 1);
-  }
-  return set;
-}
-
-const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym:     "#4a9eff",
-  film:    "#ff6b6b",
-  note:    "#f5a623",
-  commit:  "#22c55e",
-  reading: "#a78bfa",
-};
-
 const CAT_LABELS: Record<ActivityCategory, string> = {
   gym:     "Gym",
   film:    "Film",
@@ -94,16 +68,6 @@ const CAT_LABELS: Record<ActivityCategory, string> = {
   commit:  "Commit",
   reading: "Reading",
 };
-
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
-
-const CAT_ICONS = {
-  gym:     Dumbbell,
-  film:    Clapperboard,
-  note:    FileText,
-  commit:  GitMerge,
-  reading: BookOpen,
-} as const;
 
 export default function OverviewPage() {
   const C = useTheme();
@@ -129,8 +93,6 @@ export default function OverviewPage() {
   const [addingGoal, setAddingGoal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
 
-  // Tooltip
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; dateKey: string } | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
 
   // Month filter: null = All, 0–11 = month index
@@ -258,32 +220,6 @@ export default function OverviewPage() {
 
   const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails, readingDetails);
 
-  // Grid construction
-  const days = buildYearDays(year);
-  const jan1 = new Date(year, 0, 1);
-  const jan1dow = (jan1.getDay() + 6) % 7; // Mon=0
-  const totalCols = Math.ceil((days.length + jan1dow) / 7);
-  const monthCols = getMonthStartCols(year);
-
-  const streakGroups = useMemo(() => {
-    const groups: { col: number; startRow: number; endRow: number }[] = [];
-    for (let col = 0; col < totalCols; col++) {
-      let start: number | null = null;
-      for (let row = 0; row < 7; row++) {
-        const di = col * 7 + row - jan1dow;
-        const inStreak = di >= 0 && di < days.length && streakSet.has(toDateKey(days[di]));
-        if (inStreak) {
-          if (start === null) start = row;
-        } else if (start !== null) {
-          groups.push({ col, startRow: start, endRow: row - 1 });
-          start = null;
-        }
-      }
-      if (start !== null) groups.push({ col, startRow: start, endRow: 6 });
-    }
-    return groups;
-  }, [streakSet, totalCols, days, jan1dow]);
-
   // Scroll to date in feed
   const scrollToDate = useCallback((dateKey: string) => {
     if (!feedRef.current) return;
@@ -370,156 +306,66 @@ export default function OverviewPage() {
       {/* Year Grid */}
       <div style={{ overflowX: "auto", marginBottom: 40 }}>
         <div style={{ position: "relative", display: "inline-block", minWidth: "100%" }}>
-          {/* Month labels */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: `28px repeat(${totalCols}, ${CELL}px)`,
-            gap: `0 ${GAP}px`,
-            marginBottom: 4,
-          }}>
-            <div />
-            {Array.from({ length: totalCols }, (_, col) => {
-              const mc = monthCols.find(m => m.col === col);
+          <YearGrid
+            year={year}
+            activityMap={activityMap}
+            streakSet={streakSet}
+            streakTipKey={streakTipKey}
+            cell={18}
+            gap={5}
+            dowWidth={28}
+            streakBorderWidth={1.5}
+            onCellClick={(dateKey, hasActivity) => { if (hasActivity) scrollToDate(dateKey); }}
+            tooltipContent={(dateKey) => {
+              const cats = activityMap.get(dateKey);
+              const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
               return (
-                <div key={col} style={{
-                  fontSize: 10,
-                  color: mc ? C.textMuted : "transparent",
-                  whiteSpace: "nowrap",
-                  overflow: "visible",
-                  userSelect: "none",
+                <div style={{
+                  background: C.surface,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 5,
+                  padding: "6px 10px",
+                  fontSize: 11,
+                  color: C.text,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                  minWidth: 140,
+                  maxWidth: 260,
                 }}>
-                  {mc?.label ?? ""}
+                  <div style={{ color: C.textMuted, marginBottom: 4, fontWeight: 600 }}>
+                    {formatDateShort(dateKey)}
+                  </div>
+                  {activeCats.flatMap(cat => {
+                    let entries: string[] = [];
+                    if (cat === "gym") { const v = gymDetailMap.get(dateKey); if (v) entries = [v]; }
+                    else if (cat === "film") { entries = filmDetailMap.get(dateKey) ?? []; }
+                    else if (cat === "note") { entries = noteDetailMap.get(dateKey) ?? []; }
+                    else if (cat === "commit") { const n = commitDetailMap.get(dateKey); if (n != null) entries = [`${n} commit${n !== 1 ? "s" : ""}`]; }
+                    else if (cat === "reading") { entries = readingDetails.filter(r => r.date === dateKey).map(r => r.label); }
+                    const MAX = 4;
+                    const overflow = entries.length > MAX ? entries.length - MAX : 0;
+                    const shown = overflow ? entries.slice(0, MAX) : entries;
+                    if (shown.length === 0) return [(
+                      <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                        <span style={{ color: CAT_COLORS[cat] }}>{CAT_LABELS[cat]}</span>
+                      </div>
+                    )];
+                    return [
+                      ...shown.map((entry, i) => (
+                        <div key={`${cat}-${i}`} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                          <span style={{ color: C.text }}>{entry}</span>
+                        </div>
+                      )),
+                      ...(overflow > 0 ? [(
+                        <div key={`${cat}-more`} style={{ paddingLeft: 11, marginBottom: 2, color: C.textFaint }}>+{overflow} more</div>
+                      )] : []),
+                    ];
+                  })}
                 </div>
               );
-            })}
-          </div>
-
-          {/* Grid rows (7 rows = Mon–Sun) */}
-          <div style={{ position: "relative" }}>
-          {DOW_LABELS.map((dow, rowIdx) => (
-            <div key={rowIdx} style={{
-              display: "grid",
-              gridTemplateColumns: `28px repeat(${totalCols}, ${CELL}px)`,
-              gap: `${GAP}px`,
-              marginBottom: rowIdx === 6 ? 0 : GAP,
-            }}>
-              {/* Day-of-week label */}
-              <div style={{
-                fontSize: 10,
-                color: C.textFaint,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                paddingRight: 4,
-                userSelect: "none",
-                height: CELL,
-              }}>
-                {rowIdx % 2 === 0 ? dow : ""}
-              </div>
-
-              {Array.from({ length: totalCols }, (_, colIdx) => {
-                const dayIndex = colIdx * 7 + rowIdx - jan1dow;
-                if (dayIndex < 0 || dayIndex >= days.length) {
-                  return <div key={colIdx} style={{ width: CELL, height: CELL }} />;
-                }
-                const date = days[dayIndex];
-                const dateKey = toDateKey(date);
-                const cats = activityMap.get(dateKey);
-                const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
-                const hasActivity = activeCats.length > 0;
-                const isToday = dateKey === toDateKey(new Date());
-                const isStreak = streakSet.has(dateKey);
-                const isStreakTip = dateKey === streakTipKey;
-                const borderPaint = (() => {
-                  if (isStreak)  return C.border;
-                  if (isToday)  return C.accentMid;
-                  const cs = activeCats.map(c => CAT_COLORS[c]);
-                  if (cs.length === 0) return C.border;
-                  if (cs.length === 1) return cs[0];
-                  if (cs.length === 2) return `linear-gradient(to right, ${cs[0]} 50%, ${cs[1]} 50%)`;
-                  if (cs.length === 3) return `linear-gradient(to right, ${cs[0]} 33.3%, ${cs[1]} 33.3% 66.6%, ${cs[2]} 66.6%)`;
-                  if (cs.length === 4) return `conic-gradient(from -45deg, ${cs[0]} 90deg, ${cs[1]} 180deg, ${cs[2]} 270deg, ${cs[3]} 360deg)`;
-                  return `linear-gradient(to right, ${cs.join(", ")})`;
-                })();
-
-                return (
-                  <div
-                    key={colIdx}
-                    title={dateKey}
-                    onClick={() => hasActivity && scrollToDate(dateKey)}
-                    onMouseEnter={e => {
-                      if (hasActivity) {
-                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                        setTooltip({ x: rect.left + window.scrollX, y: rect.bottom + window.scrollY + 4, dateKey });
-                      }
-                    }}
-                    onMouseLeave={() => setTooltip(null)}
-                    style={{
-                      width: CELL,
-                      height: CELL,
-                      borderRadius: 2,
-                      background: borderPaint,
-                      padding: 1,
-                      cursor: hasActivity ? "pointer" : "default",
-                      position: "relative",
-                      overflow: "visible",
-                    }}
-                  >
-                    <div style={{
-                      width: "100%", height: "100%",
-                      borderRadius: 1,
-                      background: C.surface,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
-                    }}>
-                      {activeCats.length === 1 ? (() => {
-                        const Icon = CAT_ICONS[activeCats[0]];
-                        return <Icon size={11} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} />;
-                      })() : activeCats.length <= 4 ? (
-                        <div style={{
-                          display: "flex", flexWrap: "wrap",
-                          width: "100%", height: "100%",
-                          alignContent: "center", justifyContent: "center",
-                          gap: 1, padding: 1,
-                        }}>
-                          {activeCats.map(cat => {
-                            const Icon = CAT_ICONS[cat];
-                            return <Icon key={cat} size={6} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
-                          })}
-                        </div>
-                      ) : (
-                        <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
-                          {activeCats.map(cat => (
-                            <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {isStreakTip && (
-                      <Flame
-                        size={13}
-                        color={STREAK_COLOR}
-                        strokeWidth={2}
-                        style={{ position: "absolute", top: -5, right: -5, flexShrink: 0 }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-          {streakGroups.map(({ col, startRow, endRow }) => (
-            <div key={`sg-${col}-${startRow}`} style={{
-              position: "absolute",
-              pointerEvents: "none",
-              left: 28 + GAP + col * (CELL + GAP),
-              top: startRow * (CELL + GAP),
-              width: CELL,
-              height: (endRow - startRow + 1) * CELL + (endRow - startRow) * GAP,
-              border: `1.5px solid ${STREAK_COLOR}`,
-              borderRadius: 2,
-            }} />
-          ))}
-          </div>
+            }}
+          />
         </div>
         {loading && (
           <>
@@ -721,73 +567,6 @@ export default function OverviewPage() {
 
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (() => {
-        const cats = activityMap.get(tooltip.dateKey);
-        const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
-        return (
-          <div style={{
-            position: "fixed",
-            left: tooltip.x,
-            top: tooltip.y,
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: 5,
-            padding: "6px 10px",
-            fontSize: 11,
-            color: C.text,
-            zIndex: 999,
-            pointerEvents: "none",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            minWidth: 140,
-            maxWidth: 260,
-          }}>
-            <div style={{ color: C.textMuted, marginBottom: 4, fontWeight: 600 }}>
-              {formatDateShort(tooltip.dateKey)}
-            </div>
-            {activeCats.flatMap(cat => {
-              let entries: string[] = [];
-              if (cat === "gym") {
-                const v = gymDetailMap.get(tooltip.dateKey);
-                if (v) entries = [v];
-              } else if (cat === "film") {
-                entries = filmDetailMap.get(tooltip.dateKey) ?? [];
-              } else if (cat === "note") {
-                entries = noteDetailMap.get(tooltip.dateKey) ?? [];
-              } else if (cat === "commit") {
-                const n = commitDetailMap.get(tooltip.dateKey);
-                if (n != null) entries = [`${n} commit${n !== 1 ? "s" : ""}`];
-              } else if (cat === "reading") {
-                entries = readingDetails.filter(r => r.date === tooltip.dateKey).map(r => r.label);
-              }
-              const MAX = 4;
-              const overflow = entries.length > MAX ? entries.length - MAX : 0;
-              const shown = overflow ? entries.slice(0, MAX) : entries;
-              if (shown.length === 0) {
-                return [(
-                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                    <span style={{ color: CAT_COLORS[cat] }}>{CAT_LABELS[cat]}</span>
-                  </div>
-                )];
-              }
-              return [
-                ...shown.map((entry, i) => (
-                  <div key={`${cat}-${i}`} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                    <span style={{ color: C.text }}>{entry}</span>
-                  </div>
-                )),
-                ...(overflow > 0 ? [(
-                  <div key={`${cat}-more`} style={{ paddingLeft: 11, marginBottom: 2, color: C.textFaint }}>
-                    +{overflow} more
-                  </div>
-                )] : []),
-              ];
-            })}
-          </div>
-        );
-      })()}
     </div>
   );
 }

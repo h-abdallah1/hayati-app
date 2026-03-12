@@ -1,54 +1,17 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
-import { Dumbbell, Clapperboard, FileText, Target, GitMerge, BookOpen, Flame } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Dumbbell, Clapperboard, FileText, Target, GitMerge } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
 import { load as loadBooks } from "@/lib/books";
 import type { ReadingEntry } from "@/lib/types";
-import { Panel, Tag } from "@/components/ui";
+import { Panel, Tag, YearGrid, CAT_COLORS, ORDERED_CATS, buildStreakSet } from "@/components/ui";
 import { load as loadGoals, goalYear } from "@/lib/goals";
-import {
-  buildYearDays, mergeActivities, toDateKey, getMonthStartCols,
-  type ActivityCategory,
-} from "@/app/overview/helpers";
+import { mergeActivities, toDateKey, formatDateShort, type ActivityCategory } from "@/app/overview/helpers";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-
-const CAT_COLORS: Record<ActivityCategory, string> = {
-  gym:     "#4a9eff",
-  film:    "#ff6b6b",
-  note:    "#f5a623",
-  commit:  "#22c55e",
-  reading: "#a78bfa",
-};
-
-const CAT_ICONS = {
-  gym:     Dumbbell,
-  film:    Clapperboard,
-  note:    FileText,
-  commit:  GitMerge,
-  reading: BookOpen,
-} as const;
-
-const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
-const STREAK_COLOR = "#ff6b00";
-const DOW_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-
-function buildStreakSet(dates: string[]): Set<string> {
-  const dateSet = new Set(dates);
-  const set = new Set<string>();
-  const d = new Date();
-  if (!dateSet.has(toDateKey(d))) d.setDate(d.getDate() - 1);
-  while (dateSet.has(toDateKey(d))) {
-    set.add(toDateKey(d));
-    d.setDate(d.getDate() - 1);
-  }
-  return set;
-}
-const DOW_W = 20; // px for day-label column
-const GAP   = 3;
 
 export function OverviewPanel() {
   const C = useTheme();
@@ -61,28 +24,6 @@ export function OverviewPanel() {
   const yearStart  = `${year}-01-01`;
   const yearEnd    = `${year + 1}-01-01`;
 
-  // Measure grid container width → derive cell size
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [sq, setSq] = useState(11);
-  // cellPx = actual rendered 1fr cell pixel width, used for overlay positioning
-  const [cellPx, setCellPx] = useState(11);
-  const totalColsRef = useRef(53);
-  useEffect(() => {
-    const el = gridRef.current;
-    if (!el) return;
-    const measure = () => {
-      const tc = totalColsRef.current;
-      const actualCellW = (el.offsetWidth - DOW_W - tc * GAP) / tc;
-      setCellPx(Math.max(1, actualCellW));
-      // sq: clamped icon-size hint
-      const colW = (el.offsetWidth - DOW_W - GAP) / 53;
-      setSq(Math.max(6, Math.min(14, Math.floor(colW))));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // Fetch gym workouts
   const [gymWorkouts, setGymWorkouts] = useState<HevyWorkoutFull[]>([]);
@@ -98,7 +39,7 @@ export function OverviewPanel() {
   useEffect(() => { fetchGym(); }, [fetchGym]);
 
   // Fetch obsidian notes
-  const [obsidianFiles, setObsidianFiles] = useState<{ mtime: number }[]>([]);
+  const [obsidianFiles, setObsidianFiles] = useState<{ mtime: number; name: string }[]>([]);
   useEffect(() => {
     if (!settings.obsidianVaultPath) { setObsidianFiles([]); return; }
     fetch(`/api/obsidian/files?vault=${encodeURIComponent(settings.obsidianVaultPath)}`)
@@ -124,6 +65,61 @@ export function OverviewPanel() {
   const readingDates = books.filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd).map(b => b.finishedDate);
   const activityMap  = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
 
+  // Detail maps for tooltip
+  const gymDetailMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const w of gymWorkouts) {
+      if (w.date >= yearStart && w.date < yearEnd) {
+        const prev = m.get(w.date);
+        m.set(w.date, prev ? `${prev}, ${w.title}` : `${w.title} · ${w.duration}m`);
+      }
+    }
+    return m;
+  }, [gymWorkouts, yearStart, yearEnd]);
+
+  const filmDetailMap = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const f of films) {
+      if (f.watchedDate >= yearStart && f.watchedDate < yearEnd) {
+        if (!m.has(f.watchedDate)) m.set(f.watchedDate, []);
+        const stars = f.rating ? "★".repeat(Math.floor(f.rating)) + (f.rating % 1 >= 0.5 ? "½" : "") : "";
+        m.get(f.watchedDate)!.push(`${f.title}${stars ? ` ${stars}` : ""}`);
+      }
+    }
+    return m;
+  }, [films, yearStart, yearEnd]);
+
+  const noteDetailMap = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const f of obsidianFiles) {
+      const d = toDateKey(new Date(f.mtime));
+      if (d >= yearStart && d < yearEnd) {
+        if (!m.has(d)) m.set(d, []);
+        m.get(d)!.push(f.name);
+      }
+    }
+    return m;
+  }, [obsidianFiles, yearStart, yearEnd]);
+
+  const commitDetailMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const d of commitDays) {
+      if (d.date >= yearStart && d.date < yearEnd) m.set(d.date, (m.get(d.date) ?? 0) + d.count);
+    }
+    return m;
+  }, [commitDays, yearStart, yearEnd]);
+
+  const readingDetailMap = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const b of books) {
+      if (b.finishedDate >= yearStart && b.finishedDate < yearEnd) {
+        if (!m.has(b.finishedDate)) m.set(b.finishedDate, []);
+        m.get(b.finishedDate)!.push(`${b.title}${b.author ? ` · ${b.author}` : ""}`);
+      }
+    }
+    return m;
+  }, [books, yearStart, yearEnd]);
+
   const { streakSet, streakTipKey } = useMemo(() => {
     const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates];
     const set = buildStreakSet(allDates);
@@ -136,40 +132,6 @@ export function OverviewPanel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gymWorkouts, films, obsidianFiles, commitDays, books]);
 
-  // Streak groups
-  const streakGroups = useMemo(() => {
-    const days_ = buildYearDays(year);
-    const jan1_ = new Date(year, 0, 1);
-    const jan1dow_ = (jan1_.getDay() + 6) % 7;
-    const totalCols_ = Math.ceil((days_.length + jan1dow_) / 7);
-    const groups: { col: number; startRow: number; endRow: number }[] = [];
-    for (let col = 0; col < totalCols_; col++) {
-      let start: number | null = null;
-      for (let row = 0; row < 7; row++) {
-        const di = col * 7 + row - jan1dow_;
-        const inStreak = di >= 0 && di < days_.length && streakSet.has(toDateKey(days_[di]));
-        if (inStreak) {
-          if (start === null) start = row;
-        } else if (start !== null) {
-          groups.push({ col, startRow: start, endRow: row - 1 });
-          start = null;
-        }
-      }
-      if (start !== null) groups.push({ col, startRow: start, endRow: 6 });
-    }
-    return groups;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streakSet, year]);
-
-  // Grid geometry
-  const days      = buildYearDays(year);
-  const jan1      = new Date(year, 0, 1);
-  const jan1dow   = (jan1.getDay() + 6) % 7; // Mon=0
-  const totalCols = Math.ceil((days.length + jan1dow) / 7);
-  totalColsRef.current = totalCols;
-  const monthCols = getMonthStartCols(year);
-  const todayKey  = toDateKey(new Date());
-  const BR        = Math.max(1, Math.round(sq * 0.2));
 
   return (
     <Panel style={{ display: "flex", flexDirection: "column", padding: 16 }}>
@@ -194,137 +156,70 @@ export function OverviewPanel() {
       </div>
 
       {/* Grid */}
-      <div ref={gridRef} style={{ width: "100%", overflow: "hidden" }}>
-        {/* Month labels — same column template as cell grid */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: `${DOW_W}px repeat(${totalCols}, 1fr)`,
-          gap: `0 ${GAP}px`,
-          marginBottom: 4,
-        }}>
-          <div />
-          {Array.from({ length: totalCols }, (_, col) => {
-            const mc = monthCols.find(m => m.col === col);
-            return (
-              <div key={col} style={{
-                fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
-                color: mc ? C.textFaint : "transparent",
-                whiteSpace: "nowrap", overflow: "visible", userSelect: "none",
-              }}>
-                {mc?.label.toLowerCase() ?? ""}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Rows — DOW labels + cell grid share the same column template */}
-        <div style={{ position: "relative" }}>
-        {DOW_LABELS.map((dow, rowIdx) => (
-          <div key={rowIdx} style={{
-            display: "grid",
-            gridTemplateColumns: `${DOW_W}px repeat(${totalCols}, 1fr)`,
-            gap: `${GAP}px`,
-            marginBottom: rowIdx === 6 ? 0 : GAP,
-          }}>
-            {/* Day-of-week label */}
+      <YearGrid
+        year={year}
+        activityMap={activityMap}
+        streakSet={streakSet}
+        streakTipKey={streakTipKey}
+        fluid
+        gap={3}
+        dowWidth={20}
+        monthLabelLower
+        streakBorderWidth={1}
+        tooltipContent={(dateKey) => {
+          const cats = activityMap.get(dateKey);
+          const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
+          const CAT_LABELS: Record<ActivityCategory, string> = {
+            gym: "Gym", film: "Film", note: "Note", commit: "Commit", reading: "Reading",
+          };
+          return (
             <div style={{
-              fontSize: 9, color: C.textFaint,
-              display: "flex", alignItems: "center", justifyContent: "flex-end",
-              paddingRight: 4, userSelect: "none", aspectRatio: "1",
-              visibility: rowIdx % 2 === 0 ? "visible" : "hidden",
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: 5,
+              padding: "6px 10px",
+              fontSize: 11,
+              color: C.text,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              minWidth: 140,
+              maxWidth: 260,
+              fontFamily: "'JetBrains Mono',monospace",
             }}>
-              {dow}
-            </div>
-
-            {/* Cells for this row */}
-            {Array.from({ length: totalCols }, (_, colIdx) => {
-              const dayIndex = colIdx * 7 + rowIdx - jan1dow;
-              if (dayIndex < 0 || dayIndex >= days.length) {
-                return <div key={colIdx} style={{ aspectRatio: "1" }} />;
-              }
-              const dateKey    = toDateKey(days[dayIndex]);
-              const cats       = activityMap.get(dateKey);
-              const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
-              const isToday     = dateKey === todayKey;
-              const isStreak    = streakSet.has(dateKey);
-              const isStreakTip = dateKey === streakTipKey;
-              const borderPaint = (() => {
-                if (isStreak)  return C.border;
-                if (isToday)  return C.accentMid;
-                const cs = activeCats.map(c => CAT_COLORS[c]);
-                if (cs.length === 0) return C.border;
-                if (cs.length === 1) return cs[0];
-                if (cs.length === 2) return `linear-gradient(to right, ${cs[0]} 50%, ${cs[1]} 50%)`;
-                if (cs.length === 3) return `linear-gradient(to right, ${cs[0]} 33.3%, ${cs[1]} 33.3% 66.6%, ${cs[2]} 66.6%)`;
-                if (cs.length === 4) return `conic-gradient(from -45deg, ${cs[0]} 90deg, ${cs[1]} 180deg, ${cs[2]} 270deg, ${cs[3]} 360deg)`;
-                return `linear-gradient(to right, ${cs.join(", ")})`;
-              })();
-              return (
-                <div key={colIdx} title={dateKey} style={{
-                  aspectRatio: "1", borderRadius: BR,
-                  background: borderPaint,
-                  padding: 1,
-                  position: "relative",
-                  overflow: "visible",
-                }}>
-                  <div style={{
-                    width: "100%", height: "100%",
-                    borderRadius: Math.max(0, BR - 1),
-                    background: C.surface,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
-                  }}>
-                    {activeCats.length === 1 ? (() => {
-                      const Icon = CAT_ICONS[activeCats[0]];
-                      const sz = Math.max(5, sq - 4);
-                      return <Icon size={sz} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} style={{ flexShrink: 0 }} />;
-                    })() : activeCats.length <= 4 ? (
-                      <div style={{
-                        display: "flex", flexWrap: "wrap",
-                        width: "100%", height: "100%",
-                        alignContent: "center", justifyContent: "center",
-                        gap: 1, padding: 1,
-                      }}>
-                        {activeCats.map(cat => {
-                          const Icon = CAT_ICONS[cat];
-                          const sz = Math.max(4, Math.floor(sq / 2) - 1);
-                          return <Icon key={cat} size={sz} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
-                        })}
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
-                        {activeCats.map(cat => (
-                          <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                        ))}
-                      </div>
-                    )}
+              <div style={{ color: C.textMuted, marginBottom: 4, fontWeight: 600 }}>
+                {formatDateShort(dateKey)}
+              </div>
+              {activeCats.flatMap(cat => {
+                let entries: string[] = [];
+                if (cat === "gym") { const v = gymDetailMap.get(dateKey); if (v) entries = [v]; }
+                else if (cat === "film") { entries = filmDetailMap.get(dateKey) ?? []; }
+                else if (cat === "note") { entries = noteDetailMap.get(dateKey) ?? []; }
+                else if (cat === "commit") { const n = commitDetailMap.get(dateKey); if (n != null) entries = [`${n} commit${n !== 1 ? "s" : ""}`]; }
+                else if (cat === "reading") { entries = readingDetailMap.get(dateKey) ?? []; }
+                const MAX = 4;
+                const overflow = entries.length > MAX ? entries.length - MAX : 0;
+                const shown = overflow ? entries.slice(0, MAX) : entries;
+                if (shown.length === 0) return [(
+                  <div key={cat} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                    <span style={{ color: CAT_COLORS[cat] }}>{CAT_LABELS[cat]}</span>
                   </div>
-                  {isStreakTip && (
-                    <Flame
-                      size={Math.max(5, sq - 5)}
-                      color={STREAK_COLOR}
-                      strokeWidth={2}
-                      style={{ position: "absolute", top: -4, right: -4, flexShrink: 0 }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-        {streakGroups.map(({ col, startRow, endRow }) => (
-          <div key={`sg-${col}-${startRow}`} style={{
-            position: "absolute",
-            pointerEvents: "none",
-            left: DOW_W + GAP + col * (cellPx + GAP),
-            top: startRow * (cellPx + GAP),
-            width: cellPx,
-            height: (endRow - startRow + 1) * cellPx + (endRow - startRow) * GAP,
-            border: `1px solid ${STREAK_COLOR}`,
-            borderRadius: BR,
-          }} />
-        ))}
-        </div>
-      </div>
+                )];
+                return [
+                  ...shown.map((entry, i) => (
+                    <div key={`${cat}-${i}`} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
+                      <span style={{ color: C.text }}>{entry}</span>
+                    </div>
+                  )),
+                  ...(overflow > 0 ? [(
+                    <div key={`${cat}-more`} style={{ paddingLeft: 11, marginBottom: 2, color: C.textFaint }}>+{overflow} more</div>
+                  )] : []),
+                ];
+              })}
+            </div>
+          );
+        }}
+      />
     </Panel>
   );
 }
