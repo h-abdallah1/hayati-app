@@ -215,6 +215,10 @@ export function OverviewPanel() {
               const isToday     = dateKey === todayKey;
               const isStreak    = streakSet.has(dateKey);
               const isStreakTip = dateKey === streakTipKey;
+              const dow = (dayIndex + jan1dow) % 7; // 0=Mon 6=Sun
+              const hasPrevStreak = isStreak && dow > 0 && dayIndex > 0 && streakSet.has(toDateKey(days[dayIndex - 1]));
+              const hasNextStreak = isStreak && dow < 6 && dayIndex < days.length - 1 && streakSet.has(toDateKey(days[dayIndex + 1]));
+              const connW = Math.max(2, Math.round(sq * 0.35));
               const borderPaint = (() => {
                 if (isStreak) return STREAK_COLOR;
                 if (isToday)  return C.accentMid;
@@ -265,6 +269,12 @@ export function OverviewPanel() {
                       </div>
                     )}
                   </div>
+                  {hasPrevStreak && (
+                    <div style={{ position: "absolute", top: -GAP, left: "50%", transform: "translateX(-50%)", width: connW, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
+                  )}
+                  {hasNextStreak && (
+                    <div style={{ position: "absolute", bottom: -GAP, left: "50%", transform: "translateX(-50%)", width: connW, height: GAP, background: STREAK_COLOR, pointerEvents: "none" }} />
+                  )}
                   {isStreakTip && (
                     <Flame
                       size={Math.max(5, sq - 5)}
