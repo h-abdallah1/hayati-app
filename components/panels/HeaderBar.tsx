@@ -36,10 +36,14 @@ export function HeaderBar({ time }: { time: Date }) {
     'Dec',
   ];
   const dateStr = `${DAYS[time.getDay()]} · ${MONTHS[time.getMonth()]} ${time.getDate()}`;
+  const startOfYear = new Date(time.getFullYear(), 0, 1).getTime();
+  const startOfNextYear = new Date(time.getFullYear() + 1, 0, 1).getTime();
+  const yearFrac = (time.getTime() - startOfYear) / (startOfNextYear - startOfYear);
   const metrics = [
     { label: 'day', frac: dayFrac, color: C.accent },
     { label: 'week', frac: weekFrac, color: C.teal },
     { label: 'month', frac: monthFrac, color: C.blue },
+    { label: 'year', frac: yearFrac, color: '#a78bfa' },
   ];
   return (
     <div
