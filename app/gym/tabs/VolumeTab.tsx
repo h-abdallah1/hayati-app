@@ -1,25 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import { weekStart, workoutVolume } from "../helpers";
 import { Empty } from "../components/shared";
 
-export function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: ReturnType<typeof useTheme> }) {
-  const weeks = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const w of workouts) {
-      const wk = weekStart(w.date);
-      map.set(wk, (map.get(wk) ?? 0) + workoutVolume(w));
-    }
-    return [...map.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([wk, vol]) => ({
-        label: new Date(wk + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        vol: Math.round(vol),
-      }));
-  }, [workouts]);
+type WeekVol = { label: string; vol: number };
+
+export function VolumeTab({ selectedYear, C }: { selectedYear: number; C: ReturnType<typeof useTheme> }) {
+  const [weeks, setWeeks] = useState<WeekVol[]>([]);
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    setWeeks([]);
+    setTotal(0);
+    fetch(`/api/hevy/analytics/volume?year=${selectedYear}`)
+      .then(r => r.json())
+      .then(d => { setWeeks(d.byWeek ?? []); setTotal(d.total ?? 0); })
+      .catch(() => {});
+  }, [selectedYear]);
 
   if (!weeks.length) return <Empty C={C} />;
 
@@ -49,7 +47,7 @@ export function VolumeTab({ workouts, C }: { workouts: HevyWorkoutFull[]; C: Ret
         ))}
       </div>
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, marginTop: 12 }}>
-        total volume · {Math.round(weeks.reduce((s, w) => s + w.vol, 0) / 1000)}t
+        total volume · {Math.round(total / 1000)}t
       </div>
     </div>
   );

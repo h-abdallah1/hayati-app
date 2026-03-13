@@ -18,18 +18,9 @@ export function useQuranVerse() {
     const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
     const ayahNum = ((dayOfYear - 1) % 6236) + 1;
 
-    fetch(`https://api.alquran.cloud/v1/ayah/${ayahNum}/editions/quran-uthmani,en.asad`)
+    fetch(`/api/quran?ayah=${ayahNum}`)
       .then(r => r.json())
-      .then(data => {
-        const ar = data.data[0];
-        const en = data.data[1];
-        setVerse({
-          arabic: ar.text,
-          translation: en.text,
-          ref: `${ar.surah.englishName} ${ar.surah.number}:${ar.numberInSurah}`,
-          url: `https://quran.com/${ar.surah.number}/${ar.numberInSurah}`,
-        });
-      })
+      .then(data => { if (!data.error) setVerse(data); })
       .catch(() => {});
   }, []);
 

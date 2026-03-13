@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTheme } from "@/lib/theme";
-import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import { SPLIT_CAT } from "../helpers";
 import { Sparkline, Empty } from "../components/shared";
+
+type TopEx    = { title: string; count: number; history: { weight: number }[] };
+type SplitRow = { cat: string; n: number };
+type RecentW  = { id: string; title: string; date: string; duration: number };
+
+type OverviewData = {
+  topExercises: TopEx[];
+  splitRows:    SplitRow[];
+  recent:       RecentW[];
+  trainedDates: string[];
+};
 
 function SectionLabel({ label, C }: { label: string; C: ReturnType<typeof useTheme> }) {
   return (
@@ -14,47 +23,41 @@ function SectionLabel({ label, C }: { label: string; C: ReturnType<typeof useThe
   );
 }
 
-export function OverviewTab({ workouts, count, streak, avgPerWeek, selectedYear, C }: {
-  workouts: HevyWorkoutFull[];
+export function OverviewTab({ count, streak, avgPerWeek, selectedYear, C }: {
   count: number; streak: number; avgPerWeek: string; selectedYear: number;
   C: ReturnType<typeof useTheme>;
 }) {
-  const curYear   = new Date().getFullYear();
-  const isCurYear = selectedYear === curYear;
-  const today     = new Date().toISOString().split("T")[0];
-  const workoutSet = useMemo(() => new Set(workouts.map(w => w.date)), [workouts]);
+  const [data, setData] = useState<OverviewData | null>(null);
+
+  useEffect(() => {
+    setData(null);
+    fetch(`/api/hevy/analytics/overview?year=${selectedYear}`)
+      .then(r => r.json())
+      .then(d => setData(d))
+      .catch(() => {});
+  }, [selectedYear]);
+
+  const curYear    = new Date().getFullYear();
+  const isCurYear  = selectedYear === curYear;
+  const today      = new Date().toISOString().split("T")[0];
+  const workoutSet = useMemo(() => new Set(data?.trainedDates ?? []), [data]);
 
   const week = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - 6 + i);
     return d.toISOString().split("T")[0];
   }), []);
 
-  const topExercises = useMemo(() => {
-    const map = new Map<string, { count: number; history: { weight: number }[] }>();
-    for (const w of [...workouts].reverse()) {
-      for (const ex of w.exercises) {
-        const p = map.get(ex.title) ?? { count: 0, history: [] };
-        const max = Math.max(0, ...ex.sets.map(s => s.weight_kg ?? 0));
-        map.set(ex.title, { count: p.count + 1, history: max > 0 ? [...p.history, { weight: max }] : p.history });
-      }
-    }
-    return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [workouts]);
-
-  const splitRows = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const w of workouts) { const cat = SPLIT_CAT(w.title); map.set(cat, (map.get(cat) ?? 0) + 1); }
-    return [...map.entries()].map(([cat, n]) => ({ cat, n })).sort((a, b) => b.n - a.n).slice(0, 5);
-  }, [workouts]);
-
   const CAT_COLORS: Record<string, string> = {
     Push: C.accent, Pull: C.teal, Legs: C.amber,
     Upper: C.blue, Lower: C.red, "Full Body": C.textMuted, Cardio: C.teal, Other: C.textFaint,
   };
-  const splitMax = splitRows[0]?.n ?? 1;
-  const recent   = workouts.slice(0, 4);
 
-  if (!workouts.length) return <Empty C={C} />;
+  if (!data) return <Empty C={C} />;
+
+  const { topExercises, splitRows, recent } = data;
+  if (!recent.length && !topExercises.length) return <Empty C={C} />;
+
+  const splitMax = splitRows[0]?.n ?? 1;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px", alignItems: "start" }}>

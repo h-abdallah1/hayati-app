@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { Sparkline, Pager, Stat, Empty } from "../components/shared";
@@ -8,33 +8,29 @@ import { ExerciseChart } from "../components/ExerciseChart";
 
 const EX_PAGE = 10;
 
-export function ExercisesTab({ workouts, C, selectedEx, setSelectedEx }: {
+type ExStat = {
+  title: string; count: number; sets: number; reps: number;
+  maxWeight: number; history: { weight: number }[];
+};
+
+export function ExercisesTab({ workouts, selectedYear, C, selectedEx, setSelectedEx }: {
   workouts: HevyWorkoutFull[];
+  selectedYear: number;
   C: ReturnType<typeof useTheme>;
   selectedEx: string | null;
   setSelectedEx: (v: string | null) => void;
 }) {
-  const [page, setPage] = useState(1);
+  const [page,  setPage]  = useState(1);
+  const [stats, setStats] = useState<ExStat[]>([]);
 
-  const stats = useMemo(() => {
-    const map = new Map<string, { count: number; sets: number; reps: number; maxWeight: number; history: { weight: number }[] }>();
-    for (const w of [...workouts].reverse()) {
-      for (const ex of w.exercises) {
-        const p = map.get(ex.title) ?? { count: 0, sets: 0, reps: 0, maxWeight: 0, history: [] };
-        const sessionMax = Math.max(0, ...ex.sets.map(s => s.weight_kg ?? 0));
-        map.set(ex.title, {
-          count:     p.count + 1,
-          sets:      p.sets + ex.sets.length,
-          reps:      p.reps + ex.sets.reduce((s, set) => s + (set.reps ?? 0), 0),
-          maxWeight: Math.max(p.maxWeight, sessionMax),
-          history:   sessionMax > 0 ? [...p.history, { weight: sessionMax }] : p.history,
-        });
-      }
-    }
-    return [...map.entries()].map(([title, s]) => ({ title, ...s })).sort((a, b) => b.count - a.count);
-  }, [workouts]);
-
-  useEffect(() => { setPage(1); }, [workouts]);
+  useEffect(() => {
+    setPage(1);
+    setStats([]);
+    fetch(`/api/hevy/analytics/exercises?year=${selectedYear}`)
+      .then(r => r.json())
+      .then(d => setStats(d.exercises ?? []))
+      .catch(() => {});
+  }, [selectedYear]);
 
   if (selectedEx) return <ExerciseChart title={selectedEx} workouts={workouts} C={C} onBack={() => setSelectedEx(null)} />;
 

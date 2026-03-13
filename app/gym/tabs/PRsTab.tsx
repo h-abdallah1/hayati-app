@@ -1,41 +1,29 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
-import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { Pager, Stat, Empty } from "../components/shared";
 
 const PR_PAGE = 10;
 
-export function PRsTab({ workouts, C, onSelectEx }: {
-  workouts: HevyWorkoutFull[];
+type PR = { title: string; weight: number; reps: number; date: string; orm: number };
+
+export function PRsTab({ selectedYear, C, onSelectEx }: {
+  selectedYear: number;
   C: ReturnType<typeof useTheme>;
   onSelectEx: (title: string) => void;
 }) {
   const [page, setPage] = useState(1);
+  const [prs,  setPrs]  = useState<PR[]>([]);
 
-  const prs = useMemo(() => {
-    const map = new Map<string, { weight: number; reps: number; date: string }>();
-    for (const w of workouts) {
-      for (const ex of w.exercises) {
-        for (const s of ex.sets) {
-          if (!s.weight_kg || !s.reps) continue;
-          const prev = map.get(ex.title);
-          if (!prev || s.weight_kg > prev.weight || (s.weight_kg === prev.weight && s.reps > prev.reps)) {
-            map.set(ex.title, { weight: s.weight_kg, reps: s.reps, date: w.date });
-          }
-        }
-      }
-    }
-    return [...map.entries()]
-      .map(([title, { weight, reps, date }]) => ({
-        title, weight, reps, date,
-        orm: Math.round(weight * (1 + reps / 30)),
-      }))
-      .sort((a, b) => b.weight - a.weight);
-  }, [workouts]);
-
-  useEffect(() => { setPage(1); }, [workouts]);
+  useEffect(() => {
+    setPage(1);
+    setPrs([]);
+    fetch(`/api/hevy/analytics/prs?year=${selectedYear}`)
+      .then(r => r.json())
+      .then(d => setPrs(d.prs ?? []))
+      .catch(() => {});
+  }, [selectedYear]);
 
   const pageCount = Math.ceil(prs.length / PR_PAGE);
   const paged     = prs.slice((page - 1) * PR_PAGE, page * PR_PAGE);

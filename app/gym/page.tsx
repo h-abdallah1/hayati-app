@@ -167,7 +167,7 @@ export default function GymPage() {
             </div>
 
             {/* Tab content */}
-            {tab === "overview"  && <OverviewTab  workouts={workouts} count={count} streak={streak} avgPerWeek={avgPerWeek} selectedYear={selectedYear} C={C} />}
+            {tab === "overview"  && <OverviewTab  count={count} streak={streak} avgPerWeek={avgPerWeek} selectedYear={selectedYear} C={C} />}
             {tab === "sessions"  && (() => {
               const pageCount = Math.ceil(count / PAGE_SIZE);
               const paged     = workouts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -189,9 +189,9 @@ export default function GymPage() {
                 </>
               );
             })()}
-            {tab === "exercises" && <ExercisesTab workouts={workouts} C={C} selectedEx={selectedEx} setSelectedEx={setSelectedEx} />}
-            {tab === "volume"    && <VolumeTab    workouts={workouts} C={C} />}
-            {tab === "prs"       && <PRsTab       workouts={workouts} C={C} onSelectEx={title => { setSelectedEx(title); setTab("exercises"); }} />}
+            {tab === "exercises" && <ExercisesTab workouts={workouts} selectedYear={selectedYear} C={C} selectedEx={selectedEx} setSelectedEx={setSelectedEx} />}
+            {tab === "volume"    && <VolumeTab    selectedYear={selectedYear} C={C} />}
+            {tab === "prs"       && <PRsTab       selectedYear={selectedYear} C={C} onSelectEx={title => { setSelectedEx(title); setTab("exercises"); }} />}
             {tab === "split"     && <SplitTab     workouts={workouts} C={C} />}
 
             </>)}
