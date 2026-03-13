@@ -106,12 +106,14 @@ export function OverviewPanel() {
   const readingDates = books
     .filter((b) => b.finishedDate >= yearStart && b.finishedDate < yearEnd)
     .map((b) => b.finishedDate);
+  // MOCK: force today to show sparkle (4+ activities) — remove when done
+  const _mockToday = toDateKey(new Date());
   const activityMap = mergeActivities(
-    gymDates,
-    filmDates,
-    noteDates,
-    commitDates,
-    readingDates,
+    [...gymDates, _mockToday],
+    [...filmDates, _mockToday],
+    [...noteDates, _mockToday],
+    [...commitDates, _mockToday],
+    [...readingDates, _mockToday],
   );
 
   // Detail maps for tooltip

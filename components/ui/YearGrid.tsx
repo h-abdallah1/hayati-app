@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame, Sparkles } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { buildYearDays, getMonthStartCols, toDateKey, type ActivityCategory } from "@/app/overview/helpers";
 
@@ -192,7 +192,17 @@ export function YearGrid({
             const isStreak   = streakSet.has(dateKey);
             const isStreakTip = dateKey === streakTipKey;
 
+            const isChroma = activeCats.length > 3;
+            const CHROMA_GRADIENT = [
+              "radial-gradient(ellipse at 20% 20%, #6B4DEB 0%, transparent 70%)",
+              "radial-gradient(ellipse at 80% 15%, #7DD4F5 0%, transparent 60%)",
+              "radial-gradient(ellipse at 75% 80%, #F5922A 0%, transparent 65%)",
+              "radial-gradient(ellipse at 25% 85%, #E8506A 0%, transparent 60%)",
+              "radial-gradient(ellipse at 55% 50%, #C4A8F2 0%, transparent 55%)",
+            ].join(", ");
+
             const borderPaint = (() => {
+              if (isChroma) return CHROMA_GRADIENT;
               if (isStreak) return C.border;
               if (isToday)  return C.accentMid;
               const cs = activeCats.map(c => CAT_COLORS[c]);
@@ -200,7 +210,6 @@ export function YearGrid({
               if (cs.length === 1) return cs[0];
               if (cs.length === 2) return `linear-gradient(to right, ${cs[0]} 50%, ${cs[1]} 50%)`;
               if (cs.length === 3) return `linear-gradient(to right, ${cs[0]} 33.3%, ${cs[1]} 33.3% 66.6%, ${cs[2]} 66.6%)`;
-              if (cs.length === 4) return `conic-gradient(from -45deg, ${cs[0]} 90deg, ${cs[1]} 180deg, ${cs[2]} 270deg, ${cs[3]} 360deg)`;
               return `linear-gradient(to right, ${cs.join(", ")})`;
             })();
 
@@ -224,19 +233,20 @@ export function YearGrid({
                   cursor: hasActivity && onCellClick ? "pointer" : "default",
                   position: "relative",
                   overflow: "visible",
+                  ...(isChroma ? { animation: "chroma-shine 3s ease-in-out infinite" } : {}),
                 }}
               >
                 <div style={{
                   width: "100%", height: "100%",
                   borderRadius: Math.max(0, BR - 1),
-                  background: C.surface,
+                  background: isChroma ? CHROMA_GRADIENT : C.surface,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 1,
                 }}>
                   {activeCats.length === 1 ? (() => {
                     const Icon = CAT_ICONS[activeCats[0]];
                     const sz = fluid ? Math.max(5, effectiveSq - 4) : 11;
                     return <Icon size={sz} color={CAT_COLORS[activeCats[0]]} strokeWidth={2} style={{ flexShrink: 0 }} />;
-                  })() : activeCats.length <= 4 ? (
+                  })() : activeCats.length <= 3 ? (
                     <div style={{
                       display: "flex", flexWrap: "wrap",
                       width: "100%", height: "100%",
@@ -249,13 +259,17 @@ export function YearGrid({
                         return <Icon key={cat} size={sz} color={CAT_COLORS[cat]} strokeWidth={2.5} style={{ flexShrink: 0 }} />;
                       })}
                     </div>
-                  ) : (
-                    <div style={{ display: "flex", gap: 1, alignItems: "center", justifyContent: "center" }}>
-                      {activeCats.map(cat => (
-                        <div key={cat} style={{ width: 3, height: 3, borderRadius: "50%", background: CAT_COLORS[cat], flexShrink: 0 }} />
-                      ))}
-                    </div>
-                  )}
+                  ) : (() => {
+                    const sz = fluid ? Math.max(5, effectiveSq - 4) : 11;
+                    return (
+                      <Sparkles
+                        size={sz}
+                        color="#ffffff"
+                        strokeWidth={2.5}
+                        style={{ flexShrink: 0 }}
+                      />
+                    );
+                  })()}
                 </div>
                 {isStreakTip && (
                   <Flame
@@ -294,6 +308,12 @@ export function YearGrid({
 
   return (
     <div ref={fluid ? gridRef : undefined} style={fluid ? { width: "100%", overflow: "hidden" } : undefined}>
+      <style>{`
+        @keyframes chroma-shine {
+          0%, 100% { filter: brightness(1) saturate(1); }
+          50%       { filter: brightness(1.35) saturate(1.5); }
+        }
+      `}</style>
       {/* Month labels */}
       <div style={{
         display: "grid",
