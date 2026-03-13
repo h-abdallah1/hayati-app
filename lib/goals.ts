@@ -84,5 +84,11 @@ export function load(): Goal[] {
 }
 
 export function persist(goals: Goal[]) {
-  try { localStorage.setItem("hayati-goals", JSON.stringify(goals)); } catch {}
+  const json = JSON.stringify(goals);
+  try { localStorage.setItem("hayati-goals", json); } catch {}
+  fetch("/api/store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: "hayati-goals", value: json }),
+  }).catch(() => {});
 }

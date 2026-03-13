@@ -11,5 +11,11 @@ export function loadBooks(): BookEntry[] {
 }
 
 export function persistBooks(books: BookEntry[]): void {
-  try { localStorage.setItem(KEY, JSON.stringify(books)); } catch {}
+  const json = JSON.stringify(books);
+  try { localStorage.setItem(KEY, json); } catch {}
+  fetch("/api/store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: KEY, value: json }),
+  }).catch(() => {});
 }

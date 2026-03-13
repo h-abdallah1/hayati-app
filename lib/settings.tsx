@@ -77,7 +77,13 @@ export function GlobalSettingsProvider({ children }: { children: React.ReactNode
   const updateGlobal = useCallback((partial: Partial<GlobalSettings>) => {
     setGlobal(prev => {
       const next = { ...prev, ...partial };
-      try { localStorage.setItem(GLOBAL_KEY, JSON.stringify(next)); } catch {}
+      const json = JSON.stringify(next);
+      try { localStorage.setItem(GLOBAL_KEY, json); } catch {}
+      fetch("/api/store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: GLOBAL_KEY, value: json }),
+      }).catch(() => {});
       return next;
     });
   }, []);
@@ -146,7 +152,13 @@ export function PanelSettingsProvider({ children }: { children: React.ReactNode 
   const updatePanels = useCallback((partial: Partial<PanelSettings>) => {
     setPanels(prev => {
       const next = { ...prev, ...partial };
-      try { localStorage.setItem(PANELS_KEY, JSON.stringify(next)); } catch {}
+      const json = JSON.stringify(next);
+      try { localStorage.setItem(PANELS_KEY, json); } catch {}
+      fetch("/api/store", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: PANELS_KEY, value: json }),
+      }).catch(() => {});
       return next;
     });
   }, []);

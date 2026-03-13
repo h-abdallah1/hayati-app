@@ -1,6 +1,20 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+function StoreSyncProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    fetch("/api/store")
+      .then(r => r.json())
+      .then((rows: { key: string; value: string }[]) => {
+        for (const { key, value } of rows) {
+          try { localStorage.setItem(key, value); } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+  return <>{children}</>;
+}
 import { GlobalSettingsProvider, PanelSettingsProvider } from "@/lib/settings";
 import { ThemeProvider } from "@/lib/theme";
 import { LayoutProvider } from "@/lib/layout";
@@ -24,6 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
 
   return (
+    <StoreSyncProvider>
     <GlobalSettingsProvider>
       <PanelSettingsProvider>
         <LayoutProvider>
@@ -45,5 +60,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </LayoutProvider>
       </PanelSettingsProvider>
     </GlobalSettingsProvider>
+    </StoreSyncProvider>
   );
 }

@@ -56,9 +56,13 @@ export default function TravelPage() {
 
   // Persist
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(visited));
-    } catch {}
+    const json = JSON.stringify(visited);
+    try { localStorage.setItem(STORAGE_KEY, json); } catch {}
+    fetch("/api/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: STORAGE_KEY, value: json }),
+    }).catch(() => {});
   }, [visited]);
 
   function toggle(id: string) {

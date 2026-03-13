@@ -87,7 +87,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   const updateLayout = (next: LayoutItem[]) => {
     setLayout(next);
-    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)); } catch {}
+    const json = JSON.stringify(next);
+    try { localStorage.setItem(LAYOUT_KEY, json); } catch {}
+    fetch("/api/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: LAYOUT_KEY, value: json }),
+    }).catch(() => {});
   };
   const resetLayout = () => {
     setLayout(DEFAULT_LAYOUT);
@@ -103,7 +109,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     };
     const next = [...templates, t];
     setTemplates(next);
-    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next)); } catch {}
+    const json = JSON.stringify(next);
+    try { localStorage.setItem(TEMPLATES_KEY, json); } catch {}
+    fetch("/api/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: TEMPLATES_KEY, value: json }),
+    }).catch(() => {});
   };
 
   const loadTemplate = (id: string) => {
@@ -114,7 +126,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const deleteTemplate = (id: string) => {
     const next = templates.filter(t => t.id !== id);
     setTemplates(next);
-    try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next)); } catch {}
+    const json = JSON.stringify(next);
+    try { localStorage.setItem(TEMPLATES_KEY, json); } catch {}
+    fetch("/api/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: TEMPLATES_KEY, value: json }),
+    }).catch(() => {});
   };
 
   return (
