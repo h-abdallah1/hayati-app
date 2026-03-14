@@ -9,7 +9,7 @@ import { getHiddenPanels } from "@/lib/modules";
 import {
   HeaderBar, PrayerPanel, QuranPanel, ReadingPanel,
   NewsPanel, CalendarPanel,
-  GymPanel, FilmsPanel, OverviewPanel, AsciiPanel,
+  GymPanel, FilmsPanel, OverviewPanel, AsciiPanel, GamingPanel,
 } from "@/components/panels";
 import { ErrorBoundary } from "@/components/ui";
 import { Responsive, useContainerWidth } from "react-grid-layout";
@@ -44,6 +44,7 @@ function HayatiInner() {
     films:    <FilmsPanel />,
     overview: <OverviewPanel />,
     ascii:    <AsciiPanel />,
+    gaming:   <GamingPanel />,
   };
 
   return (

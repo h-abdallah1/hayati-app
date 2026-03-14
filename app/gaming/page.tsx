@@ -1,0 +1,563 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/theme";
+import { loadGames, persistGames } from "@/lib/gameList";
+import { toDateKey } from "@/app/overview/helpers";
+import type { GameEntry, GameStatus, GamePlatform } from "@/lib/types";
+
+const PLATFORMS: GamePlatform[] = [
+  "Nintendo Switch", "PlayStation 5", "PlayStation 4",
+  "Steam Deck", "PC", "Xbox Series X/S", "Xbox One",
+  "iOS", "Android", "Other",
+];
+
+const STATUS_CHIPS: { status: GameStatus; label: string }[] = [
+  { status: "backlog",   label: "○" },
+  { status: "playing",   label: "▶" },
+  { status: "completed", label: "✓" },
+  { status: "dropped",   label: "✗" },
+];
+
+type ViewMode = "grid" | "timeline";
+
+type Palette = ReturnType<typeof useTheme>;
+
+function fmtDate(d: string) {
+  return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function monthLabel(key: string) {
+  const [y, m] = key.split("-");
+  return new Date(Number(y), Number(m) - 1).toLocaleString("default", { month: "long", year: "numeric" });
+}
+
+function statusColor(s: GameStatus, C: Palette): string {
+  if (s === "playing")   return C.accent;
+  if (s === "completed") return C.teal;
+  if (s === "dropped")   return C.red ?? "#ef4444";
+  return C.textMuted;
+}
+
+function chipBg(s: GameStatus, active: GameStatus, C: Palette): string {
+  if (s !== active) return "none";
+  if (s === "playing")   return C.accentDim;
+  if (s === "completed") return `${C.teal}22`;
+  if (s === "dropped")   return `${C.red ?? "#ef4444"}22`;
+  return C.surfaceHi;
+}
+
+const EMPTY_FORM = { title: "", platform: "PC" as GamePlatform, date: "", cover: "", url: "" };
+
+export default function GamingPage() {
+  const C = useTheme();
+
+  const [gameList,      setGameList]      = useState<GameEntry[]>([]);
+  const [editingId,     setEditingId]     = useState<string | null>(null);
+  const [editDraft,     setEditDraft]     = useState({ title: "", platform: "PC" as GamePlatform });
+  const [view,          setView]          = useState<ViewMode>("grid");
+  const [search,        setSearch]        = useState("");
+  const [statusFilter,  setStatusFilter]  = useState<"all" | GameStatus>("all");
+  const [adding,        setAdding]        = useState(false);
+  const [form,          setForm]          = useState({ ...EMPTY_FORM, date: toDateKey(new Date()) });
+  const [fetchingCovers, setFetchingCovers] = useState(false);
+  const [coverProgress,  setCoverProgress]  = useState("");
+
+  useEffect(() => {
+    setGameList(loadGames());
+  }, []);
+
+  const updateGame = (id: string, patch: Partial<GameEntry>) => {
+    const next = gameList.map(g => {
+      if (g.id !== id) return g;
+      const updated = { ...g, ...patch };
+      if (patch.status === "completed" && !updated.finishedDate) {
+        updated.finishedDate = toDateKey(new Date());
+      }
+      return updated;
+    });
+    setGameList(next);
+    persistGames(next);
+  };
+
+  const deleteGame = (id: string) => {
+    const next = gameList.filter(g => g.id !== id);
+    setGameList(next);
+    persistGames(next);
+  };
+
+  const startEdit = (g: GameEntry) => { setEditingId(g.id); setEditDraft({ title: g.title, platform: g.platform }); };
+  const commitEdit = (id: string) => {
+    const title = editDraft.title.trim();
+    if (!title) return;
+    const next = gameList.map(g => g.id === id ? { ...g, title, platform: editDraft.platform } : g);
+    setGameList(next);
+    persistGames(next);
+    setEditingId(null);
+  };
+  const cancelEdit = () => setEditingId(null);
+
+  const fetchAllCovers = async () => {
+    const missing = gameList.filter(g => !g.cover);
+    if (!missing.length) return;
+    setFetchingCovers(true);
+    let updated = [...gameList];
+    for (let i = 0; i < missing.length; i++) {
+      const g = missing[i];
+      setCoverProgress(`${i + 1} / ${missing.length}`);
+      try {
+        const res = await fetch("/api/sgdb", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: g.title }),
+        });
+        const { cover } = await res.json() as { cover: string | null };
+        if (cover) {
+          updated = updated.map(x => x.id === g.id ? { ...x, cover } : x);
+          setGameList([...updated]);
+        }
+      } catch {}
+      // small delay to avoid hammering the API
+      await new Promise(r => setTimeout(r, 300));
+    }
+    persistGames(updated);
+    setFetchingCovers(false);
+    setCoverProgress("");
+  };
+
+  const saveGame = () => {
+    if (!form.title.trim()) return;
+    const title    = form.title.trim();
+    const platform = form.platform;
+    const date     = form.date || toDateKey(new Date());
+    const cover    = form.cover.trim() || undefined;
+    const url      = form.url.trim() || undefined;
+
+    const entry: GameEntry = {
+      id: crypto.randomUUID(),
+      title,
+      platform,
+      status: "backlog",
+      cover,
+      addedAt: new Date(date).toISOString(),
+      url,
+    };
+    const next = [...gameList, entry];
+    setGameList(next);
+    persistGames(next);
+    setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) });
+    setAdding(false);
+  };
+
+  const cancel = () => { setAdding(false); setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) }); };
+  const onKey  = (e: React.KeyboardEvent) => { if (e.key === "Enter") saveGame(); if (e.key === "Escape") cancel(); };
+
+  // Stats
+  const completed  = gameList.filter(g => g.status === "completed" && g.finishedDate);
+  const now        = new Date();
+  const thisYear   = String(now.getFullYear());
+  const countYear  = completed.filter(g => g.finishedDate!.startsWith(thisYear)).length;
+
+  const platformCounts = gameList.reduce<Record<string, number>>((acc, g) => {
+    acc[g.platform] = (acc[g.platform] ?? 0) + 1;
+    return acc;
+  }, {});
+  const topPlatform = Object.entries(platformCounts).sort((a, b) => b[1] - a[1])[0];
+
+  // Filtered list
+  const filtered = gameList
+    .filter(g => statusFilter === "all" || g.status === statusFilter)
+    .filter(g => !search || g.title.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => (b.finishedDate ?? b.addedAt).localeCompare(a.finishedDate ?? a.addedAt));
+
+  const datedFiltered = filtered.filter(g => !!g.finishedDate);
+  const byMonth = datedFiltered.reduce<Record<string, GameEntry[]>>((acc, g) => {
+    const key = g.finishedDate!.slice(0, 7);
+    (acc[key] ??= []).push(g);
+    return acc;
+  }, {});
+  const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
+  const btnBase: React.CSSProperties = {
+    background: "none",
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    cursor: "pointer",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 10,
+    padding: "3px 9px",
+    lineHeight: 1.6,
+  };
+  const activeBtn = (active: boolean): React.CSSProperties => ({
+    ...btnBase,
+    border: `1px solid ${active ? C.accent : C.border}`,
+    background: active ? C.accentDim : "none",
+    color: active ? C.accent : C.textMuted,
+  });
+  const inputSt: React.CSSProperties = {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    padding: "5px 9px",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 11,
+    color: C.text,
+    outline: "none",
+  };
+  const selectSt: React.CSSProperties = {
+    ...inputSt,
+    cursor: "pointer",
+  };
+
+  const editingProps = { editingId, editDraft, setEditDraft, onStartEdit: startEdit, onCommitEdit: commitEdit, onCancelEdit: cancelEdit, onUpdateGame: updateGame };
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.08em" }}>
+          GAMING
+        </span>
+        <button
+          onClick={fetchAllCovers}
+          disabled={fetchingCovers}
+          style={{ ...btnBase, marginLeft: "auto", color: C.textMuted, borderColor: C.border }}
+        >
+          {fetchingCovers ? `fetching covers ${coverProgress}` : "fetch covers"}
+        </button>
+        <button onClick={() => setAdding(true)} style={{ ...btnBase, color: C.accent, borderColor: C.accentMid }}>
+          + add game
+        </button>
+      </div>
+
+      {/* Add form */}
+      {adding && (
+        <div style={{ marginBottom: 24, padding: "14px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginBottom: 2 }}>ADD GAME</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="title (required)" onKeyDown={onKey} style={{ ...inputSt, flex: "2 1 180px" }} />
+            <select value={form.platform} onChange={e => setForm(f => ({ ...f, platform: e.target.value as GamePlatform }))} style={{ ...selectSt, flex: "1 1 160px" }}>
+              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} onKeyDown={onKey} style={{ ...inputSt, flex: "1 1 140px" }} />
+            <input value={form.cover} onChange={e => setForm(f => ({ ...f, cover: e.target.value }))} placeholder="cover url (optional)" onKeyDown={onKey} style={{ ...inputSt, flex: "2 1 180px" }} />
+            <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="url (optional)" onKeyDown={onKey} style={{ ...inputSt, flex: "2 1 180px" }} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={saveGame} style={{ ...btnBase, color: C.accent, borderColor: C.accentMid }}>save</button>
+            <button onClick={cancel} style={{ ...btnBase, color: C.textFaint }}>cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Controls */}
+      {gameList.length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
+          {(["all", "backlog", "playing", "completed", "dropped"] as const).map(s => (
+            <button key={s} onClick={() => setStatusFilter(s)} style={activeBtn(statusFilter === s)}>{s}</button>
+          ))}
+          <div style={{ width: 1, height: 16, background: C.border, margin: "0 4px" }} />
+          {(["grid", "timeline"] as ViewMode[]).map(v => (
+            <button key={v} onClick={() => setView(v)} style={activeBtn(view === v)}>{v}</button>
+          ))}
+          <div style={{ flex: 1 }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="search…"
+            style={{ ...inputSt, fontSize: 10, padding: "3px 9px", background: C.surfaceHi, maxWidth: 200, lineHeight: 1.6 }}
+          />
+        </div>
+      )}
+
+      {/* Stats */}
+      {gameList.length > 0 && (
+        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+          {[
+            { val: completed.length, label: "completed" },
+            { val: countYear,        label: "this year" },
+            ...(topPlatform ? [{ val: topPlatform[1], label: topPlatform[0] }] : []),
+          ].map(s => (
+            <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{s.val}</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Content */}
+      {gameList.length === 0 ? (
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
+          no games yet — click <span style={{ color: C.accent }}>+ add game</span> to get started
+        </div>
+      ) : (view === "timeline" ? datedFiltered : filtered).length === 0 ? (
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
+          {view === "timeline" ? "no completed entries" : "no results"}
+        </div>
+      ) : view === "grid" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 16 }}>
+          {filtered.map(g => (
+            <GameCard key={g.id} game={g} C={C} onDelete={deleteGame} {...editingProps} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ maxWidth: 640 }}>
+          <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 24 }}>
+            {months.map(month => (
+              <div key={month}>
+                <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, marginBottom: 14, paddingTop: 4 }}>
+                  <div style={{ position: "absolute", left: -29, width: 8, height: 8, borderRadius: 2, background: C.border, transform: "rotate(45deg)" }} />
+                  <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 13, fontWeight: 700, color: C.text }}>{monthLabel(month)}</span>
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>
+                    {byMonth[month].length} game{byMonth[month].length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                {byMonth[month].map(g => (
+                  <div key={g.id} style={{ position: "relative", paddingBottom: 20 }}>
+                    <div style={{ position: "absolute", left: -29, top: 10, width: 8, height: 8, borderRadius: "50%", background: C.teal }} />
+                    <GameRow game={g} C={C} onDelete={deleteGame} {...editingProps} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface EditingProps {
+  editingId: string | null;
+  editDraft: { title: string; platform: GamePlatform };
+  setEditDraft: React.Dispatch<React.SetStateAction<{ title: string; platform: GamePlatform }>>;
+  onStartEdit: (g: GameEntry) => void;
+  onCommitEdit: (id: string) => void;
+  onCancelEdit: () => void;
+  onUpdateGame: (id: string, patch: Partial<GameEntry>) => void;
+}
+
+function PlatformBadge({ platform, C }: { platform: GamePlatform; C: Palette }) {
+  return (
+    <span style={{
+      fontFamily: "'JetBrains Mono',monospace", fontSize: 8,
+      color: C.textFaint, border: `1px solid ${C.border}`,
+      borderRadius: 3, padding: "1px 4px", lineHeight: 1,
+    }}>
+      {platform}
+    </span>
+  );
+}
+
+function GameCard({ game: g, C, onDelete, editingId, editDraft, setEditDraft, onStartEdit, onCommitEdit, onCancelEdit, onUpdateGame }: { game: GameEntry; C: Palette; onDelete: (id: string) => void } & EditingProps) {
+  const isEditing = editingId === g.id;
+  const inputSt: React.CSSProperties = {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    padding: "4px 7px",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 10,
+    color: C.text,
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Cover */}
+      <div style={{
+        width: "100%", aspectRatio: "3/4", borderRadius: 6,
+        overflow: "hidden", background: C.surfaceHi,
+        border: `1px solid ${C.border}`, position: "relative",
+      }}>
+        {g.cover ? (
+          <img src={g.cover} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 8 }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: C.border }}>⬛</span>
+          </div>
+        )}
+        <button
+          onClick={() => onDelete(g.id)}
+          title="delete"
+          style={{
+            position: "absolute", top: 4, right: 4,
+            background: "rgba(0,0,0,0.55)", border: "none",
+            borderRadius: 3, cursor: "pointer",
+            fontSize: 11, color: "#fff",
+            width: 18, height: 18,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            opacity: 0, transition: "opacity 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Info */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {isEditing ? (
+          <>
+            <input
+              autoFocus
+              value={editDraft.title}
+              onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))}
+              onKeyDown={e => { if (e.key === "Enter") onCommitEdit(g.id); if (e.key === "Escape") onCancelEdit(); }}
+              style={inputSt}
+            />
+            <select
+              value={editDraft.platform}
+              onChange={e => setEditDraft(d => ({ ...d, platform: e.target.value as GamePlatform }))}
+              style={{ ...inputSt, cursor: "pointer", marginTop: 2 }}
+            >
+              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+              <button onClick={() => onCommitEdit(g.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.accent }}>save</button>
+              <button onClick={onCancelEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>cancel</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <span
+              onClick={() => onStartEdit(g)}
+              title="click to edit"
+              style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.text, lineHeight: 1.4, wordBreak: "break-word", cursor: "pointer" }}
+            >
+              {g.url ? (
+                <a href={g.url} target="_blank" rel="noopener noreferrer"
+                  style={{ color: C.text, textDecoration: "none" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+                  onMouseLeave={e => (e.currentTarget.style.color = C.text)}
+                  onClick={e => e.stopPropagation()}>
+                  {g.title}
+                </a>
+              ) : g.title}
+            </span>
+            <PlatformBadge platform={g.platform} C={C} />
+            {g.finishedDate && (
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{g.finishedDate}</span>
+            )}
+            {/* Status chips */}
+            <div style={{ display: "flex", gap: 3, marginTop: 2, flexWrap: "wrap" }}>
+              {STATUS_CHIPS.map(({ status, label }) => (
+                <button
+                  key={status}
+                  onClick={() => onUpdateGame(g.id, { status })}
+                  style={{
+                    background: chipBg(status, g.status, C),
+                    border: `1px solid ${g.status === status ? statusColor(status, C) : C.border}`,
+                    borderRadius: 4, cursor: "pointer",
+                    fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+                    color: g.status === status ? statusColor(status, C) : C.border,
+                    padding: "2px 6px", lineHeight: 1,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GameRow({ game: g, C, onDelete, editingId, editDraft, setEditDraft, onStartEdit, onCommitEdit, onCancelEdit, onUpdateGame }: { game: GameEntry; C: Palette; onDelete: (id: string) => void } & EditingProps) {
+  const isEditing = editingId === g.id;
+  const inputSt: React.CSSProperties = {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    padding: "3px 7px",
+    fontFamily: "'JetBrains Mono',monospace",
+    fontSize: 11,
+    color: C.text,
+    outline: "none",
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+      {/* Cover thumbnail */}
+      <div style={{ width: 36, flexShrink: 0, aspectRatio: "3/4", borderRadius: 3, overflow: "hidden", background: C.surfaceHi, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {g.cover
+          ? <img src={g.cover} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          : null
+        }
+      </div>
+      {/* Delete */}
+      <button onClick={() => onDelete(g.id)} title="delete" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: C.textFaint, padding: 0, flexShrink: 0, lineHeight: 1 }}>×</button>
+      {/* Title / edit */}
+      {isEditing ? (
+        <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 6, alignItems: "center" }}>
+          <input
+            autoFocus
+            value={editDraft.title}
+            onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") onCommitEdit(g.id); if (e.key === "Escape") onCancelEdit(); }}
+            style={{ ...inputSt, flex: "2 1 0" }}
+          />
+          <select
+            value={editDraft.platform}
+            onChange={e => setEditDraft(d => ({ ...d, platform: e.target.value as GamePlatform }))}
+            style={{ ...inputSt, flex: "1 1 0", cursor: "pointer" }}
+          >
+            {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={() => onCommitEdit(g.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.accent, flexShrink: 0 }}>save</button>
+          <button onClick={onCancelEdit} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>cancel</button>
+        </div>
+      ) : (
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+          <span
+            onClick={() => onStartEdit(g)}
+            style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.text, cursor: "pointer" }}
+          >
+            {g.url ? (
+              <a href={g.url} target="_blank" rel="noopener noreferrer" style={{ color: C.text, textDecoration: "none" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.text)}
+                onClick={e => e.stopPropagation()}>
+                {g.title}
+              </a>
+            ) : g.title}
+          </span>
+          <PlatformBadge platform={g.platform} C={C} />
+        </div>
+      )}
+      {/* Status chips */}
+      {!isEditing && (
+        <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+          {STATUS_CHIPS.map(({ status, label }) => (
+            <button
+              key={status}
+              onClick={() => onUpdateGame(g.id, { status })}
+              style={{
+                background: chipBg(status, g.status, C),
+                border: `1px solid ${g.status === status ? statusColor(status, C) : C.border}`,
+                borderRadius: 4, cursor: "pointer",
+                fontFamily: "'JetBrains Mono',monospace", fontSize: 10,
+                color: g.status === status ? statusColor(status, C) : C.border,
+                padding: "3px 7px", lineHeight: 1,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Date */}
+      {g.finishedDate && (
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{fmtDate(g.finishedDate)}</span>
+      )}
+    </div>
+  );
+}

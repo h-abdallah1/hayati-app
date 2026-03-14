@@ -8,3 +8,4 @@ export { GymPanel }     from "./GymPanel";
 export { FilmsPanel }    from "./FilmsPanel";
 export { OverviewPanel } from "./OverviewPanel";
 export { AsciiPanel }   from "./AsciiPanel";
+export { GamingPanel }  from "./GamingPanel";
