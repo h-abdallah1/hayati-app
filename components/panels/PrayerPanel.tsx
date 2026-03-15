@@ -19,7 +19,7 @@ export function PrayerPanel({ time }: { time: Date }) {
   const rowPb = smPray ? 10 : 18;
 
   return (
-    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding: smPray ? 14 : 20 }}>
+    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding: 14 }}>
       <div className="hayati-drag-handle" style={{ display:"inline-flex", marginBottom: smPray ? 8 : 10 }}><Tag color={C.textFaint}>Prayer times</Tag></div>
       <div style={{ display:"flex", flexDirection:"column" }}>
         {PRAYER_TIMES.map((p, i) => {

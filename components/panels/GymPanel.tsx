@@ -45,7 +45,7 @@ export function GymPanel() {
   const sm = height > 0 && height < 175;
 
   return (
-    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: sm ? 14 : 20 }}>
+    <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: 14 }}>
       <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: sm ? 8 : 16 }}>
         <Tag color={loggedToday ? C.accent : C.textFaint}>Gym</Tag>
         <button

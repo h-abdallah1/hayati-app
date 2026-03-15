@@ -36,7 +36,7 @@ export function GamingPanel() {
   const smRead  = height > 0 && height < 200;
 
   return (
-    <Panel ref={ref} style={{ padding: smRead ? 14 : 20 }}>
+    <Panel ref={ref} style={{ padding: 14 }}>
       <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: smRead ? 8 : 14 }}>
         <Tag color={C.textFaint}>Gaming</Tag>
         <Link href="/gaming" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint, textDecoration: "none" }}>

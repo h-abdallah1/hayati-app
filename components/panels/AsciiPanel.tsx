@@ -168,7 +168,7 @@ export function AsciiPanel() {
   const art = ART_PIECES[index];
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column', padding: 20 }}>
+    <Panel style={{ display: 'flex', flexDirection: 'column', padding: 14 }}>
       <div
         className="hayati-drag-handle"
         style={{ marginBottom: 8 }}

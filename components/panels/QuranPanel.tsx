@@ -12,7 +12,7 @@ export function QuranPanel() {
   const verse = useQuranVerse();
   const smQuran = height > 0 && height < 220;
   return (
-    <Panel ref={ref} style={{ padding: smQuran ? 14 : 20 }}>
+    <Panel ref={ref} style={{ padding: 14 }}>
       <div
         style={{
           position: 'absolute',

@@ -215,7 +215,7 @@ export function OverviewPanel() {
   }, [gymWorkouts, films, obsidianFiles, commitDays, books]);
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column', padding: 20 }}>
+    <Panel style={{ display: 'flex', flexDirection: 'column', padding: 14 }}>
       {/* Header row */}
       <div
         className="hayati-drag-handle"

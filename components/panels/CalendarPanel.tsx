@@ -54,7 +54,7 @@ export function CalendarPanel({ time }: { time: Date }) {
   const dayName=(d: number)=>new Date(viewing.year,viewing.month,d).toLocaleDateString("en-US",{weekday:"short"});
   const upcoming=isCurMonth ? events.filter(e=>e.date>=today&&e.date<=today+6).sort((a,b)=>a.date-b.date).slice(0,3) : [];
   return (
-    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding:20 }}>
+    <Panel ref={ref} style={{ display:"flex", flexDirection:"column", padding:14 }}>
       <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: height > 0 && height < 220 ? 8 : 10 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <Tag color={C.textFaint}>Calendar</Tag>

@@ -45,7 +45,7 @@ export function NewsPanel() {
   });
 
   return (
-    <Panel ref={ref} style={{ padding: smNews ? 14 : 20 }}>
+    <Panel ref={ref} style={{ padding: 14 }}>
       <div className="hayati-drag-handle" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom: smNews ? 8 : 14 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Tag color={C.textFaint}>Latest news</Tag>

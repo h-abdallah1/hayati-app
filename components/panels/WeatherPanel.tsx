@@ -24,7 +24,7 @@ export function WeatherPanel() {
   ];
 
   return (
-    <Panel ref={ref} style={{ display: 'flex', flexDirection: 'column', padding: compact ? 14 : 20 }}>
+    <Panel ref={ref} style={{ display: 'flex', flexDirection: 'column', padding: 14 }}>
       {/* Header */}
       <div className="hayati-drag-handle" style={{ marginBottom: compact ? 8 : 12 }}>
         <Tag color={C.textFaint}>Weather · {global.location.label}</Tag>
