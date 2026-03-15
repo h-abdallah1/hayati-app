@@ -46,7 +46,7 @@ export function GymPanel() {
 
   return (
     <Panel ref={ref} style={{ display: "flex", flexDirection: "column", padding: 14 }}>
-      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: sm ? 8 : 16 }}>
+      <div className="hayati-drag-handle" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <Tag color={loggedToday ? C.accent : C.textFaint}>Gym</Tag>
         <button
           onClick={sync}

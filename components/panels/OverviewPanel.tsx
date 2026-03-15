@@ -223,7 +223,7 @@ export function OverviewPanel() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 12,
+          marginBottom: 8,
         }}
       >
         <Tag color={C.textFaint}>Overview {year}</Tag>

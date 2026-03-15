@@ -36,7 +36,7 @@ export function QuranPanel() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: smQuran ? 10 : 18,
+          marginBottom: 8,
         }}
       >
         <Tag color={C.textFaint}>{'Quran · verse of the day'}</Tag>
