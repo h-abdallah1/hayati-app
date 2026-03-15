@@ -16,8 +16,9 @@ export const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: "quran",    x: 0, y: 7,  w: 1, h: 7  },
   { i: "gym",      x: 0, y: 14, w: 1, h: 8  },
   { i: "calendar", x: 1, y: 0,  w: 1, h: 22 },
-  { i: "news",     x: 2, y: 0,  w: 2, h: 6  },
-  { i: "ascii",    x: 3, y: 0,  w: 1, h: 7  },
+  { i: "weather",  x: 2, y: 0,  w: 1, h: 7  },
+  { i: "news",     x: 3, y: 0,  w: 1, h: 14 },
+  { i: "ascii",    x: 2, y: 7,  w: 1, h: 7  },
   { i: "overview", x: 0, y: 22, w: 4, h: 6  },
 ];
 

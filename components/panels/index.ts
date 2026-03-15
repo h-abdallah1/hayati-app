@@ -7,3 +7,4 @@ export { GymPanel }     from "./GymPanel";
 export { OverviewPanel } from "./OverviewPanel";
 export { AsciiPanel }   from "./AsciiPanel";
 export { GamingPanel }  from "./GamingPanel";
+export { WeatherPanel } from "./WeatherPanel";
