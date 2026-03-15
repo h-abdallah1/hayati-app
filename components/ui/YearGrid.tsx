@@ -295,7 +295,7 @@ export function YearGrid({
       ))}
 
       {/* Streak overlays */}
-      {streakGroups.map(({ col, startRow, endRow }) => (
+      {!loading && streakGroups.map(({ col, startRow, endRow }) => (
         <div key={`sg-${col}-${startRow}`} style={{
           position: "absolute",
           pointerEvents: "none",
