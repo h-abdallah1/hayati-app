@@ -58,7 +58,7 @@ export function GymPanel() {
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: sm ? 8 : 14 }}>
-        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: sm ? 28 : 42, fontWeight: 800, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
+        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: sm ? 28 : 42, color: loading ? C.textFaint : C.accent, lineHeight: 1 }}>
           {loading ? "—" : count}
         </span>
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: C.textFaint }}>sessions</span>
