@@ -171,7 +171,7 @@ export function AsciiPanel() {
     <Panel style={{ display: 'flex', flexDirection: 'column', padding: 14 }}>
       <div
         className="hayati-drag-handle"
-        style={{ marginBottom: 8 }}
+        style={{ display: 'inline-flex', marginBottom: 8 }}
       >
         <Tag color={C.textFaint}>ascii art</Tag>
       </div>
