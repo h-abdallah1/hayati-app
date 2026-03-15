@@ -25,10 +25,9 @@ export function ModulesSection() {
     setTimeout(() => setSaved(false), 1500);
   };
 
-  const orderedIds = global.moduleOrder.length
-    ? global.moduleOrder
-    : MODULES.map(m => m.id);
-  const ordered = orderedIds.map(id => MODULES.find(m => m.id === id)!).filter(Boolean);
+  const savedIds = global.moduleOrder.length ? global.moduleOrder : MODULES.map(m => m.id);
+  const allIds   = [...savedIds, ...MODULES.map(m => m.id).filter(id => !savedIds.includes(id))];
+  const ordered  = allIds.map(id => MODULES.find(m => m.id === id)!).filter(Boolean);
 
   const toggle = (id: string) => {
     const next = global.disabledModules.includes(id)
@@ -49,7 +48,7 @@ export function ModulesSection() {
   const onDrop = (targetId: string) => {
     const from = dragId.current;
     if (!from || from === targetId) return;
-    const ids = [...orderedIds];
+    const ids = [...allIds];
     const fromIdx = ids.indexOf(from);
     const toIdx = ids.indexOf(targetId);
     ids.splice(fromIdx, 1);
