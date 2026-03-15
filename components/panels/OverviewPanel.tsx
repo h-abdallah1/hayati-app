@@ -8,13 +8,15 @@ import {
   Target,
   GitMerge,
   Flame,
+  Gamepad2,
 } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { useGlobalSettings } from '@/lib/settings';
 import { useLetterboxd } from '@/lib/hooks/useLetterboxd';
 import { useGithub } from '@/lib/hooks/useGithub';
 import { load as loadBooks } from '@/lib/books';
-import type { ReadingEntry } from '@/lib/types';
+import { loadGames } from '@/lib/gameList';
+import type { ReadingEntry, GameEntry } from '@/lib/types';
 import {
   Panel,
   Tag,
@@ -43,9 +45,9 @@ export function OverviewPanel() {
     year,
   );
   const [books, setBooks] = useState<ReadingEntry[]>([]);
-  useEffect(() => {
-    setBooks(loadBooks());
-  }, []);
+  useEffect(() => { setBooks(loadBooks()); }, []);
+  const [games, setGames] = useState<GameEntry[]>([]);
+  useEffect(() => { setGames(loadGames()); }, []);
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year + 1}-01-01`;
 
@@ -106,12 +108,16 @@ export function OverviewPanel() {
   const readingDates = books
     .filter((b) => b.finishedDate >= yearStart && b.finishedDate < yearEnd)
     .map((b) => b.finishedDate);
+  const gamingDates = games
+    .filter((g) => g.finishedDate && g.finishedDate >= yearStart && g.finishedDate < yearEnd)
+    .map((g) => g.finishedDate!);
   const activityMap = mergeActivities(
     gymDates,
     filmDates,
     noteDates,
     commitDates,
     readingDates,
+    gamingDates,
   );
 
   // Detail maps for tooltip
@@ -177,6 +183,17 @@ export function OverviewPanel() {
     return m;
   }, [books, yearStart, yearEnd]);
 
+  const gamingDetailMap = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const g of games) {
+      if (g.finishedDate && g.finishedDate >= yearStart && g.finishedDate < yearEnd) {
+        if (!m.has(g.finishedDate)) m.set(g.finishedDate, []);
+        m.get(g.finishedDate)!.push(`${g.title} · ${g.platform}`);
+      }
+    }
+    return m;
+  }, [games, yearStart, yearEnd]);
+
   const { streakSet, streakTipKey } = useMemo(() => {
     const allDates = [
       ...gymDates,
@@ -184,6 +201,7 @@ export function OverviewPanel() {
       ...noteDates,
       ...commitDates,
       ...readingDates,
+      ...gamingDates,
     ];
     const set = buildStreakSet(allDates);
     const d = new Date();
@@ -253,6 +271,20 @@ export function OverviewPanel() {
                   },
                 ]
               : []),
+            ...(gamingDates.length > 0
+              ? [
+                  {
+                    icon: (
+                      <Gamepad2
+                        size={9}
+                        strokeWidth={2}
+                        color={CAT_COLORS.gaming}
+                      />
+                    ),
+                    val: gamingDates.length,
+                  },
+                ]
+              : []),
             {
               icon: <Target size={9} strokeWidth={2} color={C.textMuted} />,
               val: goalsTotal ? `${goalsDone}/${goalsTotal}` : '—',
@@ -310,6 +342,7 @@ export function OverviewPanel() {
             note: 'Note',
             commit: 'Commit',
             reading: 'Reading',
+            gaming: 'Gaming',
           };
           return (
             <div
@@ -345,6 +378,8 @@ export function OverviewPanel() {
                   if (n != null) entries = [`${n} commit${n !== 1 ? 's' : ''}`];
                 } else if (cat === 'reading') {
                   entries = readingDetailMap.get(dateKey) ?? [];
+                } else if (cat === 'gaming') {
+                  entries = gamingDetailMap.get(dateKey) ?? [];
                 }
                 const MAX = 4;
                 const overflow =

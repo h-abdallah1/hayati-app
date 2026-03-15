@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame, Gamepad2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
-import type { Goal, ReadingEntry } from "@/lib/types";
+import type { Goal, ReadingEntry, GameEntry } from "@/lib/types";
 import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STATUS_CYCLE } from "@/lib/goals";
 import { load as loadBooks } from "@/lib/books";
+import { loadGames } from "@/lib/gameList";
 import { calcStreak } from "@/app/gym/helpers";
 import {
   mergeActivities,
@@ -67,6 +68,7 @@ const CAT_LABELS: Record<ActivityCategory, string> = {
   note:    "Note",
   commit:  "Commit",
   reading: "Reading",
+  gaming:  "Gaming",
 };
 
 export default function OverviewPage() {
@@ -90,6 +92,10 @@ export default function OverviewPage() {
   // Books (manual localStorage — read-only here, logging is on /reading)
   const [books, setBooks] = useState<ReadingEntry[]>([]);
   useEffect(() => { setBooks(loadBooks()); }, []);
+
+  // Games (manual localStorage — read-only here, logging is on /gaming)
+  const [games, setGames] = useState<GameEntry[]>([]);
+  useEffect(() => { setGames(loadGames()); }, []);
   const [addingGoal, setAddingGoal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
 
@@ -151,11 +157,15 @@ export default function OverviewPage() {
     .filter(b => b.finishedDate >= yearStart && b.finishedDate < yearEnd)
     .map(b => b.finishedDate);
 
+  const gamingDates = games
+    .filter(g => g.finishedDate && g.finishedDate >= yearStart && g.finishedDate < yearEnd)
+    .map(g => g.finishedDate!);
+
   const gymStreak = calcStreak(gymDates);
 
-  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates);
+  const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates, gamingDates);
 
-  const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates];
+  const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates, ...gamingDates];
   const streakSet = buildStreakSet(allDates);
   const streakTipKey = (() => {
     const d = new Date();
@@ -218,7 +228,14 @@ export default function OverviewPage() {
       label: `${b.title}${b.author ? ` · ${b.author}` : ""}`,
     }));
 
-  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails, readingDetails);
+  const gamingDetails = games
+    .filter(g => g.finishedDate && g.finishedDate >= yearStart && g.finishedDate < yearEnd)
+    .map(g => ({
+      date: g.finishedDate!,
+      label: `${g.title} · ${g.platform}`,
+    }));
+
+  const feedEntries = buildActivityFeed(activityMap, gymDetails, filmDetails, noteDetails, commitDetails, readingDetails, gamingDetails);
 
   // Scroll to date in feed
   const scrollToDate = useCallback((dateKey: string) => {
@@ -300,6 +317,9 @@ export default function OverviewPage() {
             {readingDates.length > 0 && (
               <StatBox label="books" value={String(readingDates.length)} icon={<BookOpen size={11} color={CAT_COLORS.reading} strokeWidth={2} />} C={C} />
             )}
+            {gamingDates.length > 0 && (
+              <StatBox label="games" value={String(gamingDates.length)} icon={<Gamepad2 size={11} color={CAT_COLORS.gaming} strokeWidth={2} />} C={C} />
+            )}
           </div>
         );
       })()}
@@ -342,6 +362,7 @@ export default function OverviewPage() {
                     else if (cat === "note") { entries = noteDetailMap.get(dateKey) ?? []; }
                     else if (cat === "commit") { const n = commitDetailMap.get(dateKey); if (n != null) entries = [`${n} commit${n !== 1 ? "s" : ""}`]; }
                     else if (cat === "reading") { entries = readingDetails.filter(r => r.date === dateKey).map(r => r.label); }
+                    else if (cat === "gaming") { entries = gamingDetails.filter(g => g.date === dateKey).map(g => g.label); }
                     const MAX = 4;
                     const overflow = entries.length > MAX ? entries.length - MAX : 0;
                     const shown = overflow ? entries.slice(0, MAX) : entries;

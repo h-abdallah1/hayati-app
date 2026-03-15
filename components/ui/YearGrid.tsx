@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useMemo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame, Sparkles } from "lucide-react";
+import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame, Sparkles, Gamepad2 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { buildYearDays, getMonthStartCols, toDateKey, type ActivityCategory } from "@/app/overview/helpers";
 
@@ -17,6 +17,7 @@ export const CAT_COLORS: Record<ActivityCategory, string> = {
   note:    "#f5a623",
   commit:  "#22c55e",
   reading: "#a78bfa",
+  gaming:  "#06b6d4",
 };
 
 export const CAT_ICONS = {
@@ -25,9 +26,10 @@ export const CAT_ICONS = {
   note:    FileText,
   commit:  GitMerge,
   reading: BookOpen,
+  gaming:  Gamepad2,
 } as const;
 
-export const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading"];
+export const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading", "gaming"];
 
 export function buildStreakSet(dates: string[]): Set<string> {
   const dateSet = new Set(dates);
