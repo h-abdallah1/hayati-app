@@ -26,34 +26,33 @@ function monthLabel(key: string) {
   return new Date(Number(y), Number(m) - 1).toLocaleString("default", { month: "long", year: "numeric" });
 }
 
-const PLATFORM_ICON: Record<GamePlatform, { icon: React.ReactNode; color: string }> = {
-  "Nintendo Switch":  { icon: <Gamepad       size={11} />, color: "#e4000f" },
-  "PlayStation 5":    { icon: <SiPlaystation size={11} />, color: "#003087" },
-  "PlayStation 4":    { icon: <SiPlaystation size={11} />, color: "#003087" },
-  "Steam Deck":       { icon: <SiSteamdeck   size={11} />, color: "#1b2838" },
-  "PC":               { icon: <SiSteam       size={11} />, color: "#6b7280" },
-  "Xbox Series X/S":  { icon: <Gamepad2      size={11} />, color: "#107c10" },
-  "Xbox One":         { icon: <Gamepad2      size={11} />, color: "#107c10" },
-  "iOS":              { icon: <SiApple       size={11} />, color: "#555555" },
-  "Android":          { icon: <SiAndroid     size={11} />, color: "#3ddc84" },
-  "Other":            { icon: <Monitor       size={11} />, color: "#6b7280" },
+const PLATFORM_META: Record<GamePlatform, { icon: React.ReactNode; color: string; short: string }> = {
+  "Nintendo Switch":  { icon: <Gamepad       size={10} />, color: "#e4000f", short: "NSW"  },
+  "PlayStation 5":    { icon: <SiPlaystation size={10} />, color: "#003791", short: "PS5"  },
+  "PlayStation 4":    { icon: <SiPlaystation size={10} />, color: "#003791", short: "PS4"  },
+  "Steam Deck":       { icon: <SiSteamdeck   size={10} />, color: "#6c8ebf", short: "SD"   },
+  "PC":               { icon: <SiSteam       size={10} />, color: "#7289da", short: "PC"   },
+  "Xbox Series X/S":  { icon: <Gamepad2      size={10} />, color: "#107c10", short: "XSX"  },
+  "Xbox One":         { icon: <Gamepad2      size={10} />, color: "#107c10", short: "XB1"  },
+  "iOS":              { icon: <SiApple       size={10} />, color: "#888888", short: "iOS"  },
+  "Android":          { icon: <SiAndroid     size={10} />, color: "#3ddc84", short: "AND"  },
+  "Other":            { icon: <Monitor       size={10} />, color: "#888888", short: "???"  },
 };
 
-function PlatformBadge({ platform, C }: { platform: GamePlatform; C: Palette }) {
-  const { icon, color } = PLATFORM_ICON[platform] ?? PLATFORM_ICON["Other"];
+function PlatformBadge({ platform }: { platform: GamePlatform }) {
+  const { icon, color, short } = PLATFORM_META[platform] ?? PLATFORM_META["Other"];
   return (
     <span title={platform} style={{
-      display: "inline-flex", alignItems: "center", gap: 3,
-      color, border: `1px solid ${C.border}`,
-      borderRadius: 3, padding: "2px 5px", lineHeight: 1,
-      fontFamily: "'JetBrains Mono',monospace", fontSize: 8,
+      display: "inline-flex", alignItems: "center", gap: 4,
+      color, opacity: 0.85,
+      fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 600, lineHeight: 1,
     }}>
-      {icon}
-      <span style={{ color: C.textFaint }}>{platform}</span>
+      {icon}{short}
     </span>
   );
 }
 
+const DEFAULT_DATE = "2025-12-31";
 const EMPTY_FORM = { title: "", platform: "PC" as GamePlatform, date: "", cover: "", url: "" };
 
 export default function GamingPage() {
@@ -148,7 +147,6 @@ export default function GamingPage() {
   const cancel = () => { setAdding(false); setForm({ ...EMPTY_FORM, date: toDateKey(new Date()) }); };
   const onKey  = (e: React.KeyboardEvent) => { if (e.key === "Enter") saveGame(); if (e.key === "Escape") cancel(); };
 
-  const DEFAULT_DATE = "2025-12-31";
   const now       = new Date();
   const thisYear  = String(now.getFullYear());
   const countYear = gameList.filter(g => (g.finishedDate ?? DEFAULT_DATE).startsWith(thisYear)).length;
@@ -354,8 +352,8 @@ function GameCard({ game: g, C, onDelete, editingId, editDraft, setEditDraft, on
                     onClick={e => e.stopPropagation()}>{g.title}</a>
                 : g.title}
             </span>
-            <PlatformBadge platform={g.platform} C={C} />
-            {g.finishedDate && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{g.finishedDate}</span>}
+            <PlatformBadge platform={g.platform} />
+            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{g.finishedDate ?? DEFAULT_DATE}</span>
           </>
         )}
       </div>
@@ -397,10 +395,10 @@ function GameRow({ game: g, C, onDelete, editingId, editDraft, setEditDraft, onS
                   onClick={e => e.stopPropagation()}>{g.title}</a>
               : g.title}
           </span>
-          <PlatformBadge platform={g.platform} C={C} />
+          <PlatformBadge platform={g.platform} />
         </div>
       )}
-      {g.finishedDate && <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{fmtDate(g.finishedDate)}</span>}
+      <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, flexShrink: 0 }}>{fmtDate(g.finishedDate ?? DEFAULT_DATE)}</span>
     </div>
   );
 }

@@ -10,17 +10,17 @@ import { loadGames } from "@/lib/gameList";
 import { SiPlaystation, SiSteam, SiSteamdeck, SiApple, SiAndroid } from "react-icons/si";
 import { Monitor, Gamepad2, Gamepad } from "lucide-react";
 
-const PLATFORM_ICON: Record<GamePlatform, { icon: React.ReactNode; color: string }> = {
-  "Nintendo Switch":  { icon: <Gamepad       size={10} />, color: "#e4000f" },
-  "PlayStation 5":    { icon: <SiPlaystation size={10} />, color: "#003087" },
-  "PlayStation 4":    { icon: <SiPlaystation size={10} />, color: "#003087" },
-  "Steam Deck":       { icon: <SiSteamdeck   size={10} />, color: "#1b2838" },
-  "PC":               { icon: <SiSteam       size={10} />, color: "#6b7280" },
-  "Xbox Series X/S":  { icon: <Gamepad2      size={10} />, color: "#107c10" },
-  "Xbox One":         { icon: <Gamepad2      size={10} />, color: "#107c10" },
-  "iOS":              { icon: <SiApple       size={10} />, color: "#555555" },
-  "Android":          { icon: <SiAndroid     size={10} />, color: "#3ddc84" },
-  "Other":            { icon: <Monitor       size={10} />, color: "#6b7280" },
+const PLATFORM_META: Record<GamePlatform, { icon: React.ReactNode; color: string; short: string }> = {
+  "Nintendo Switch":  { icon: <Gamepad       size={10} />, color: "#e4000f", short: "NSW"  },
+  "PlayStation 5":    { icon: <SiPlaystation size={10} />, color: "#003791", short: "PS5"  },
+  "PlayStation 4":    { icon: <SiPlaystation size={10} />, color: "#003791", short: "PS4"  },
+  "Steam Deck":       { icon: <SiSteamdeck   size={10} />, color: "#6c8ebf", short: "SD"   },
+  "PC":               { icon: <SiSteam       size={10} />, color: "#7289da", short: "PC"   },
+  "Xbox Series X/S":  { icon: <Gamepad2      size={10} />, color: "#107c10", short: "XSX"  },
+  "Xbox One":         { icon: <Gamepad2      size={10} />, color: "#107c10", short: "XB1"  },
+  "iOS":              { icon: <SiApple       size={10} />, color: "#888888", short: "iOS"  },
+  "Android":          { icon: <SiAndroid     size={10} />, color: "#3ddc84", short: "AND"  },
+  "Other":            { icon: <Monitor       size={10} />, color: "#888888", short: "???"  },
 };
 
 export function GamingPanel() {
@@ -54,10 +54,9 @@ export function GamingPanel() {
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, paddingTop: 2 }}>
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: smRead ? 12 : 13, fontWeight: 700, color: C.text, lineHeight: 1.35 }}>{current.title}</div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, color: PLATFORM_ICON[current.platform]?.color ?? "#6b7280" }}>
-              {PLATFORM_ICON[current.platform]?.icon}
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>{current.platform}</span>
-            </div>
+            {(() => { const m = PLATFORM_META[current.platform] ?? PLATFORM_META["Other"]; return (
+              <span title={current.platform} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: m.color, opacity: 0.85, fontFamily: "'JetBrains Mono',monospace", fontSize: 9, fontWeight: 600, lineHeight: 1 }}>{m.icon}{m.short}</span>
+            ); })()}
           </div>
         </div>
       ) : (
