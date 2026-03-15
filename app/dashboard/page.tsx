@@ -7,9 +7,9 @@ import { useLayout } from "@/lib/layout";
 import { formatClock } from "@/lib/time";
 import { getHiddenPanels } from "@/lib/modules";
 import {
-  HeaderBar, PrayerPanel, QuranPanel, ReadingPanel,
+  HeaderBar, PrayerPanel, QuranPanel,
   NewsPanel, CalendarPanel,
-  GymPanel, FilmsPanel, OverviewPanel, AsciiPanel, GamingPanel,
+  GymPanel, OverviewPanel, AsciiPanel, GamingPanel,
 } from "@/components/panels";
 import { ErrorBoundary } from "@/components/ui";
 import { Responsive, useContainerWidth } from "react-grid-layout";
@@ -40,8 +40,6 @@ function HayatiInner() {
     gym:      <GymPanel />,
     calendar: <CalendarPanel time={time} />,
     news:     <NewsPanel />,
-    reading:  <ReadingPanel />,
-    films:    <FilmsPanel />,
     overview: <OverviewPanel />,
     ascii:    <AsciiPanel />,
     gaming:   <GamingPanel />,
