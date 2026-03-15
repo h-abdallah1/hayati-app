@@ -10,7 +10,6 @@ export function QuranPanel() {
   const ref = useRef<HTMLDivElement>(null);
   const { height } = usePanelSize(ref);
   const verse = useQuranVerse();
-  const smQuran = height > 0 && height < 220;
   return (
     <Panel ref={ref} style={{ padding: 14 }}>
       <div

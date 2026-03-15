@@ -18,7 +18,6 @@ export function NewsPanel() {
   const { items: liveItems, loaded } = useNews(panels.newsFeeds);
   const [page, setPage] = useState(0);
 
-  const smNews = height > 0 && height < 200;
   const PAGE_SIZE = height <= 0 ? 5 : Math.max(2, Math.min(10, Math.floor((height - 44) / 36)));
 
   const displayItems: NewsItem[] = panels.newsFeeds.length === 0
