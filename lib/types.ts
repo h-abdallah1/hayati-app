@@ -77,10 +77,6 @@ export type ReadingEntry = {
   cover?: string; // Open Library cover URL
 };
 
-export type BookStatus = "notStarted" | "reading" | "read";
-
-export type GameStatus = "backlog" | "playing" | "completed" | "dropped";
-
 export type GamePlatform =
   | "Nintendo Switch" | "PlayStation 5" | "PlayStation 4"
   | "Steam Deck" | "PC" | "Xbox Series X/S" | "Xbox One"
@@ -90,10 +86,9 @@ export type GameEntry = {
   id: string;
   title: string;
   platform: GamePlatform;
-  status: GameStatus;
   cover?: string;
   addedAt: string;       // ISO datetime
-  finishedDate?: string; // YYYY-MM-DD, set when status → "completed"
+  finishedDate?: string; // YYYY-MM-DD
   rating?: number;
   url?: string;
 };
@@ -102,9 +97,8 @@ export type BookEntry = {
   id: string;
   title: string;
   author: string;
-  status: BookStatus;
   cover?: string;
-  addedAt: string; // ISO date string
-  finishedDate?: string; // YYYY-MM-DD, set when status → "read"
+  addedAt: string;       // ISO datetime
+  finishedDate?: string; // YYYY-MM-DD
   url?: string;
 };
