@@ -32,15 +32,17 @@ export const CAT_ICONS = {
 export const ORDERED_CATS: ActivityCategory[] = ["gym", "film", "note", "commit", "reading", "gaming"];
 
 export function buildStreakSet(dates: string[]): Set<string> {
-  const dateSet = new Set(dates);
-  const set = new Set<string>();
-  const d = new Date();
-  if (!dateSet.has(toDateKey(d))) d.setDate(d.getDate() - 1);
-  while (dateSet.has(toDateKey(d))) {
-    set.add(toDateKey(d));
-    d.setDate(d.getDate() - 1);
+  if (dates.length === 0) return new Set();
+  const sorted = [...new Set(dates)].sort();
+  let bestStart = 0, bestLen = 1, curStart = 0, curLen = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const [y, m, d] = sorted[i].split("-").map(Number);
+    if (sorted[i - 1] === toDateKey(new Date(y, m - 1, d - 1))) {
+      curLen++;
+      if (curLen > bestLen) { bestLen = curLen; bestStart = curStart; }
+    } else { curStart = i; curLen = 1; }
   }
-  return set;
+  return new Set(sorted.slice(bestStart, bestStart + bestLen));
 }
 
 // ── Component ────────────────────────────────────────────────────────────────

@@ -17,6 +17,33 @@ export function calcStreak(dates: string[]): number {
   return streak;
 }
 
+export function calcWeekStreak(dates: string[]): number {
+  if (dates.length === 0) return 0;
+  function toISOWeek(dateStr: string): string {
+    const d = new Date(dateStr + "T00:00:00");
+    const dow = d.getDay() || 7; // Mon=1 … Sun=7
+    d.setDate(d.getDate() + 4 - dow); // shift to nearest Thursday
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    return `${d.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  }
+  function prevWeek(w: string): string {
+    const [yr, wk] = w.split("-W").map(Number);
+    if (wk > 1) return `${yr}-W${String(wk - 1).padStart(2, "0")}`;
+    // last week of previous year
+    return toISOWeek(`${yr - 1}-12-28`); // Dec 28 is always in the last ISO week
+  }
+  const weeks = new Set(dates.map(toISOWeek));
+  let cur = toISOWeek(new Date().toISOString().split("T")[0]);
+  if (!weeks.has(cur)) {
+    cur = prevWeek(cur);
+    if (!weeks.has(cur)) return 0;
+  }
+  let count = 0;
+  while (weeks.has(cur)) { count++; cur = prevWeek(cur); }
+  return count >= 3 ? count : 0;
+}
+
 export function weekStart(dateStr: string): string {
   const d   = new Date(dateStr + "T00:00:00");
   const dow = d.getDay();

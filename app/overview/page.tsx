@@ -12,7 +12,7 @@ import type { Goal, ReadingEntry, GameEntry } from "@/lib/types";
 import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STATUS_CYCLE } from "@/lib/goals";
 import { load as loadBooks } from "@/lib/books";
 import { loadGames } from "@/lib/gameList";
-import { calcStreak } from "@/app/gym/helpers";
+import { calcWeekStreak } from "@/app/gym/helpers";
 import {
   mergeActivities,
   buildActivityFeed,
@@ -161,18 +161,14 @@ export default function OverviewPage() {
     .filter(g => g.finishedDate && g.finishedDate >= yearStart && g.finishedDate < yearEnd)
     .map(g => g.finishedDate!);
 
-  const gymStreak = calcStreak(gymDates);
+  const gymWeekStreak = calcWeekStreak(gymDates);
 
   const activityMap = mergeActivities(gymDates, filmDates, noteDates, commitDates, readingDates, gamingDates);
 
   const allDates = [...gymDates, ...filmDates, ...noteDates, ...commitDates, ...readingDates, ...gamingDates];
   const streakSet = buildStreakSet(allDates);
-  const streakTipKey = (() => {
-    const d = new Date();
-    if (streakSet.has(toDateKey(d))) return toDateKey(d);
-    d.setDate(d.getDate() - 1);
-    return streakSet.has(toDateKey(d)) ? toDateKey(d) : null;
-  })();
+  const streakTipKey = streakSet.size > 0 ? [...streakSet].sort().at(-1)! : null;
+
 
   // Feed detail records
   const gymDetailMap = new Map<string, string>();
@@ -308,7 +304,7 @@ export default function OverviewPage() {
             <StatBox label="quarter"     value={`Q${quarter}`} C={C} />
             <div style={{ width: 1, height: 32, background: C.border, alignSelf: "flex-end", marginBottom: 2 }} />
             <StatBox label="streak" value={`${streakSet.size}d`} icon={<Flame size={11} color="#ff6b00" strokeWidth={2} />} C={C} />
-            <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    sub={!loading && gymStreak > 0 ? `${gymStreak}d streak` : undefined} icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
+            <StatBox label="gym"     value={loading ? "—" : String(gymDates.length)}    sub={!loading && gymWeekStreak >= 3 ? `${gymWeekStreak}w streak` : undefined} icon={<Dumbbell      size={11} color={CAT_COLORS.gym}    strokeWidth={2} />} C={C} />
             <StatBox label="films"   value={loading ? "—" : String(filmDates.length)}   icon={<Clapperboard  size={11} color={CAT_COLORS.film}   strokeWidth={2} />} C={C} />
             <StatBox label="notes"   value={loading ? "—" : String(noteDates.length)}   icon={<FileText      size={11} color={CAT_COLORS.note}   strokeWidth={2} />} C={C} />
             {settings.githubUsername && (
@@ -317,9 +313,7 @@ export default function OverviewPage() {
             {readingDates.length > 0 && (
               <StatBox label="books" value={String(readingDates.length)} icon={<BookOpen size={11} color={CAT_COLORS.reading} strokeWidth={2} />} C={C} />
             )}
-            {gamingDates.length > 0 && (
-              <StatBox label="games" value={String(gamingDates.length)} icon={<Gamepad2 size={11} color={CAT_COLORS.gaming} strokeWidth={2} />} C={C} />
-            )}
+            <StatBox label="games" value={String(gamingDates.length)} icon={<Gamepad2 size={11} color={CAT_COLORS.gaming} strokeWidth={2} />} C={C} />
           </div>
         );
       })()}

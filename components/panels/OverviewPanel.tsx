@@ -32,6 +32,7 @@ import {
   formatDateShort,
   type ActivityCategory,
 } from '@/app/overview/helpers';
+import { calcWeekStreak } from '@/app/gym/helpers';
 import type { HevyWorkoutFull } from '@/app/api/hevy/workouts/route';
 
 export function OverviewPanel() {
@@ -194,7 +195,7 @@ export function OverviewPanel() {
     return m;
   }, [games, yearStart, yearEnd]);
 
-  const { streakSet, streakTipKey } = useMemo(() => {
+  const { streakSet, streakTipKey, gymWeekStreak } = useMemo(() => {
     const allDates = [
       ...gymDates,
       ...filmDates,
@@ -204,14 +205,12 @@ export function OverviewPanel() {
       ...gamingDates,
     ];
     const set = buildStreakSet(allDates);
-    const d = new Date();
-    const tip = set.has(toDateKey(d))
-      ? toDateKey(d)
-      : (() => {
-          d.setDate(d.getDate() - 1);
-          return set.has(toDateKey(d)) ? toDateKey(d) : null;
-        })();
-    return { streakSet: set, streakTipKey: tip };
+    const tip = set.size > 0 ? [...set].sort().at(-1)! : null;
+    return {
+      streakSet: set,
+      streakTipKey: tip,
+      gymWeekStreak: calcWeekStreak(gymDates),
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gymWorkouts, films, obsidianFiles, commitDays, books]);
 
@@ -239,7 +238,7 @@ export function OverviewPanel() {
               icon: (
                 <Dumbbell size={9} strokeWidth={2} color={CAT_COLORS.gym} />
               ),
-              val: gymDates.length,
+              val: gymWeekStreak >= 3 ? `${gymDates.length} (${gymWeekStreak}w)` : gymDates.length,
             },
             {
               icon: (
@@ -271,20 +270,16 @@ export function OverviewPanel() {
                   },
                 ]
               : []),
-            ...(gamingDates.length > 0
-              ? [
-                  {
-                    icon: (
-                      <Gamepad2
-                        size={9}
-                        strokeWidth={2}
-                        color={CAT_COLORS.gaming}
-                      />
-                    ),
-                    val: gamingDates.length,
-                  },
-                ]
-              : []),
+            {
+              icon: (
+                <Gamepad2
+                  size={9}
+                  strokeWidth={2}
+                  color={CAT_COLORS.gaming}
+                />
+              ),
+              val: gamingDates.length,
+            },
             {
               icon: <Target size={9} strokeWidth={2} color={C.textMuted} />,
               val: goalsTotal ? `${goalsDone}/${goalsTotal}` : '—',
