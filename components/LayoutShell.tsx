@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Sidebar } from "./Sidebar";
+import { Background } from "./Background";
 import { useGlobalSettings } from "@/lib/settings";
 import { useAssistant } from "@/app/providers";
 
@@ -27,12 +28,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <Background />
       {!fullscreen && <Sidebar />}
       <main style={{
         marginLeft: fullscreen ? 0 : 56,
         marginRight: assistantOpen ? DRAWER_WIDTH : 0,
         paddingBottom: 28,
         transition: "margin-right 0.25s cubic-bezier(0.4,0,0.2,1)",
+        position: "relative",
+        zIndex: 1,
       }}>
         {children}
       </main>

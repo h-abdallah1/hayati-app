@@ -80,6 +80,23 @@ export function GeneralSection() {
       </div>
 
       <div style={{ marginBottom: 12 }}>
+        <span style={fieldLabel(C)}>Background</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {([["orbs", "Orbs"], ["ps3", "PS3"], ["night", "Night"]] as const).map(([val, label]) => (
+            <button key={val} onClick={() => updateGlobal({ bgStyle: val })} style={{
+              flex: 1, padding: "6px 0", borderRadius: 6, cursor: "pointer",
+              fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
+              border: `1px solid ${global.bgStyle === val ? C.accent : C.border}`,
+              background: global.bgStyle === val ? C.accentDim : C.surfaceHi,
+              color: global.bgStyle === val ? C.accent : C.textMuted,
+            }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
         <span style={fieldLabel(C)}>Time format</span>
         <div style={{ display: "flex", gap: 6 }}>
           {(["12h", "24h"] as const).map(fmt => (

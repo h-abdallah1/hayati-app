@@ -188,7 +188,6 @@ export default function HomePage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: C.bg,
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",

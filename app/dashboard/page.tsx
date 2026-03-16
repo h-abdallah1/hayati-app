@@ -47,7 +47,7 @@ function HayatiInner() {
   };
 
   return (
-    <div style={{ background:C.bg, padding:"24px 28px", paddingBottom:0 }}>
+    <div style={{ padding:"24px 28px", paddingBottom:0 }}>
       <HeaderBar time={time} />
       <div ref={containerRef} style={{ maxWidth:1280, margin:"0 auto" }}>
         {mounted && (

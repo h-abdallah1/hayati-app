@@ -25,6 +25,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   ollamaUrl: "http://localhost:11434",
   ollamaModel: "llama3.2:1b",
   accentTheme: "sage",
+  bgStyle: "orbs",
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -51,6 +52,7 @@ function readGlobal(): GlobalSettings {
       ollamaUrl:    typeof parsed.ollamaUrl === "string"    ? parsed.ollamaUrl    : DEFAULT_GLOBAL.ollamaUrl,
       ollamaModel:  typeof parsed.ollamaModel === "string"  ? parsed.ollamaModel  : DEFAULT_GLOBAL.ollamaModel,
       accentTheme:  typeof parsed.accentTheme === "string"  ? parsed.accentTheme  : DEFAULT_GLOBAL.accentTheme,
+      bgStyle: (["orbs", "ps3", "night"] as const).includes(parsed.bgStyle as "orbs" | "ps3" | "night") ? parsed.bgStyle as GlobalSettings["bgStyle"] : DEFAULT_GLOBAL.bgStyle,
     };
   } catch {
     return DEFAULT_GLOBAL;
