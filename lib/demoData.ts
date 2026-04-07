@@ -181,24 +181,26 @@ export const DEMO_GYM_WORKOUTS: HevyWorkoutFull[] = WORKOUT_DATES_2026.map((date
 
 // ── Books ─────────────────────────────────────────────────────────────────────
 
+const OL = (isbn: string) => `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+
 export const DEMO_BOOKS: BookEntry[] = [
   // Currently reading (no finishedDate)
-  { id: "b1",  title: "The Creative Act",              author: "Rick Rubin",            addedAt: "2026-03-10" },
-  { id: "b2",  title: "Blood Meridian",                author: "Cormac McCarthy",        addedAt: "2026-02-28" },
+  { id: "b1",  title: "The Creative Act",              author: "Rick Rubin",             addedAt: "2026-03-10", cover: OL("9780593652947") },
+  { id: "b2",  title: "Blood Meridian",                author: "Cormac McCarthy",         addedAt: "2026-02-28", cover: OL("9780679728757") },
   // Finished 2026
-  { id: "b3",  title: "Atomic Habits",                 author: "James Clear",            finishedDate: "2026-03-18", addedAt: "2026-02-10" },
-  { id: "b4",  title: "The Pragmatic Programmer",      author: "David Thomas",            finishedDate: "2026-02-20", addedAt: "2026-01-15" },
-  { id: "b5",  title: "Dune",                          author: "Frank Herbert",            finishedDate: "2026-01-30", addedAt: "2025-12-22" },
-  { id: "b6",  title: "A Philosophy of Software Design", author: "John Ousterhout",      finishedDate: "2026-01-12", addedAt: "2025-12-01" },
+  { id: "b3",  title: "Atomic Habits",                 author: "James Clear",             finishedDate: "2026-03-18", addedAt: "2026-02-10", cover: OL("9780735211292") },
+  { id: "b4",  title: "The Pragmatic Programmer",      author: "David Thomas",             finishedDate: "2026-02-20", addedAt: "2026-01-15", cover: OL("9780135957059") },
+  { id: "b5",  title: "Dune",                          author: "Frank Herbert",             finishedDate: "2026-01-30", addedAt: "2025-12-22", cover: OL("9780441013593") },
+  { id: "b6",  title: "A Philosophy of Software Design", author: "John Ousterhout",       finishedDate: "2026-01-12", addedAt: "2025-12-01", cover: OL("9781732102217") },
   // Finished 2025
-  { id: "b7",  title: "The Name of the Wind",          author: "Patrick Rothfuss",        finishedDate: "2025-12-04", addedAt: "2025-10-20" },
-  { id: "b8",  title: "Thinking, Fast and Slow",       author: "Daniel Kahneman",         finishedDate: "2025-10-28", addedAt: "2025-09-14" },
-  { id: "b9",  title: "Norwegian Wood",                author: "Haruki Murakami",          finishedDate: "2025-09-15", addedAt: "2025-08-20" },
-  { id: "b10", title: "Deep Work",                     author: "Cal Newport",             finishedDate: "2025-08-02", addedAt: "2025-07-10" },
-  { id: "b11", title: "The Remains of the Day",        author: "Kazuo Ishiguro",          finishedDate: "2025-06-25", addedAt: "2025-05-30" },
-  { id: "b12", title: "Project Hail Mary",             author: "Andy Weir",               finishedDate: "2025-05-18", addedAt: "2025-04-22" },
-  { id: "b13", title: "Designing Data-Intensive Applications", author: "Martin Kleppmann", finishedDate: "2025-04-08", addedAt: "2025-02-15" },
-  { id: "b14", title: "The Master and Margarita",      author: "Mikhail Bulgakov",         finishedDate: "2025-02-28", addedAt: "2025-01-10" },
+  { id: "b7",  title: "The Name of the Wind",          author: "Patrick Rothfuss",         finishedDate: "2025-12-04", addedAt: "2025-10-20", cover: OL("9780756405892") },
+  { id: "b8",  title: "Thinking, Fast and Slow",       author: "Daniel Kahneman",          finishedDate: "2025-10-28", addedAt: "2025-09-14", cover: OL("9780374533557") },
+  { id: "b9",  title: "Norwegian Wood",                author: "Haruki Murakami",           finishedDate: "2025-09-15", addedAt: "2025-08-20", cover: OL("9780375704024") },
+  { id: "b10", title: "Deep Work",                     author: "Cal Newport",              finishedDate: "2025-08-02", addedAt: "2025-07-10", cover: OL("9781455586691") },
+  { id: "b11", title: "The Remains of the Day",        author: "Kazuo Ishiguro",           finishedDate: "2025-06-25", addedAt: "2025-05-30", cover: OL("9780679731726") },
+  { id: "b12", title: "Project Hail Mary",             author: "Andy Weir",                finishedDate: "2025-05-18", addedAt: "2025-04-22", cover: OL("9780593135204") },
+  { id: "b13", title: "Designing Data-Intensive Applications", author: "Martin Kleppmann", finishedDate: "2025-04-08", addedAt: "2025-02-15", cover: OL("9781449373320") },
+  { id: "b14", title: "The Master and Margarita",      author: "Mikhail Bulgakov",          finishedDate: "2025-02-28", addedAt: "2025-01-10", cover: OL("9780679760801") },
 ];
 
 // ── Reading entries (for overview page — ReadingEntry type) ──────────────────

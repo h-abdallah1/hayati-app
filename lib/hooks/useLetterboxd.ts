@@ -12,7 +12,21 @@ export function useLetterboxd(username: string) {
   const [rev, setRev] = useState(0);
 
   useEffect(() => {
-    if (demoMode) { setFilms(DEMO_FILMS); setLoaded(true); return; }
+    if (demoMode) {
+      setFilms(DEMO_FILMS);
+      setLoaded(true);
+      // Lazily fetch posters from Wikipedia for demo films that have no poster
+      DEMO_FILMS.forEach((film, i) => {
+        if (film.poster) return;
+        fetch(`/api/poster?title=${encodeURIComponent(film.title)}&year=${film.year ?? ""}`)
+          .then(r => r.json())
+          .then((d: { url: string | null }) => {
+            if (d.url) setFilms(prev => prev.map((f, j) => j === i ? { ...f, poster: d.url! } : f));
+          })
+          .catch(() => {});
+      });
+      return;
+    }
     if (!username) { setLoaded(true); return; }
     setLoaded(false);
     const controller = new AbortController();

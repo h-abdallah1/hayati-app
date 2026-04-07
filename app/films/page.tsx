@@ -23,6 +23,7 @@ export default function FilmsPage() {
   const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const username = global.letterboxdUsername ?? "";
+  const hasSource = !!username || global.demoMode;
   const { films, loaded, refresh } = useLetterboxd(username);
 
   const [sort, setSort] = useState<SortMode>("newest");
@@ -87,10 +88,10 @@ export default function FilmsPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Dot size={4} />
           <Tag color={C.textMuted}>
-            {!username ? "not configured" : loaded ? "live" : "loading..."}
+            {!hasSource ? "not configured" : loaded ? "live" : "loading..."}
           </Tag>
         </div>
-        {username && loaded && (
+        {hasSource && loaded && !global.demoMode && (
           <button
             onClick={refresh}
             style={{ ...btnBase, color: C.textFaint, marginLeft: "auto" }}
@@ -125,7 +126,7 @@ export default function FilmsPage() {
       )}
 
       {/* Controls */}
-      {username && loaded && films.length > 0 && (
+      {hasSource && loaded && films.length > 0 && (
         <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: 4 }}>
             {(["grid", "timeline"] as ViewMode[]).map(v => (
@@ -172,7 +173,7 @@ export default function FilmsPage() {
       )}
 
       {/* Content */}
-      {!username ? (
+      {!hasSource ? (
         <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: C.textFaint, paddingTop: 40, textAlign: "center" }}>
           no films — add your Letterboxd username in settings
         </div>
@@ -482,8 +483,10 @@ function FilmCard({ film, C, onSelect }: { film: FilmEntry; C: Palette; onSelect
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>no poster</span>
+          <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "10px 8px", background: "linear-gradient(160deg, #2a2a3a 0%, #0e0e16 100%)" }}>
+            <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, color: "rgba(255,255,255,0.65)", textAlign: "center", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {film.title}
+            </span>
           </div>
         )}
       </div>

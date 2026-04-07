@@ -72,7 +72,20 @@ export default function GamingPage() {
   const [fetchingCovers, setFetchingCovers] = useState(false);
   const [coverProgress,  setCoverProgress]  = useState("");
 
-  useEffect(() => { setGameList(demoMode ? DEMO_GAMES : loadGames()); }, [demoMode]);
+  useEffect(() => {
+    if (!demoMode) { setGameList(loadGames()); return; }
+    setGameList(DEMO_GAMES);
+    // Lazily fetch covers via SteamGridDB for demo games (no persist)
+    DEMO_GAMES.forEach((game, i) => {
+      if (game.cover) return;
+      fetch("/api/sgdb", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: game.title }) })
+        .then(r => r.json())
+        .then((d: { cover: string | null }) => {
+          if (d.cover) setGameList(prev => prev.map((g, j) => j === i ? { ...g, cover: d.cover! } : g));
+        })
+        .catch(() => {});
+    });
+  }, [demoMode]);
 
   const deleteGame = (id: string) => {
     const next = gameList.filter(g => g.id !== id);
@@ -325,8 +338,10 @@ function GameCard({ game: g, C, onDelete, editingId, editDraft, setEditDraft, on
       <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: 6, overflow: "hidden", background: C.surfaceHi, border: `1px solid ${C.border}`, position: "relative" }}>
         {g.cover
           ? <img src={g.cover} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, color: C.border }}>⬛</span>
+          : <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "10px 8px", background: "linear-gradient(160deg, #1e2a3a 0%, #0a0e16 100%)" }}>
+              <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, color: "rgba(255,255,255,0.65)", textAlign: "center", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {g.title}
+              </span>
             </div>
         }
         <button onClick={() => onDelete(g.id)} title="delete" style={{
