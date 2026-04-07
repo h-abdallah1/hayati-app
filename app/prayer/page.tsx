@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useClock, getPrayerTimes, useWeather, useQuranVerse } from "@/lib/hooks";
 import { convertHHMM, formatClock } from "@/lib/time";
@@ -43,6 +43,7 @@ function qiblaDir(lat: number, lon: number): number {
 
 export default function PrayerPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const time = useClock();
   const { global, updateGlobal } = useGlobalSettings();
   const wx = useWeather(global.location);
@@ -87,7 +88,7 @@ export default function PrayerPage() {
   const qibla = Math.round(qiblaDir(global.location.lat, global.location.lon));
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
+    <div style={{ minHeight: "100vh", padding: "24px 28px" }}>
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
 
         {/* Location header */}
@@ -109,7 +110,9 @@ export default function PrayerPage() {
         <div style={{
           maxWidth: 480,
           margin: "0 auto 32px",
-          background: C.surface,
+          background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
           border: `1px solid ${C.border}`,
           borderRadius: 12,
           padding: "28px 32px",
@@ -153,7 +156,9 @@ export default function PrayerPage() {
 
         {/* Prayer list */}
         <div style={{
-          background: C.surface,
+          background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
           border: `1px solid ${C.border}`,
           borderRadius: 12,
           overflow: "hidden",
@@ -267,7 +272,10 @@ export default function PrayerPage() {
 
         {/* Quran verse */}
         <div style={{
-          background: C.surface, border: `1px solid ${C.border}`,
+          background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: `1px solid ${C.border}`,
           borderRadius: 12, padding: "24px 28px", marginTop: 20,
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>

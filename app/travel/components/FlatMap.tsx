@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useThemeToggle } from "@/lib/theme";
 import { geoEquirectangular, geoNaturalEarth1, geoMercator, geoPath } from "d3-geo";
 import { geoRobinson, geoWinkel3, geoMollweide, geoPatterson } from "d3-geo-projection";
 import type { Feature, Geometry } from "geojson";
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function FlatMap({ countries, visited, onToggle, C, projection }: Props) {
+  const { isDark } = useThemeToggle();
   const [hovered, setHovered] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string } | null>(null);
 
@@ -81,7 +83,9 @@ export function FlatMap({ countries, visited, onToggle, C, projection }: Props) 
           position: "fixed",
           left: tooltip.x + 14,
           top: tooltip.y - 10,
-          background: C.surface,
+          background: isDark ? "rgba(14, 14, 22, 0.82)" : "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(16px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(16px) saturate(1.4)",
           border: `1px solid ${C.border}`,
           borderRadius: 6,
           padding: "4px 10px",

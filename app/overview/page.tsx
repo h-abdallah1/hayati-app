@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Dumbbell, Clapperboard, FileText, GitMerge, BookOpen, Flame, Gamepad2 } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks/useLetterboxd";
 import { useGithub } from "@/lib/hooks/useGithub";
@@ -73,6 +73,7 @@ const CAT_LABELS: Record<ActivityCategory, string> = {
 
 export default function OverviewPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global: settings } = useGlobalSettings();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
@@ -245,7 +246,6 @@ export default function OverviewPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: C.bg,
       color: C.text,
       fontFamily: "'JetBrains Mono', monospace",
       paddingLeft: 72,
@@ -336,7 +336,9 @@ export default function OverviewPage() {
               const activeCats = cats ? ORDERED_CATS.filter(c => cats.has(c)) : [];
               return (
                 <div style={{
-                  background: C.surface,
+                  background: isDark ? "rgba(14, 14, 22, 0.82)" : "rgba(255,255,255,0.88)",
+                  backdropFilter: "blur(16px) saturate(1.4)",
+                  WebkitBackdropFilter: "blur(16px) saturate(1.4)",
                   border: `1px solid ${C.border}`,
                   borderRadius: 5,
                   padding: "6px 10px",

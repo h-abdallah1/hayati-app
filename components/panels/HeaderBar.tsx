@@ -2,13 +2,14 @@
 
 import { useGlobalSettings } from '@/lib/settings';
 import { useWeather } from '@/lib/hooks';
-import { useTheme } from '@/lib/theme';
+import { useTheme, useThemeToggle } from '@/lib/theme';
 import { formatClock } from '@/lib/time';
 import { Dot, Sep, Stat, Tag } from '@/components/ui';
 import { getGreeting, FONT_HEADING } from '@/lib/constants';
 
 export function HeaderBar({ time }: { time: Date }) {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const wx = useWeather(global.location);
   const h = time.getHours(),
@@ -50,7 +51,9 @@ export function HeaderBar({ time }: { time: Date }) {
       style={{
         maxWidth: 1280,
         margin: '0 auto 12px',
-        background: C.surface,
+        background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+        backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
         border: `1px solid ${C.border}`,
         borderRadius: 12,
         padding: '14px 22px',

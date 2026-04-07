@@ -86,7 +86,7 @@ export default function GymPage() {
   const avgPerWeek = (count / weeksInYear).toFixed(1);
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
+    <div style={{ minHeight: "100vh", padding: "24px 28px" }}>
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
 
         {/* Header */}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
 import { NAV_ITEMS, FONT_ARABIC } from "@/lib/constants";
@@ -12,6 +12,7 @@ import { useAssistant } from "@/app/providers";
 
 export function Sidebar() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const path = usePathname();
   const { global, updateGlobal } = useGlobalSettings();
   const [hovered, setHovered] = useState<string | null>(null);
@@ -43,7 +44,9 @@ export function Sidebar() {
       position: "fixed",
       left: 0, top: 0, bottom: 0,
       width: 56,
-      background: C.bg,
+      background: isDark ? "rgba(10, 10, 18, 0.60)" : "rgba(248, 248, 244, 0.68)",
+      backdropFilter: "blur(20px) saturate(1.6)",
+      WebkitBackdropFilter: "blur(20px) saturate(1.6)",
       borderRight: `1px solid ${C.border}`,
       display: "flex",
       flexDirection: "column",

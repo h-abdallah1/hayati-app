@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { loadBooks, persistBooks } from "@/lib/bookList";
 import { toDateKey } from "@/app/overview/helpers";
 import type { BookEntry } from "@/lib/types";
@@ -33,6 +33,7 @@ const EMPTY_FORM = { title: "", author: "", date: "", url: "" };
 
 export default function ReadingPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
 
   const [bookList,     setBookList]     = useState<BookEntry[]>([]);
   const [fetchingBook, setFetchingBook] = useState<string | null>(null);
@@ -181,7 +182,7 @@ export default function ReadingPage() {
   const editingProps = { editingId, editDraft, setEditDraft, onStartEdit: startEdit, onCommitEdit: commitEdit, onCancelEdit: cancelEdit, fetchingBook };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64 }}>
+    <div style={{ minHeight: "100vh", color: C.text, paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.08em" }}>READING</span>
@@ -194,7 +195,7 @@ export default function ReadingPage() {
 
       {/* Log book form */}
       {adding && (
-        <div style={{ marginBottom: 24, padding: "14px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ marginBottom: 24, padding: "14px 16px", background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.textFaint, marginBottom: 2 }}>LOG BOOK</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="title (required)" onKeyDown={onKey} style={{ ...inputSt, flex: "2 1 180px" }} />
@@ -226,7 +227,7 @@ export default function ReadingPage() {
 
       {/* Stats */}
       {bookList.length > 0 && (
-        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 24, marginBottom: 20, padding: "10px 14px", background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
           {[
             { val: bookList.length, label: "total" },
             { val: countYear,       label: "this year" },

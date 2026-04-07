@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useClock } from "@/lib/hooks";
 import { useGlobalSettings } from "@/lib/settings";
 import { isRouteDisabled, MODULES } from "@/lib/modules";
@@ -53,6 +53,7 @@ function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
 
 function InlineSearch() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -100,7 +101,9 @@ function InlineSearch() {
         alignItems: "center",
         gap: 10,
         padding: "10px 14px",
-        background: C.surface,
+        background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+        backdropFilter: "blur(24px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6)",
         border: `1px solid ${focused ? C.borderHi : C.border}`,
         borderRadius: open ? "8px 8px 0 0" : 8,
         transition: "border-color 0.15s",
@@ -138,7 +141,9 @@ function InlineSearch() {
         <div style={{
           position: "absolute",
           left: 0, right: 0,
-          background: C.surface,
+          background: isDark ? "rgba(14, 14, 22, 0.75)" : "rgba(255,255,255,0.80)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
           border: `1px solid ${C.borderHi}`,
           borderTop: "none",
           borderRadius: "0 0 8px 8px",

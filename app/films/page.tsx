@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { useLetterboxd } from "@/lib/hooks";
 import { Tag, Dot } from "@/components/ui";
@@ -20,6 +20,7 @@ type ViewMode = "grid" | "timeline";
 
 export default function FilmsPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const username = global.letterboxdUsername ?? "";
   const { films, loaded, refresh } = useLetterboxd(username);
@@ -74,7 +75,7 @@ export default function FilmsPage() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: "28px 32px" }}>
+    <div style={{ minHeight: "100vh", padding: "28px 32px" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.08em", color: C.text }}>FILMS</span>
@@ -96,7 +97,7 @@ export default function FilmsPage() {
 
       {/* Stats bar */}
       {loaded && films.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20, padding: "10px 14px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20, padding: "10px 14px", background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)", borderRadius: 8, border: `1px solid ${C.border}`, flexWrap: "wrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 18, fontWeight: 700, color: C.text }}>{films.length}</span>
             <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 9, color: C.textFaint }}>films in feed</span>
@@ -318,6 +319,7 @@ function TimelineView({ films, C, onSelect }: { films: FilmEntry[]; C: Palette; 
 }
 
 function FilmDrawer({ film, C, onClose }: { film: FilmEntry | null; C: Palette; onClose: () => void }) {
+  const { isDark } = useThemeToggle();
   const open = film !== null;
 
   const handleKey = useCallback((e: KeyboardEvent) => {
@@ -351,7 +353,9 @@ function FilmDrawer({ film, C, onClose }: { film: FilmEntry | null; C: Palette; 
         height: "100%",
         width: 360,
         zIndex: 50,
-        background: C.surface,
+        background: isDark ? "rgba(10, 10, 18, 0.60)" : "rgba(248, 248, 244, 0.68)",
+        backdropFilter: "blur(24px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6)",
         borderLeft: `1px solid ${C.border}`,
         transform: open ? "translateX(0)" : "translateX(100%)",
         transition: "transform 0.25s ease",

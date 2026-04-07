@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { isLeapYear, dayOfYear, MONTH_NAMES, DAY_INITIALS, SHOW_DAY, monthStartCols } from "../helpers";
 
 export function GymHeatmap({ workouts, year }: { workouts: HevyWorkoutFull[]; year: number }) {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const outerRef = useRef<HTMLDivElement>(null);
   const wrapRef  = useRef<HTMLDivElement>(null);
   const [sq, setSq]           = useState(10);
@@ -112,7 +113,9 @@ export function GymHeatmap({ workouts, year }: { workouts: HevyWorkoutFull[]; ye
           position: "absolute",
           left: mouse.x > outerW - 180 ? mouse.x - 170 : mouse.x + 14,
           top: mouse.y - 10,
-          background: C.surface,
+          background: isDark ? "rgba(14, 14, 22, 0.82)" : "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(16px) saturate(1.4)",
+          WebkitBackdropFilter: "blur(16px) saturate(1.4)",
           border: `1px solid ${C.borderHi}`,
           borderRadius: 8,
           padding: "10px 14px",

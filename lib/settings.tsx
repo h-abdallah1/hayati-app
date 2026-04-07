@@ -52,7 +52,7 @@ function readGlobal(): GlobalSettings {
       ollamaUrl:    typeof parsed.ollamaUrl === "string"    ? parsed.ollamaUrl    : DEFAULT_GLOBAL.ollamaUrl,
       ollamaModel:  typeof parsed.ollamaModel === "string"  ? parsed.ollamaModel  : DEFAULT_GLOBAL.ollamaModel,
       accentTheme:  typeof parsed.accentTheme === "string"  ? parsed.accentTheme  : DEFAULT_GLOBAL.accentTheme,
-      bgStyle: (["orbs", "ps3", "night"] as const).includes(parsed.bgStyle as "orbs" | "ps3" | "night") ? parsed.bgStyle as GlobalSettings["bgStyle"] : DEFAULT_GLOBAL.bgStyle,
+      bgStyle: (["orbs", "ps3", "night", "stars"] as const).includes(parsed.bgStyle as GlobalSettings["bgStyle"]) ? parsed.bgStyle as GlobalSettings["bgStyle"] : DEFAULT_GLOBAL.bgStyle,
     };
   } catch {
     return DEFAULT_GLOBAL;

@@ -2,94 +2,49 @@
 
 import { useEffect, useRef } from "react";
 
-interface Orb {
-  x: number;
-  y: number;
+// Mesh gradient — 5 large slow-drifting colour blobs that blend together
+interface Blob {
+  x: number; y: number;
   r: number;
   color: [number, number, number];
   opacity: number;
   phase: number;
-  speed: number;
-  driftX: number;
-  driftY: number;
+  speedX: number; speedY: number;
+  driftX: number; driftY: number;
 }
 
-interface Spark {
-  x: number;
-  y: number;
-  r: number;
-  color: [number, number, number];
-  opacity: number;
-  phase: number;
-  speed: number;
-  driftX: number;
-  driftY: number;
-  pulseSpeed: number;
-}
-
-const COLORS: [number, number, number][] = [
-  [107, 77,  235], // #6B4DEB purple
-  [125, 212, 245], // #7DD4F5 sky
-  [245, 146, 42],  // #F5922A orange
-  [232, 80,  106], // #E8506A rose
-  [196, 168, 242], // #C4A8F2 lavender
+const PALETTE: [number, number, number][] = [
+  [109,  40, 217], // violet
+  [6,   182, 212], // cyan
+  [236,  72, 153], // pink
+  [79,   70, 229], // indigo
+  [5,   150, 105], // emerald
 ];
 
-function makeOrbs(w: number, h: number): Orb[] {
+function makeBlobs(w: number, h: number): Blob[] {
   const diag = Math.sqrt(w * w + h * h);
-  return Array.from({ length: 6 }, (_, i) => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    r: diag * (0.55 + Math.random() * 0.35),
-    color: COLORS[i % COLORS.length],
-    opacity: 0.09 + Math.random() * 0.07,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.0002 + Math.random() * 0.0003,
-    driftX: w * 0.30 + Math.random() * w * 0.20,
-    driftY: h * 0.25 + Math.random() * h * 0.20,
+  // Spread blobs evenly across the canvas rather than random clumping
+  const positions = [
+    [0.15, 0.25], [0.80, 0.20], [0.50, 0.70],
+    [0.10, 0.75], [0.85, 0.65],
+  ];
+  return positions.map(([px, py], i) => ({
+    x: px * w,
+    y: py * h,
+    r: diag * (0.50 + Math.random() * 0.25),
+    color: PALETTE[i],
+    opacity: 0.20 + Math.random() * 0.10,
+    phase: (i / 5) * Math.PI * 2,
+    speedX: 0.00008 + Math.random() * 0.00010,
+    speedY: 0.00006 + Math.random() * 0.00008,
+    driftX: w * 0.18 + Math.random() * w * 0.12,
+    driftY: h * 0.14 + Math.random() * h * 0.10,
   }));
-}
-
-function makeSparks(w: number, h: number): Spark[] {
-  const diag = Math.sqrt(w * w + h * h);
-  return Array.from({ length: 5 }, (_, i) => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    r: diag * (0.25 + Math.random() * 0.20),
-    color: COLORS[(i + 2) % COLORS.length],
-    opacity: 0.22 + Math.random() * 0.18,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.0004 + Math.random() * 0.0005,
-    driftX: w * 0.20 + Math.random() * w * 0.15,
-    driftY: h * 0.15 + Math.random() * h * 0.15,
-    pulseSpeed: 0.003 + Math.random() * 0.004,
-  }));
-}
-
-function drawOrb(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, r: number,
-  color: [number, number, number], opacity: number
-) {
-  const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-  const [rv, g, b] = color;
-  grad.addColorStop(0,   `rgba(${rv},${g},${b},${opacity})`);
-  grad.addColorStop(0.4, `rgba(${rv},${g},${b},${opacity * 0.5})`);
-  grad.addColorStop(1,   `rgba(${rv},${g},${b},0)`);
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  ctx.fill();
 }
 
 export function FlowBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<{
-    orbs: Orb[];
-    sparks: Spark[];
-    raf: number;
-    t: number;
-  } | null>(null);
+  const stateRef = useRef<{ blobs: Blob[]; raf: number; t: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,62 +53,50 @@ export function FlowBackground() {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
+      canvas.width  = window.innerWidth;
       canvas.height = window.innerHeight;
-      if (stateRef.current) {
-        stateRef.current.orbs = makeOrbs(canvas.width, canvas.height);
-        stateRef.current.sparks = makeSparks(canvas.width, canvas.height);
-      }
+      if (stateRef.current) stateRef.current.blobs = makeBlobs(canvas.width, canvas.height);
     };
 
     resize();
-
-    stateRef.current = {
-      orbs: makeOrbs(canvas.width, canvas.height),
-      sparks: makeSparks(canvas.width, canvas.height),
-      raf: 0,
-      t: 0,
-    };
+    stateRef.current = { blobs: makeBlobs(canvas.width, canvas.height), raf: 0, t: 0 };
 
     const draw = () => {
       const state = stateRef.current!;
       state.t += 1;
-      const w = canvas.width;
-      const h = canvas.height;
+      const w = canvas.width, h = canvas.height;
 
-      // Dark base
       ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = "rgb(8, 7, 14)";
+      ctx.fillStyle = "rgb(7, 5, 18)";
       ctx.fillRect(0, 0, w, h);
 
-      // Large atmospheric blobs — very subtle color zones
-      for (const orb of state.orbs) {
-        const ox = orb.x + Math.sin(state.t * orb.speed + orb.phase) * orb.driftX;
-        const oy = orb.y + Math.cos(state.t * orb.speed * 0.8 + orb.phase) * orb.driftY;
-        drawOrb(ctx, ox, oy, orb.r, orb.color, orb.opacity);
+      for (const blob of state.blobs) {
+        const ox = blob.x + Math.sin(state.t * blob.speedX + blob.phase) * blob.driftX;
+        const oy = blob.y + Math.cos(state.t * blob.speedY + blob.phase * 0.7) * blob.driftY;
+        const grad = ctx.createRadialGradient(ox, oy, 0, ox, oy, blob.r);
+        const [r, g, b] = blob.color;
+        grad.addColorStop(0,    `rgba(${r},${g},${b},${blob.opacity})`);
+        grad.addColorStop(0.30, `rgba(${r},${g},${b},${blob.opacity * 0.55})`);
+        grad.addColorStop(0.60, `rgba(${r},${g},${b},${blob.opacity * 0.18})`);
+        grad.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+        ctx.beginPath();
+        ctx.arc(ox, oy, blob.r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
       }
 
-      // Dark vignette to keep edges black and center moody
-      const vignette = ctx.createRadialGradient(w / 2, h / 2, h * 0.1, w / 2, h / 2, w * 0.85);
-      vignette.addColorStop(0, "rgba(0,0,0,0)");
-      vignette.addColorStop(1, "rgba(0,0,0,0.72)");
-      ctx.fillStyle = vignette;
+      // Vignette
+      const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.05, w / 2, h / 2, w * 0.88);
+      vig.addColorStop(0,   "rgba(0,0,0,0)");
+      vig.addColorStop(0.55,"rgba(0,0,0,0.22)");
+      vig.addColorStop(1,   "rgba(0,0,0,0.82)");
+      ctx.fillStyle = vig;
       ctx.fillRect(0, 0, w, h);
-
-      // Smaller glowing sparks on top — pulsing
-      for (const spark of state.sparks) {
-        const ox = spark.x + Math.sin(state.t * spark.speed + spark.phase) * spark.driftX;
-        const oy = spark.y + Math.cos(state.t * spark.speed * 1.3 + spark.phase) * spark.driftY;
-        const pulse = 0.75 + 0.25 * Math.sin(state.t * spark.pulseSpeed + spark.phase);
-        drawOrb(ctx, ox, oy, spark.r * pulse, spark.color, spark.opacity * pulse);
-        drawOrb(ctx, ox, oy, spark.r * 0.18, spark.color, spark.opacity);
-      }
 
       state.raf = requestAnimationFrame(draw);
     };
 
     stateRef.current.raf = requestAnimationFrame(draw);
-
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
@@ -164,13 +107,7 @@ export function FlowBackground() {
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: "none",
-        display: "block",
-      }}
+      style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", display: "block" }}
     />
   );
 }

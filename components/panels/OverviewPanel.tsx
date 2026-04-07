@@ -10,7 +10,7 @@ import {
   Flame,
   Gamepad2,
 } from 'lucide-react';
-import { useTheme } from '@/lib/theme';
+import { useTheme, useThemeToggle } from '@/lib/theme';
 import { useGlobalSettings } from '@/lib/settings';
 import { useLetterboxd } from '@/lib/hooks/useLetterboxd';
 import { useGithub } from '@/lib/hooks/useGithub';
@@ -37,6 +37,7 @@ import type { HevyWorkoutFull } from '@/app/api/hevy/workouts/route';
 
 export function OverviewPanel() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global: settings } = useGlobalSettings();
   const year = new Date().getFullYear();
   const { films } = useLetterboxd(settings.letterboxdUsername);
@@ -342,7 +343,9 @@ export function OverviewPanel() {
           return (
             <div
               style={{
-                background: C.surface,
+                background: isDark ? "rgba(14, 14, 22, 0.82)" : "rgba(255,255,255,0.88)",
+                backdropFilter: "blur(16px) saturate(1.4)",
+                WebkitBackdropFilter: "blur(16px) saturate(1.4)",
                 border: `1px solid ${C.border}`,
                 borderRadius: 5,
                 padding: '6px 10px',

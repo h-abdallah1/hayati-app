@@ -30,7 +30,7 @@ export type GlobalSettings = {
   ollamaUrl: string;
   ollamaModel: string;
   accentTheme: string;
-  bgStyle: "orbs" | "ps3" | "night";
+  bgStyle: "orbs" | "ps3" | "night" | "stars";
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

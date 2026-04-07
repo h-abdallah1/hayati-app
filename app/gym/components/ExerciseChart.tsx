@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { setVolume } from "../helpers";
 import { Stat, Empty } from "./shared";
@@ -10,6 +10,7 @@ export function ExerciseChart({ title, workouts, C, onBack }: {
   title: string; workouts: HevyWorkoutFull[];
   C: ReturnType<typeof useTheme>; onBack: () => void;
 }) {
+  const { isDark } = useThemeToggle();
   const [hovIdx, setHovIdx] = useState<number | null>(null);
 
   const points = useMemo(() => {
@@ -142,7 +143,9 @@ export function ExerciseChart({ title, workouts, C, onBack }: {
             position: "absolute",
             left: Math.min(px(hovIdx) * (400 / W), 340),
             top: -8,
-            background: C.surface,
+            background: isDark ? "rgba(14, 14, 22, 0.82)" : "rgba(255,255,255,0.88)",
+            backdropFilter: "blur(16px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
             border: `1px solid ${C.borderHi}`,
             borderRadius: 6,
             padding: "7px 10px",

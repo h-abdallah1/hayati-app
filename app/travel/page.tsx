@@ -6,7 +6,7 @@ import type { Topology } from "topojson-specification";
 import type { GeometryCollection } from "topojson-specification";
 import type { Feature, Geometry } from "geojson";
 import { numericToAlpha2 } from "i18n-iso-countries";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { FlatMap } from "./components/FlatMap";
 import { GlobeView } from "./components/GlobeView";
@@ -27,6 +27,7 @@ type View = "flat" | "globe";
 
 export default function TravelPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const [visited, setVisited] = useState<string[]>([]);
   const [countries, setCountries] = useState<Feature<Geometry, { name: string }>[]>([]);
@@ -110,7 +111,9 @@ export default function TravelPage() {
         <div style={{
           display: "flex",
           gap: 3,
-          background: C.surface,
+          background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
           border: `1px solid ${C.border}`,
           borderRadius: 8,
           padding: 3,

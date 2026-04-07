@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings, usePanelSettings } from "@/lib/settings";
 import { useNews } from "@/lib/hooks/useNews";
 import { useCalendarEvents } from "@/lib/hooks/useCalendarEvents";
@@ -22,6 +22,7 @@ function dayOfYear(d: Date) {
 
 export function Ticker() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const pathname = usePathname();
   const { global: settings } = useGlobalSettings();
   const { panels } = usePanelSettings();
@@ -96,7 +97,9 @@ export function Ticker() {
         left: 56,
         right: 0,
         height: TICKER_H,
-        background: C.bg,
+        background: isDark ? "rgba(10, 10, 18, 0.70)" : "rgba(248, 248, 244, 0.75)",
+        backdropFilter: "blur(20px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(20px) saturate(1.6)",
         borderTop: `1px solid ${C.border}`,
         overflow: "hidden",
         zIndex: 90,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, KeyboardEvent } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import { GeneralSection } from "@/components/settings/GeneralSection";
 import { ModulesSection } from "@/components/settings/ModulesSection";
@@ -76,6 +76,7 @@ const ALL_TABS = [
 
 export default function SettingsPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const disabled = global.disabledModules;
   const [activeTab, setActiveTab] = useState("general");
@@ -91,7 +92,6 @@ export default function SettingsPage() {
     <div style={{
       marginLeft: 56,
       minHeight: "100vh",
-      background: C.bg,
       padding: "24px 28px",
     }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
@@ -111,7 +111,9 @@ export default function SettingsPage() {
           <div style={{
             width: 320,
             flexShrink: 0,
-            background: C.surface,
+            background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+            backdropFilter: "blur(24px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
             border: `1px solid ${C.border}`,
             borderRadius: 10,
             padding: "4px 20px 20px",
@@ -123,7 +125,9 @@ export default function SettingsPage() {
           <div style={{
             flex: 1,
             minWidth: 0,
-            background: C.surface,
+            background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+            backdropFilter: "blur(24px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
             border: `1px solid ${C.border}`,
             borderRadius: 10,
             padding: 0,

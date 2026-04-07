@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 
 type ArticleData = {
   title?: string;
@@ -15,6 +15,7 @@ type ArticleData = {
 
 function ReaderContent() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const router = useRouter();
   const searchParams = useSearchParams();
   const url = searchParams.get("url") ?? "";
@@ -67,7 +68,7 @@ function ReaderContent() {
     : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg }}>
+    <div style={{ minHeight: "100vh" }}>
       <style>{proseStyles}</style>
 
       {/* Top bar */}
@@ -75,7 +76,9 @@ function ReaderContent() {
         position: "sticky",
         top: 0,
         zIndex: 10,
-        background: C.bg,
+        background: isDark ? "rgba(10, 10, 18, 0.70)" : "rgba(248, 248, 244, 0.75)",
+        backdropFilter: "blur(20px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(20px) saturate(1.6)",
         borderBottom: `1px solid ${C.border}`,
         padding: "10px 28px",
         display: "flex",

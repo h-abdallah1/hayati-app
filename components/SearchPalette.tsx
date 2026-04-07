@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { NAV_ITEMS, FONT_MONO } from "@/lib/constants";
 import { Target, FileText, Dumbbell } from "lucide-react";
 import type { Goal, Note } from "@/lib/types";
@@ -20,6 +20,7 @@ const PAGES: Result[] = NAV_ITEMS.map(n => ({
 
 export function SearchPalette() {
   const C      = useTheme();
+  const { isDark } = useThemeToggle();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef  = useRef<HTMLDivElement>(null);
@@ -99,7 +100,7 @@ export function SearchPalette() {
       <div
         onClick={e => e.stopPropagation()}
         onKeyDown={onKey}
-        style={{ background: C.surface, border: `1px solid ${C.borderHi}`, borderRadius: 12, width: 540, maxHeight: 440, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.5)" }}
+        style={{ background: isDark ? "rgba(14, 14, 22, 0.72)" : "rgba(255, 255, 255, 0.75)", backdropFilter: "blur(24px) saturate(1.8)", WebkitBackdropFilter: "blur(24px) saturate(1.8)", border: `1px solid ${C.borderHi}`, borderRadius: 12, width: 540, maxHeight: 440, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 32px 80px rgba(0,0,0,0.5)" }}
       >
         {/* Input */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>

@@ -2,18 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { X, ExternalLink } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { ChatPanel } from "./ChatPanel";
 
 export function AssistantDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const router = useRouter();
 
   return (
     <div style={{
       position: "fixed", top: 0, right: 0, bottom: 0,
       width: 480,
-      background: C.bg,
+      background: isDark ? "rgba(10, 10, 18, 0.60)" : "rgba(248, 248, 244, 0.68)",
+      backdropFilter: "blur(20px) saturate(1.6)",
+      WebkitBackdropFilter: "blur(20px) saturate(1.6)",
       borderLeft: `1px solid ${C.border}`,
       zIndex: 201,
       display: "flex",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 
@@ -180,6 +180,7 @@ function GraphView({ files, selectedPath, onSelect, C }: {
 
 export default function NotesPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const vault = global.obsidianVaultPath ?? "";
 
@@ -387,7 +388,7 @@ export default function NotesPage() {
   // ── No vault ─────────────────────────────────────────────────────────────
   if (!vault) {
     return (
-      <div style={{ height: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>
           <div style={{ ...syne, fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 10 }}>No vault configured</div>
           <div style={{ ...mono, fontSize: 12, color: C.textMuted, lineHeight: 1.7 }}>
@@ -400,11 +401,11 @@ export default function NotesPage() {
 
   // ── Layout ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ height: "100vh", background: C.bg, display: "flex", overflow: "hidden" }}>
+    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
       <div style={{
-        width: 260, background: C.surface, borderRight: `1px solid ${C.border}`,
+        width: 260, background: isDark ? "rgba(10, 10, 18, 0.60)" : "rgba(248, 248, 244, 0.68)", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)", borderRight: `1px solid ${C.border}`,
         display: "flex", flexDirection: "column", flexShrink: 0, overflow: "hidden",
       }}>
 
@@ -583,7 +584,7 @@ export default function NotesPage() {
             {/* Tab bar */}
             <div style={{
               height: 36, borderBottom: `1px solid ${C.border}`, flexShrink: 0,
-              display: "flex", alignItems: "stretch", background: C.surface,
+              display: "flex", alignItems: "stretch", background: isDark ? "rgba(14, 14, 22, 0.55)" : "rgba(255,255,255,0.60)",
             }}>
               {/* Scrollable tabs */}
               <div style={{ flex: 1, display: "flex", alignItems: "stretch", overflowX: "auto", minWidth: 0 }}>
@@ -765,7 +766,7 @@ export default function NotesPage() {
 
       {/* ══ GRAPH PANEL ══════════════════════════════════════════════════════ */}
       {showGraph && (
-        <div style={{ width: 300, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: C.surface }}>
+        <div style={{ width: 300, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: isDark ? "rgba(10, 10, 18, 0.60)" : "rgba(248, 248, 244, 0.68)", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)" }}>
           <div style={{ height: 36, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", padding: "0 14px", gap: 8, flexShrink: 0 }}>
             <span style={{ ...syne, fontWeight: 700, fontSize: 12, color: C.textMuted }}>Graph</span>
             <span style={{ ...mono, fontSize: 9, color: C.textFaint }}>{files.length} notes</span>

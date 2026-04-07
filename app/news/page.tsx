@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Star, X } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme, useThemeToggle } from "@/lib/theme";
 import { usePanelSettings } from "@/lib/settings";
 import { useNews } from "@/lib/hooks";
 import { NEWS } from "@/lib/data";
@@ -46,6 +46,7 @@ function itemId(n: { url?: string; title: string }): string {
 
 export default function NewsPage() {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const router = useRouter();
   const { panels } = usePanelSettings();
   const { items: liveItems, loaded, refresh } = useNews(panels.newsFeeds);
@@ -182,7 +183,7 @@ export default function NewsPage() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, padding: "24px 28px" }}>
+    <div style={{ minHeight: "100vh", padding: "24px 28px" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
 
         {/* Header */}
@@ -363,7 +364,9 @@ export default function NewsPage() {
         {/* Stats breakdown */}
         {showStats && (
           <div style={{
-            background: C.surface,
+            background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+            backdropFilter: "blur(24px) saturate(1.6)",
+            WebkitBackdropFilter: "blur(24px) saturate(1.6)",
             border: `1px solid ${C.border}`,
             borderRadius: 8,
             padding: "12px 16px",
@@ -428,7 +431,9 @@ export default function NewsPage() {
                     gap: 14,
                     alignItems: "flex-start",
                     padding: "14px 16px",
-                    background: C.surface,
+                    background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+                    backdropFilter: "blur(24px) saturate(1.6)",
+                    WebkitBackdropFilter: "blur(24px) saturate(1.6)",
                     opacity: isRead ? 0.45 : 1,
                     transition: "opacity 0.15s",
                   }}>
