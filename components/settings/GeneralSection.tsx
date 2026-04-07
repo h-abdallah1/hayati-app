@@ -82,7 +82,7 @@ export function GeneralSection() {
       <div style={{ marginBottom: 12 }}>
         <span style={fieldLabel(C)}>Background</span>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {([["orbs", "Mesh"], ["ps3", "Aurora"], ["stars", "Space"], ["night", "Night"], ["rain", "Rain"], ["matrix", "Matrix"], ["fireflies", "Fireflies"], ["particles", "Network"]] as const).map(([val, label]) => (
+          {([["orbs", "Mesh"], ["ps3", "Aurora"], ["stars", "Space"], ["night", "Night"], ["rain", "Rain"], ["matrix", "Matrix"], ["fireflies", "Fireflies"], ["particles", "Network"], ["gradient", "Gradient"]] as const).map(([val, label]) => (
             <button key={val} onClick={() => updateGlobal({ bgStyle: val })} style={{
               flex: "1 0 calc(25% - 6px)", padding: "6px 0", borderRadius: 6, cursor: "pointer",
               fontFamily: "'JetBrains Mono',monospace", fontSize: 11,
