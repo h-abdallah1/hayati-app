@@ -19,6 +19,7 @@ const PAGE_RESULTS: Result[] = SECTIONS.map(s => ({ label: s.label, sub: s.desc 
 
 function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
   const C = useTheme();
+  const { isDark } = useThemeToggle();
   const [hovered, setHovered] = useState(false);
   return (
     <Link
@@ -30,8 +31,14 @@ function NavCard({ href, Icon, label, desc }: typeof SECTIONS[0]) {
         flexDirection: "column",
         gap: 8,
         padding: "14px 16px",
-        background: hovered ? C.surfaceHi : C.surface,
-        border: `1px solid ${hovered ? C.borderHi : C.border}`,
+        background: hovered
+          ? (isDark ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.80)")
+          : (isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.55)"),
+        backdropFilter: "blur(16px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(16px) saturate(1.6)",
+        border: isDark
+          ? `1px solid ${hovered ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)"}`
+          : `1px solid ${hovered ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.75)"}`,
         borderRadius: 10,
         textDecoration: "none",
         cursor: "pointer",
