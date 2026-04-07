@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useTheme, useThemeToggle } from '@/lib/theme';
 import { useGlobalSettings } from '@/lib/settings';
+import { DEMO_OBSIDIAN_FILES } from '@/lib/demoData';
 import { useLetterboxd } from '@/lib/hooks/useLetterboxd';
 import { useGithub } from '@/lib/hooks/useGithub';
 import { load as loadBooks } from '@/lib/books';
@@ -73,6 +74,7 @@ export function OverviewPanel() {
     { mtime: number; name: string }[]
   >([]);
   useEffect(() => {
+    if (settings.demoMode) { setObsidianFiles(DEMO_OBSIDIAN_FILES); return; }
     if (!settings.obsidianVaultPath) {
       setObsidianFiles([]);
       return;
@@ -83,7 +85,7 @@ export function OverviewPanel() {
       .then((r) => r.json())
       .then((d) => setObsidianFiles(d.files ?? []))
       .catch(() => {});
-  }, [settings.obsidianVaultPath]);
+  }, [settings.obsidianVaultPath, settings.demoMode]);
 
   // Goals
   const [goalsDone, setGoalsDone] = useState(0);

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
 import type { ObsidianFile } from "@/app/api/obsidian/files/route";
+import { DEMO_OBSIDIAN_FILES } from "@/lib/demoData";
 
 // ── Markdown renderer ─────────────────────────────────────────────────────────
 
@@ -183,6 +184,7 @@ export default function NotesPage() {
   const { isDark } = useThemeToggle();
   const { global } = useGlobalSettings();
   const vault = global.obsidianVaultPath ?? "";
+  const demoMode = global.demoMode;
 
   const [files, setFiles] = useState<ObsidianFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -233,10 +235,21 @@ export default function NotesPage() {
     setLoading(false);
   }, [vault]);
 
-  useEffect(() => { if (vault) loadFiles(); }, [vault, loadFiles]);
+  useEffect(() => {
+    if (demoMode) { setFiles(DEMO_OBSIDIAN_FILES); setLoading(false); return; }
+    if (vault) loadFiles();
+  }, [vault, loadFiles, demoMode]);
 
   // ── Load file content ────────────────────────────────────────────────────
   const loadFile = useCallback(async (relPath: string) => {
+    if (demoMode) {
+      const file = DEMO_OBSIDIAN_FILES.find(f => f.path === relPath);
+      const name = file?.name ?? relPath;
+      const tags = file?.tags.map(t => `#${t}`).join("  ") ?? "";
+      const links = file?.links.map(l => `- [[${l}]]`).join("\n") ?? "";
+      const c = `# ${name}\n\n${tags ? `${tags}\n\n` : ""}${links ? `## Links\n${links}\n\n` : ""}*This is a demo note.*`;
+      setContent(c); setSavedContent(c); return;
+    }
     if (!vault) return;
     try {
       const res = await fetch(`/api/obsidian/file?vault=${encodeURIComponent(vault)}&path=${encodeURIComponent(relPath)}`);
@@ -244,7 +257,7 @@ export default function NotesPage() {
       const c = data.content ?? "";
       setContent(c); setSavedContent(c);
     } catch { setContent(""); setSavedContent(""); }
-  }, [vault]);
+  }, [vault, demoMode]);
 
   useEffect(() => {
     if (selectedPath) { loadFile(selectedPath); setMode("edit"); setTitleEditing(false); }
@@ -386,7 +399,7 @@ export default function NotesPage() {
   const vaultName = vault.split("/").pop() || "Vault";
 
   // ── No vault ─────────────────────────────────────────────────────────────
-  if (!vault) {
+  if (!vault && !demoMode) {
     return (
       <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", maxWidth: 360 }}>

@@ -41,21 +41,38 @@ export const DEMO_WEATHER = {
 // ── Films ─────────────────────────────────────────────────────────────────────
 
 export const DEMO_FILMS: FilmEntry[] = [
-  { title: "Dune: Part Two",          year: 2024, rating: 4.5, watchedDate: "2026-03-28", rewatch: false, liked: true  },
-  { title: "Oppenheimer",             year: 2023, rating: 5,   watchedDate: "2026-03-14", rewatch: false, liked: true  },
-  { title: "Past Lives",              year: 2023, rating: 4.5, watchedDate: "2026-02-22", rewatch: false, liked: true  },
-  { title: "The Holdovers",           year: 2023, rating: 4,   watchedDate: "2026-02-08", rewatch: false, liked: false },
-  { title: "Poor Things",             year: 2023, rating: 3.5, watchedDate: "2026-01-30", rewatch: false, liked: false },
-  { title: "Anatomy of a Fall",       year: 2023, rating: 4,   watchedDate: "2026-01-18", rewatch: false, liked: true  },
-  { title: "Killers of the Flower Moon", year: 2023, rating: 4.5, watchedDate: "2026-01-05", rewatch: false, liked: true },
-  { title: "Interstellar",            year: 2014, rating: 5,   watchedDate: "2025-12-28", rewatch: true,  liked: true  },
-  { title: "The Zone of Interest",    year: 2023, rating: 4,   watchedDate: "2025-12-14", rewatch: false, liked: false },
-  { title: "Aftersun",                year: 2022, rating: 5,   watchedDate: "2025-11-30", rewatch: true,  liked: true  },
-  { title: "All of Us Strangers",     year: 2023, rating: 4.5, watchedDate: "2025-11-12", rewatch: false, liked: true  },
-  { title: "Challengers",             year: 2024, rating: 4,   watchedDate: "2025-10-25", rewatch: false, liked: true  },
-  { title: "Alien: Romulus",          year: 2024, rating: 3,   watchedDate: "2025-10-08", rewatch: false, liked: false },
-  { title: "The Substance",           year: 2024, rating: 3.5, watchedDate: "2025-09-19", rewatch: false, liked: false },
-  { title: "Longlegs",                year: 2024, rating: 2.5, watchedDate: "2025-09-04", rewatch: false, liked: false },
+  // 2026
+  { title: "The Brutalist",            year: 2024, rating: 5,   watchedDate: "2026-04-01", rewatch: false, liked: true  },
+  { title: "Dune: Part Two",           year: 2024, rating: 4.5, watchedDate: "2026-03-22", rewatch: false, liked: true  },
+  { title: "Conclave",                 year: 2024, rating: 4.5, watchedDate: "2026-03-15", rewatch: false, liked: true  },
+  { title: "Anora",                    year: 2024, rating: 4,   watchedDate: "2026-03-08", rewatch: false, liked: true  },
+  { title: "A Real Pain",              year: 2024, rating: 4,   watchedDate: "2026-02-27", rewatch: false, liked: true  },
+  { title: "Nickel Boys",              year: 2024, rating: 4.5, watchedDate: "2026-02-18", rewatch: false, liked: true  },
+  { title: "Anatomy of a Fall",        year: 2023, rating: 4.5, watchedDate: "2026-02-08", rewatch: false, liked: true  },
+  { title: "The Substance",            year: 2024, rating: 3.5, watchedDate: "2026-01-30", rewatch: false, liked: false },
+  { title: "Nosferatu",                year: 2024, rating: 4,   watchedDate: "2026-01-20", rewatch: false, liked: true  },
+  { title: "Interstellar",             year: 2014, rating: 5,   watchedDate: "2026-01-11", rewatch: true,  liked: true  },
+  { title: "Wicked",                   year: 2024, rating: 3,   watchedDate: "2026-01-04", rewatch: false, liked: false },
+  // 2025
+  { title: "Babygirl",                 year: 2024, rating: 3.5, watchedDate: "2025-12-22", rewatch: false, liked: false },
+  { title: "Flow",                     year: 2024, rating: 4.5, watchedDate: "2025-12-14", rewatch: false, liked: true  },
+  { title: "Aftersun",                 year: 2022, rating: 5,   watchedDate: "2025-11-29", rewatch: true,  liked: true  },
+  { title: "Oppenheimer",              year: 2023, rating: 5,   watchedDate: "2025-11-15", rewatch: true,  liked: true  },
+  { title: "All of Us Strangers",      year: 2023, rating: 4.5, watchedDate: "2025-11-03", rewatch: false, liked: true  },
+  { title: "The Zone of Interest",     year: 2023, rating: 4,   watchedDate: "2025-10-24", rewatch: false, liked: false },
+  { title: "Challengers",              year: 2024, rating: 4,   watchedDate: "2025-10-11", rewatch: false, liked: true  },
+  { title: "Poor Things",              year: 2023, rating: 3.5, watchedDate: "2025-09-30", rewatch: false, liked: false },
+  { title: "Alien: Romulus",           year: 2024, rating: 3,   watchedDate: "2025-09-16", rewatch: false, liked: false },
+  { title: "Killers of the Flower Moon", year: 2023, rating: 4.5, watchedDate: "2025-09-03", rewatch: false, liked: true },
+  { title: "Past Lives",               year: 2023, rating: 5,   watchedDate: "2025-08-18", rewatch: false, liked: true  },
+  { title: "Drive My Car",             year: 2021, rating: 5,   watchedDate: "2025-07-30", rewatch: false, liked: true  },
+  { title: "Parasite",                 year: 2019, rating: 5,   watchedDate: "2025-07-12", rewatch: true,  liked: true  },
+  { title: "The Holdovers",            year: 2023, rating: 4,   watchedDate: "2025-06-28", rewatch: false, liked: true  },
+  { title: "Tár",                      year: 2022, rating: 4.5, watchedDate: "2025-06-10", rewatch: false, liked: true  },
+  { title: "Longlegs",                 year: 2024, rating: 2.5, watchedDate: "2025-05-24", rewatch: false, liked: false },
+  { title: "Everything Everywhere All at Once", year: 2022, rating: 5, watchedDate: "2025-05-09", rewatch: true, liked: true },
+  { title: "Shoplifters",              year: 2018, rating: 5,   watchedDate: "2025-04-25", rewatch: false, liked: true  },
+  { title: "The Lighthouse",           year: 2019, rating: 4,   watchedDate: "2025-04-10", rewatch: false, liked: true  },
 ];
 
 // ── GitHub ────────────────────────────────────────────────────────────────────
@@ -165,13 +182,23 @@ export const DEMO_GYM_WORKOUTS: HevyWorkoutFull[] = WORKOUT_DATES_2026.map((date
 // ── Books ─────────────────────────────────────────────────────────────────────
 
 export const DEMO_BOOKS: BookEntry[] = [
-  { id: "b1", title: "Atomic Habits",                author: "James Clear",         finishedDate: "2026-03-20", addedAt: "2026-02-01" },
-  { id: "b2", title: "The Pragmatic Programmer",     author: "David Thomas",         finishedDate: "2026-02-14", addedAt: "2026-01-10" },
-  { id: "b3", title: "Dune",                         author: "Frank Herbert",         finishedDate: "2026-01-28", addedAt: "2025-12-20" },
-  { id: "b4", title: "A Philosophy of Software Design", author: "John Ousterhout",   finishedDate: "2025-12-05", addedAt: "2025-11-15" },
-  { id: "b5", title: "The Name of the Wind",         author: "Patrick Rothfuss",     finishedDate: "2025-10-18", addedAt: "2025-09-01" },
-  { id: "b6", title: "Thinking, Fast and Slow",      author: "Daniel Kahneman",      finishedDate: "2025-08-30", addedAt: "2025-07-12" },
-  { id: "b7", title: "Blood Meridian",               author: "Cormac McCarthy",       finishedDate: "2025-06-22", addedAt: "2025-05-01" },
+  // Currently reading (no finishedDate)
+  { id: "b1",  title: "The Creative Act",              author: "Rick Rubin",            addedAt: "2026-03-10" },
+  { id: "b2",  title: "Blood Meridian",                author: "Cormac McCarthy",        addedAt: "2026-02-28" },
+  // Finished 2026
+  { id: "b3",  title: "Atomic Habits",                 author: "James Clear",            finishedDate: "2026-03-18", addedAt: "2026-02-10" },
+  { id: "b4",  title: "The Pragmatic Programmer",      author: "David Thomas",            finishedDate: "2026-02-20", addedAt: "2026-01-15" },
+  { id: "b5",  title: "Dune",                          author: "Frank Herbert",            finishedDate: "2026-01-30", addedAt: "2025-12-22" },
+  { id: "b6",  title: "A Philosophy of Software Design", author: "John Ousterhout",      finishedDate: "2026-01-12", addedAt: "2025-12-01" },
+  // Finished 2025
+  { id: "b7",  title: "The Name of the Wind",          author: "Patrick Rothfuss",        finishedDate: "2025-12-04", addedAt: "2025-10-20" },
+  { id: "b8",  title: "Thinking, Fast and Slow",       author: "Daniel Kahneman",         finishedDate: "2025-10-28", addedAt: "2025-09-14" },
+  { id: "b9",  title: "Norwegian Wood",                author: "Haruki Murakami",          finishedDate: "2025-09-15", addedAt: "2025-08-20" },
+  { id: "b10", title: "Deep Work",                     author: "Cal Newport",             finishedDate: "2025-08-02", addedAt: "2025-07-10" },
+  { id: "b11", title: "The Remains of the Day",        author: "Kazuo Ishiguro",          finishedDate: "2025-06-25", addedAt: "2025-05-30" },
+  { id: "b12", title: "Project Hail Mary",             author: "Andy Weir",               finishedDate: "2025-05-18", addedAt: "2025-04-22" },
+  { id: "b13", title: "Designing Data-Intensive Applications", author: "Martin Kleppmann", finishedDate: "2025-04-08", addedAt: "2025-02-15" },
+  { id: "b14", title: "The Master and Margarita",      author: "Mikhail Bulgakov",         finishedDate: "2025-02-28", addedAt: "2025-01-10" },
 ];
 
 // ── Reading entries (for overview page — ReadingEntry type) ──────────────────
@@ -180,14 +207,52 @@ export const DEMO_READING_ENTRIES: ReadingEntry[] = DEMO_BOOKS
   .filter(b => !!b.finishedDate)
   .map(b => ({ title: b.title, author: b.author, finishedDate: b.finishedDate!, url: b.url, cover: b.cover }));
 
+// ── Travel ────────────────────────────────────────────────────────────────────
+// ISO 3166-1 numeric IDs used by topojson world-atlas
+
+export const DEMO_VISITED_COUNTRIES: string[] = [
+  "392",  // Japan
+  "156",  // China
+  "410",  // South Korea
+  "158",  // Taiwan
+  "702",  // Singapore
+  "764",  // Thailand
+  "360",  // Indonesia
+  "458",  // Malaysia
+  "840",  // United States
+  "124",  // Canada
+  "826",  // United Kingdom
+  "250",  // France
+  "276",  // Germany
+  "380",  // Italy
+  "724",  // Spain
+  "620",  // Portugal
+  "528",  // Netherlands
+  "756",  // Switzerland
+  "36",   // Australia
+  "554",  // New Zealand
+  "504",  // Morocco
+  "784",  // UAE
+];
+
 // ── Games ─────────────────────────────────────────────────────────────────────
 
 export const DEMO_GAMES: GameEntry[] = [
-  { id: "g1", title: "Elden Ring",        platform: "PlayStation 5",  finishedDate: "2026-03-10", addedAt: "2026-01-15", rating: 5   },
-  { id: "g2", title: "Hades II",          platform: "PC",             finishedDate: "2026-01-22", addedAt: "2025-12-01", rating: 4.5 },
-  { id: "g3", title: "Balatro",           platform: "Steam Deck",     finishedDate: "2025-11-08", addedAt: "2025-10-01", rating: 4.5 },
-  { id: "g4", title: "Hollow Knight",     platform: "Nintendo Switch", finishedDate: "2025-08-14", addedAt: "2025-07-01", rating: 5   },
-  { id: "g5", title: "Cyberpunk 2077",    platform: "PlayStation 5",  finishedDate: "2025-05-30", addedAt: "2025-04-10", rating: 4   },
+  // Currently playing (no finishedDate)
+  { id: "g1",  title: "Elden Ring: Nightreign",  platform: "PlayStation 5",   addedAt: "2026-03-28" },
+  // Finished 2026
+  { id: "g2",  title: "Avowed",                  platform: "PC",               finishedDate: "2026-03-18", addedAt: "2026-02-05", rating: 3.5 },
+  { id: "g3",  title: "Monster Hunter Wilds",    platform: "PlayStation 5",    finishedDate: "2026-02-28", addedAt: "2026-02-01", rating: 4   },
+  { id: "g4",  title: "Like a Dragon: Pirate",   platform: "PlayStation 5",    finishedDate: "2026-01-26", addedAt: "2026-01-10", rating: 4.5 },
+  { id: "g5",  title: "Elden Ring",              platform: "PlayStation 5",    finishedDate: "2026-01-08", addedAt: "2025-12-20", rating: 5   },
+  // Finished 2025
+  { id: "g6",  title: "Hades II",                platform: "Steam Deck",       finishedDate: "2025-12-12", addedAt: "2025-11-01", rating: 4.5 },
+  { id: "g7",  title: "Balatro",                 platform: "Steam Deck",       finishedDate: "2025-10-30", addedAt: "2025-10-01", rating: 5   },
+  { id: "g8",  title: "Astro Bot",               platform: "PlayStation 5",    finishedDate: "2025-09-20", addedAt: "2025-09-08", rating: 5   },
+  { id: "g9",  title: "Black Myth: Wukong",      platform: "PlayStation 5",    finishedDate: "2025-08-22", addedAt: "2025-08-10", rating: 4   },
+  { id: "g10", title: "Hollow Knight",           platform: "Nintendo Switch",  finishedDate: "2025-07-14", addedAt: "2025-06-20", rating: 5   },
+  { id: "g11", title: "Animal Crossing",         platform: "Nintendo Switch",  finishedDate: "2025-06-02", addedAt: "2025-04-15", rating: 4   },
+  { id: "g12", title: "Cyberpunk 2077",          platform: "PlayStation 5",    finishedDate: "2025-04-18", addedAt: "2025-03-10", rating: 4   },
 ];
 
 // ── Goals ─────────────────────────────────────────────────────────────────────
@@ -204,17 +269,49 @@ export const DEMO_GOALS: Goal[] = [
 
 // ── Obsidian files ────────────────────────────────────────────────────────────
 
+const DAY = 86400000;
+const HR  = 3600000;
+const now = Date.now();
+
 export const DEMO_OBSIDIAN_FILES: ObsidianFile[] = [
-  { path: "Daily/2026-04-08.md",            name: "2026-04-08",                      folder: "Daily",   mtime: Date.now() - 2 * 3600000,   links: [], tags: ["daily"] },
-  { path: "Daily/2026-04-07.md",            name: "2026-04-07",                      folder: "Daily",   mtime: Date.now() - 26 * 3600000,  links: [], tags: ["daily"] },
-  { path: "Projects/Side Project v2.md",    name: "Side Project v2",                 folder: "Projects", mtime: Date.now() - 3 * 3600000,  links: ["Tech Stack", "Roadmap"], tags: ["project"] },
-  { path: "Books/Atomic Habits.md",         name: "Atomic Habits",                   folder: "Books",   mtime: Date.now() - 5 * 86400000,  links: [], tags: ["book", "notes"] },
-  { path: "Ideas/App Redesign Thoughts.md", name: "App Redesign Thoughts",           folder: "Ideas",   mtime: Date.now() - 8 * 86400000,  links: [], tags: ["ideas", "design"] },
-  { path: "Projects/Roadmap.md",            name: "Roadmap",                          folder: "Projects", mtime: Date.now() - 9 * 86400000, links: ["Side Project v2"], tags: ["project"] },
-  { path: "Notes/Tokyo Travel Notes.md",    name: "Tokyo Travel Notes",              folder: "Notes",   mtime: Date.now() - 14 * 86400000, links: [], tags: [] },
-  { path: "Notes/Meeting — Q1 Review.md",   name: "Meeting — Q1 Review",             folder: "Notes",   mtime: Date.now() - 18 * 86400000, links: [], tags: ["work"] },
-  { path: "Books/Dune Summary.md",          name: "Dune Summary",                    folder: "Books",   mtime: Date.now() - 25 * 86400000, links: [], tags: ["book", "notes"] },
-  { path: "Ideas/Language Learning Plan.md","name": "Language Learning Plan",         folder: "Ideas",   mtime: Date.now() - 30 * 86400000, links: [], tags: ["japanese"] },
-  { path: "Tech Stack.md",                  name: "Tech Stack",                      folder: "",        mtime: Date.now() - 35 * 86400000, links: ["Side Project v2"], tags: [] },
-  { path: "Daily/2026-03-30.md",            name: "2026-03-30",                      folder: "Daily",   mtime: Date.now() - 40 * 86400000, links: [], tags: ["daily"] },
+  // ── Daily notes ──────────────────────────────────────────────────────────
+  { path: "Daily/2026-04-08.md", name: "2026-04-08", folder: "Daily", mtime: now - 1 * HR,       links: ["Side Project — Hayati", "Japanese N4 Study Plan"], tags: ["daily"] },
+  { path: "Daily/2026-04-07.md", name: "2026-04-07", folder: "Daily", mtime: now - 25 * HR,      links: ["Weekly Review"], tags: ["daily"] },
+  { path: "Daily/2026-04-06.md", name: "2026-04-06", folder: "Daily", mtime: now - 49 * HR,      links: [], tags: ["daily"] },
+  { path: "Daily/2026-04-04.md", name: "2026-04-04", folder: "Daily", mtime: now - 4 * DAY,      links: ["The Creative Act"], tags: ["daily"] },
+  { path: "Daily/2026-04-03.md", name: "2026-04-03", folder: "Daily", mtime: now - 5 * DAY,      links: [], tags: ["daily"] },
+  { path: "Daily/2026-04-01.md", name: "2026-04-01", folder: "Daily", mtime: now - 7 * DAY,      links: ["Q2 2026 Goals"], tags: ["daily", "reflection"] },
+  { path: "Daily/2026-03-28.md", name: "2026-03-28", folder: "Daily", mtime: now - 11 * DAY,     links: ["Weekly Review"], tags: ["daily"] },
+  { path: "Daily/2026-03-25.md", name: "2026-03-25", folder: "Daily", mtime: now - 14 * DAY,     links: [], tags: ["daily"] },
+  { path: "Daily/2026-03-21.md", name: "2026-03-21", folder: "Daily", mtime: now - 18 * DAY,     links: ["Atomic Habits — Notes"], tags: ["daily"] },
+  { path: "Daily/2026-03-18.md", name: "2026-03-18", folder: "Daily", mtime: now - 21 * DAY,     links: [], tags: ["daily"] },
+  { path: "Daily/2026-03-14.md", name: "2026-03-14", folder: "Daily", mtime: now - 25 * DAY,     links: ["Weekly Review"], tags: ["daily"] },
+  { path: "Daily/2026-03-10.md", name: "2026-03-10", folder: "Daily", mtime: now - 29 * DAY,     links: [], tags: ["daily"] },
+  { path: "Daily/2026-03-07.md", name: "2026-03-07", folder: "Daily", mtime: now - 32 * DAY,     links: ["Weekly Review"], tags: ["daily"] },
+  { path: "Daily/2026-02-28.md", name: "2026-02-28", folder: "Daily", mtime: now - 39 * DAY,     links: [], tags: ["daily"] },
+  { path: "Daily/2026-02-21.md", name: "2026-02-21", folder: "Daily", mtime: now - 46 * DAY,     links: ["Weekly Review"], tags: ["daily"] },
+  { path: "Daily/2026-02-14.md", name: "2026-02-14", folder: "Daily", mtime: now - 53 * DAY,     links: [], tags: ["daily"] },
+  // ── Reviews & planning ───────────────────────────────────────────────────
+  { path: "Reviews/Weekly Review.md",       name: "Weekly Review",         folder: "Reviews", mtime: now - 1 * DAY,   links: ["Q2 2026 Goals", "Side Project — Hayati"], tags: ["review", "weekly"] },
+  { path: "Reviews/Q1 2026 Retrospective.md", name: "Q1 2026 Retrospective", folder: "Reviews", mtime: now - 8 * DAY, links: ["Q2 2026 Goals", "Japanese N4 Study Plan"], tags: ["review", "quarterly"] },
+  { path: "Reviews/Q2 2026 Goals.md",       name: "Q2 2026 Goals",         folder: "Reviews", mtime: now - 7 * DAY,   links: ["Side Project — Hayati", "Fitness Log"], tags: ["goals", "planning"] },
+  // ── Projects ─────────────────────────────────────────────────────────────
+  { path: "Projects/Side Project — Hayati.md", name: "Side Project — Hayati", folder: "Projects", mtime: now - 2 * HR,  links: ["Tech Stack", "API Design Notes", "UI Decisions"], tags: ["project", "dev"] },
+  { path: "Projects/Tech Stack.md",         name: "Tech Stack",            folder: "Projects", mtime: now - 3 * DAY,   links: ["Side Project — Hayati"], tags: ["project", "dev"] },
+  { path: "Projects/API Design Notes.md",   name: "API Design Notes",      folder: "Projects", mtime: now - 6 * DAY,   links: ["Tech Stack"], tags: ["project", "dev", "api"] },
+  { path: "Projects/UI Decisions.md",       name: "UI Decisions",          folder: "Projects", mtime: now - 10 * DAY,  links: ["Side Project — Hayati"], tags: ["project", "design"] },
+  // ── Books ─────────────────────────────────────────────────────────────────
+  { path: "Books/Atomic Habits — Notes.md", name: "Atomic Habits — Notes", folder: "Books",   mtime: now - 17 * DAY,  links: ["Q2 2026 Goals"], tags: ["book", "self-improvement"] },
+  { path: "Books/The Creative Act — Notes.md", name: "The Creative Act — Notes", folder: "Books", mtime: now - 4 * DAY, links: [], tags: ["book", "creativity"] },
+  { path: "Books/Dune — Notes.md",          name: "Dune — Notes",          folder: "Books",   mtime: now - 35 * DAY,  links: [], tags: ["book", "fiction"] },
+  { path: "Books/Deep Work — Notes.md",     name: "Deep Work — Notes",     folder: "Books",   mtime: now - 60 * DAY,  links: ["Q2 2026 Goals"], tags: ["book", "productivity"] },
+  { path: "Books/DDIA — Notes.md",          name: "DDIA — Notes",          folder: "Books",   mtime: now - 80 * DAY,  links: ["API Design Notes"], tags: ["book", "dev"] },
+  // ── Learning ──────────────────────────────────────────────────────────────
+  { path: "Learning/Japanese N4 Study Plan.md", name: "Japanese N4 Study Plan", folder: "Learning", mtime: now - 3 * DAY, links: ["Q2 2026 Goals"], tags: ["japanese", "learning"] },
+  { path: "Learning/Grammar Notes — て-form.md", name: "Grammar Notes — て-form", folder: "Learning", mtime: now - 9 * DAY, links: ["Japanese N4 Study Plan"], tags: ["japanese", "grammar"] },
+  { path: "Learning/Kanji List N4.md",      name: "Kanji List N4",         folder: "Learning", mtime: now - 15 * DAY,  links: ["Japanese N4 Study Plan"], tags: ["japanese", "kanji"] },
+  // ── Journal & areas ───────────────────────────────────────────────────────
+  { path: "Areas/Fitness Log.md",           name: "Fitness Log",           folder: "Areas",   mtime: now - 2 * DAY,   links: ["Q2 2026 Goals"], tags: ["fitness", "health"] },
+  { path: "Areas/Reading List 2026.md",     name: "Reading List 2026",     folder: "Areas",   mtime: now - 12 * DAY,  links: ["Q2 2026 Goals"], tags: ["reading"] },
+  { path: "Inbox/Ideas Dump.md",            name: "Ideas Dump",            folder: "Inbox",   mtime: now - 1 * DAY,   links: ["Side Project — Hayati", "UI Decisions"], tags: ["ideas"] },
 ];

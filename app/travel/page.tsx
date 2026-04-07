@@ -8,6 +8,7 @@ import type { Feature, Geometry } from "geojson";
 import { numericToAlpha2 } from "i18n-iso-countries";
 import { useTheme, useThemeToggle } from "@/lib/theme";
 import { useGlobalSettings } from "@/lib/settings";
+import { DEMO_VISITED_COUNTRIES } from "@/lib/demoData";
 import { FlatMap } from "./components/FlatMap";
 import { GlobeView } from "./components/GlobeView";
 import { Map, Globe } from "lucide-react";
@@ -47,16 +48,18 @@ export default function TravelPage() {
       });
   }, []);
 
-  // Load from localStorage
+  // Load from localStorage (or demo data)
   useEffect(() => {
+    if (global.demoMode) { setVisited(DEMO_VISITED_COUNTRIES); return; }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setVisited(JSON.parse(raw));
     } catch {}
-  }, []);
+  }, [global.demoMode]);
 
-  // Persist
+  // Persist (skip in demo mode)
   useEffect(() => {
+    if (global.demoMode) return;
     const json = JSON.stringify(visited);
     try { localStorage.setItem(STORAGE_KEY, json); } catch {}
     fetch("/api/store", {
@@ -64,15 +67,17 @@ export default function TravelPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: STORAGE_KEY, value: json }),
     }).catch(() => {});
-  }, [visited]);
+  }, [visited, global.demoMode]);
 
   function toggle(id: string) {
+    if (global.demoMode) return;
     setVisited(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
   }
 
   function remove(id: string) {
+    if (global.demoMode) return;
     setVisited(prev => prev.filter(c => c !== id));
   }
 
