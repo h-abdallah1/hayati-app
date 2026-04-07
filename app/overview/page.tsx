@@ -10,6 +10,7 @@ import type { ObsidianFile } from "@/app/api/obsidian/files/route";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import type { Goal, ReadingEntry, GameEntry } from "@/lib/types";
 import { load as loadGoals, persist as persistGoals, goalYear, STATUS_ICON, STATUS_CYCLE } from "@/lib/goals";
+import { DEMO_GYM_WORKOUTS, DEMO_OBSIDIAN_FILES, DEMO_READING_ENTRIES, DEMO_GAMES, DEMO_GOALS } from "@/lib/demoData";
 import { load as loadBooks } from "@/lib/books";
 import { loadGames } from "@/lib/gameList";
 import { calcWeekStreak } from "@/app/gym/helpers";
@@ -88,15 +89,15 @@ export default function OverviewPage() {
 
   // Goals
   const [goals, setGoals] = useState<Goal[]>([]);
-  useEffect(() => { setGoals(loadGoals()); }, []);
+  useEffect(() => { setGoals(settings.demoMode ? DEMO_GOALS : loadGoals()); }, [settings.demoMode]);
 
   // Books (manual localStorage — read-only here, logging is on /reading)
   const [books, setBooks] = useState<ReadingEntry[]>([]);
-  useEffect(() => { setBooks(loadBooks()); }, []);
+  useEffect(() => { setBooks(settings.demoMode ? DEMO_READING_ENTRIES : loadBooks()); }, [settings.demoMode]);
 
   // Games (manual localStorage — read-only here, logging is on /gaming)
   const [games, setGames] = useState<GameEntry[]>([]);
-  useEffect(() => { setGames(loadGames()); }, []);
+  useEffect(() => { setGames(settings.demoMode ? DEMO_GAMES : loadGames()); }, [settings.demoMode]);
   const [addingGoal, setAddingGoal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
 
@@ -110,6 +111,10 @@ export default function OverviewPage() {
 
   // Fetch gym
   useEffect(() => {
+    if (settings.demoMode) {
+      setGymWorkouts(DEMO_GYM_WORKOUTS.filter(w => w.date.startsWith(String(year))));
+      setGymLoading(false); return;
+    }
     setGymLoading(true);
     setGymWorkouts([]);
     fetch(`/api/hevy/workouts?year=${year}`)
@@ -117,10 +122,11 @@ export default function OverviewPage() {
       .then(d => setGymWorkouts(d.workouts ?? []))
       .catch(() => {})
       .finally(() => setGymLoading(false));
-  }, [year]);
+  }, [year, settings.demoMode]);
 
   // Fetch obsidian
   useEffect(() => {
+    if (settings.demoMode) { setObsidianFiles(DEMO_OBSIDIAN_FILES); setObsidianLoading(false); return; }
     if (!settings.obsidianVaultPath) { setObsidianFiles([]); return; }
     setObsidianLoading(true);
     setObsidianFiles([]);
@@ -129,7 +135,7 @@ export default function OverviewPage() {
       .then(d => setObsidianFiles(d.files ?? []))
       .catch(() => {})
       .finally(() => setObsidianLoading(false));
-  }, [year, settings.obsidianVaultPath]);
+  }, [year, settings.obsidianVaultPath, settings.demoMode]);
 
   // Derive date keys for the selected year
   const yearStart = `${year}-01-01`;

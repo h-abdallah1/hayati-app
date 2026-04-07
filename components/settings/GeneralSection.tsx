@@ -115,6 +115,22 @@ export function GeneralSection() {
 
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={fieldLabel(C)}>Demo mode</span>
+          <button onClick={() => updateGlobal({ demoMode: !global.demoMode })} style={{
+            background: global.demoMode ? C.accentDim : "none",
+            border: `1px solid ${global.demoMode ? C.accent : C.border}`,
+            borderRadius: 5, cursor: "pointer",
+            fontFamily: "'JetBrains Mono',monospace", fontSize: 9,
+            color: global.demoMode ? C.accent : C.textFaint,
+            padding: "3px 10px", letterSpacing: "0.3px",
+          }}>
+            {global.demoMode ? "on" : "off"}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={fieldLabel(C)}>Ticker bar</span>
           <button onClick={() => updateGlobal({ showTicker: !global.showTicker })} style={{
             background: global.showTicker ? C.accentDim : "none",

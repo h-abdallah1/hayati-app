@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTheme, useThemeToggle } from "@/lib/theme";
+import { useGlobalSettings } from "@/lib/settings";
+import { DEMO_BOOKS } from "@/lib/demoData";
 import { loadBooks, persistBooks } from "@/lib/bookList";
 import { toDateKey } from "@/app/overview/helpers";
 import type { BookEntry } from "@/lib/types";
@@ -34,6 +36,7 @@ const EMPTY_FORM = { title: "", author: "", date: "", url: "" };
 export default function ReadingPage() {
   const C = useTheme();
   const { isDark } = useThemeToggle();
+  const { global: { demoMode } } = useGlobalSettings();
 
   const [bookList,     setBookList]     = useState<BookEntry[]>([]);
   const [fetchingBook, setFetchingBook] = useState<string | null>(null);
@@ -47,8 +50,8 @@ export default function ReadingPage() {
   const [form,           setForm]           = useState({ ...EMPTY_FORM, date: toDateKey(new Date()) });
 
   useEffect(() => {
-    setBookList(loadBooks());
-  }, []);
+    setBookList(demoMode ? DEMO_BOOKS : loadBooks());
+  }, [demoMode]);
 
   const deleteBook = (id: string) => {
     const next = bookList.filter(b => b.id !== id);

@@ -31,6 +31,7 @@ export type GlobalSettings = {
   ollamaModel: string;
   accentTheme: string;
   bgStyle: "orbs" | "ps3" | "night" | "stars" | "rain" | "matrix" | "fireflies" | "particles" | "gradient";
+  demoMode: boolean;
 };
 export type PanelSettings = {
   newsFeeds: NewsFeed[];

@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import type { CalEventFull } from "@/lib/types";
+import { useGlobalSettings } from "@/lib/settings";
+import { DEMO_CALENDAR } from "@/lib/demoData";
 
 export function useCalendarEvents(feeds: string[]) {
+  const { global: { demoMode } } = useGlobalSettings();
   const [events, setEvents] = useState<CalEventFull[]>([]);
   const [loaded, setLoaded] = useState(false);
   const feedsKey = feeds.join("|");
 
   useEffect(() => {
+    if (demoMode) { setEvents(DEMO_CALENDAR); setLoaded(true); return; }
     if (feeds.length === 0) { setLoaded(true); return; }
     const controller = new AbortController();
     fetch("/api/calendar", {
@@ -21,7 +25,7 @@ export function useCalendarEvents(feeds: string[]) {
       .then(d => { setEvents(d.events ?? []); setLoaded(true); })
       .catch(e => { if (e.name !== "AbortError") setLoaded(true); });
     return () => controller.abort();
-  }, [feedsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [feedsKey, demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { events, loaded };
 }

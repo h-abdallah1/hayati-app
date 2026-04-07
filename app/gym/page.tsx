@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTheme, useThemeToggle } from "@/lib/theme";
+import { useGlobalSettings } from "@/lib/settings";
+import { DEMO_GYM_LIFETIME, DEMO_GYM_WORKOUTS } from "@/lib/demoData";
 import type { HevyWorkoutFull } from "@/app/api/hevy/workouts/route";
 import { isLeapYear, dayOfYear, calcStreak } from "./helpers";
 import { GymHeatmap } from "./components/GymHeatmap";
@@ -29,6 +31,7 @@ const TABS: { key: Tab; label: string }[] = [
 export default function GymPage() {
   const C           = useTheme();
   const { isDark }  = useThemeToggle();
+  const { global: { demoMode } } = useGlobalSettings();
   const curYear     = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(curYear);
   const [tab,          setTab]          = useState<Tab>("overview");
@@ -39,8 +42,9 @@ export default function GymPage() {
   const [wxLoading, setWxLoading] = useState(false);
 
   useEffect(() => {
+    if (demoMode) { setLifetime(DEMO_GYM_LIFETIME); return; }
     fetch("/api/hevy/lifetime").then(r => r.json()).then(l => { if (!l.error) setLifetime(l); });
-  }, []);
+  }, [demoMode]);
 
   const [selectedEx, setSelectedEx] = useState<string | null>(null);
 
@@ -48,6 +52,11 @@ export default function GymPage() {
     setPage(1);
     setSelectedEx(null);
     setWxLoading(true);
+    if (demoMode) {
+      const filtered = DEMO_GYM_WORKOUTS.filter(w => w.date.startsWith(String(selectedYear)));
+      setWorkouts(filtered); setLoading(false); setWxLoading(false);
+      return;
+    }
     fetch(`/api/hevy/workouts?year=${selectedYear}`).then(r => r.json()).then(w => {
       const loaded: HevyWorkoutFull[] = w.workouts ?? [];
       setWorkouts(loaded);
@@ -58,7 +67,7 @@ export default function GymPage() {
         localStorage.setItem("hayati-gym-exercises", JSON.stringify(names));
       } catch {}
     }).catch(() => { setLoading(false); setWxLoading(false); });
-  }, [selectedYear]);
+  }, [selectedYear, demoMode]);
 
   // Auto-open exercise chart when navigated from search (?ex=Name)
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { GlobalSettings, PanelSettings, NewsFeed, TimeFormat, MapProjection, PrayerMethod } from "./types";
+import { DEMO_SETTINGS_PATCH } from "./demoData";
 import { DEFAULT_COORDS } from "./constants";
 
 // ── Global settings ──────────────────────────────────────────────────────────
@@ -26,6 +27,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   ollamaModel: "llama3.2:1b",
   accentTheme: "sage",
   bgStyle: "orbs",
+  demoMode: false,
 };
 
 const GLOBAL_KEY = "hayati-global";
@@ -53,6 +55,7 @@ function readGlobal(): GlobalSettings {
       ollamaModel:  typeof parsed.ollamaModel === "string"  ? parsed.ollamaModel  : DEFAULT_GLOBAL.ollamaModel,
       accentTheme:  typeof parsed.accentTheme === "string"  ? parsed.accentTheme  : DEFAULT_GLOBAL.accentTheme,
       bgStyle: (["orbs", "ps3", "night", "stars", "rain", "matrix", "fireflies", "particles", "gradient"] as const).includes(parsed.bgStyle as GlobalSettings["bgStyle"]) ? parsed.bgStyle as GlobalSettings["bgStyle"] : DEFAULT_GLOBAL.bgStyle,
+      demoMode: typeof parsed.demoMode === "boolean" ? parsed.demoMode : DEFAULT_GLOBAL.demoMode,
     };
   } catch {
     return DEFAULT_GLOBAL;
@@ -100,7 +103,11 @@ export function GlobalSettingsProvider({ children }: { children: React.ReactNode
 }
 
 export function useGlobalSettings() {
-  return useContext(GlobalContext);
+  const ctx = useContext(GlobalContext);
+  if (ctx.global.demoMode) {
+    return { ...ctx, global: { ...ctx.global, ...DEMO_SETTINGS_PATCH } };
+  }
+  return ctx;
 }
 
 // ── Panel settings ────────────────────────────────────────────────────────────

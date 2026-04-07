@@ -81,6 +81,15 @@ export function HeaderBar({ time }: { time: Date }) {
         >
           {greet},&nbsp;<span style={{ color: C.text }}>{global.name}</span>
         </span>
+        {global.demoMode && (
+          <span style={{
+            fontFamily: "'JetBrains Mono',monospace", fontSize: 9, letterSpacing: "0.06em",
+            color: C.accent, border: `1px solid ${C.accentMid}`,
+            borderRadius: 4, padding: "2px 6px",
+          }}>
+            DEMO
+          </span>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 16 }}>
         {metrics.map(({ label, frac, color }) => (

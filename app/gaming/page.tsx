@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTheme, useThemeToggle } from "@/lib/theme";
+import { useGlobalSettings } from "@/lib/settings";
+import { DEMO_GAMES } from "@/lib/demoData";
 import { loadGames, persistGames } from "@/lib/gameList";
 import { toDateKey } from "@/app/overview/helpers";
 import type { GameEntry, GamePlatform } from "@/lib/types";
@@ -58,6 +60,7 @@ const EMPTY_FORM = { title: "", platform: "PC" as GamePlatform, date: "", cover:
 export default function GamingPage() {
   const C = useTheme();
   const { isDark } = useThemeToggle();
+  const { global: { demoMode } } = useGlobalSettings();
 
   const [gameList,       setGameList]       = useState<GameEntry[]>([]);
   const [editingId,      setEditingId]      = useState<string | null>(null);
@@ -69,7 +72,7 @@ export default function GamingPage() {
   const [fetchingCovers, setFetchingCovers] = useState(false);
   const [coverProgress,  setCoverProgress]  = useState("");
 
-  useEffect(() => { setGameList(loadGames()); }, []);
+  useEffect(() => { setGameList(demoMode ? DEMO_GAMES : loadGames()); }, [demoMode]);
 
   const deleteGame = (id: string) => {
     const next = gameList.filter(g => g.id !== id);
