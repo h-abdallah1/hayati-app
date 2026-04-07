@@ -89,7 +89,18 @@ export default function PrayerPage() {
 
   return (
     <div style={{ minHeight: "100vh", padding: "24px 28px" }}>
-      <div style={{ maxWidth: 860, margin: "0 auto" }}>
+      <div style={{
+        maxWidth: 860, margin: "0 auto",
+        background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+        backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+        border: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(255,255,255,0.75)",
+        borderRadius: 12,
+        padding: "20px 24px",
+        boxShadow: isDark
+          ? "inset 0 1px 0 rgba(255,255,255,0.10), 0 8px 32px rgba(0,0,0,0.35)"
+          : "inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 32px rgba(0,0,0,0.08)",
+      }}>
 
         {/* Location header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>

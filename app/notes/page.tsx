@@ -579,7 +579,12 @@ export default function NotesPage() {
       </div>
 
       {/* ══ EDITOR ═══════════════════════════════════════════════════════════ */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0,
+        background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+        backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+      }}>
         <>
             {/* Tab bar */}
             <div style={{

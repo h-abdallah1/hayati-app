@@ -89,7 +89,11 @@ export default function TravelPage() {
       padding: "28px 32px",
       maxWidth: 1100,
       margin: "0 auto",
+      minHeight: "100vh",
       fontFamily: "'JetBrains Mono', monospace",
+      background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+      backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+      WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
     }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>

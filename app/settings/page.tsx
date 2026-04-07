@@ -93,6 +93,9 @@ export default function SettingsPage() {
       marginLeft: 56,
       minHeight: "100vh",
       padding: "24px 28px",
+      background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+      backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+      WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
     }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         {/* Page header */}

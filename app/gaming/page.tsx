@@ -194,7 +194,13 @@ export default function GamingPage() {
   const editingProps = { editingId, editDraft, setEditDraft, onStartEdit: startEdit, onCommitEdit: commitEdit, onCancelEdit: cancelEdit };
 
   return (
-    <div style={{ minHeight: "100vh", color: C.text, paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64 }}>
+    <div style={{
+      minHeight: "100vh", color: C.text,
+      paddingLeft: 72, paddingRight: 32, paddingTop: 32, paddingBottom: 64,
+      background: isDark ? "rgba(20, 20, 20, 0.45)" : "rgba(255,255,255,0.58)",
+      backdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+      WebkitBackdropFilter: "blur(24px) saturate(1.6) brightness(1.05)",
+    }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: "0.08em" }}>GAMING</span>
