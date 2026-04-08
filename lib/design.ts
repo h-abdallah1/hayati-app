@@ -18,6 +18,7 @@ export type AccentTheme = { name: string; label: string; dark: string; light: st
 
 export const ACCENT_THEMES: AccentTheme[] = [
   { name: "sage",     label: "Sage",     dark: "#a8c47a", light: "#5a8a30" },
+  { name: "blue",     label: "Blue",     dark: "#4a9eff", light: "#1a6fd4" },
   { name: "amber",    label: "Amber",    dark: "#d4a574", light: "#b07030" },
   { name: "teal",     label: "Teal",     dark: "#6ec6b8", light: "#1a8a82" },
   { name: "lavender", label: "Lavender", dark: "#a394d9", light: "#6b5ab8" },

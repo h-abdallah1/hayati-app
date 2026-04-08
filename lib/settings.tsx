@@ -25,9 +25,9 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   fullscreen: false,
   ollamaUrl: "http://localhost:11434",
   ollamaModel: "llama3.2:1b",
-  accentTheme: "sage",
-  bgStyle: "orbs",
-  demoMode: false,
+  accentTheme: "blue",
+  bgStyle: "ps3",
+  demoMode: true,
 };
 
 const GLOBAL_KEY = "hayati-global";
