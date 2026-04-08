@@ -10,13 +10,13 @@ import { DEFAULT_COORDS } from "./constants";
 const PRAYER_METHODS: PrayerMethod[] = ["Dubai","MuslimWorldLeague","NorthAmerica","Egyptian","Karachi","Kuwait","Qatar","Singapore","Turkey","MoonsightingCommittee"];
 
 const DEFAULT_GLOBAL: GlobalSettings = {
-  name: "Hussein",
-  location: { ...DEFAULT_COORDS, label: "Sharjah, UAE" },
+  name: "Your Name",
+  location: { ...DEFAULT_COORDS, label: "London, UK" },
   timeFormat: "12h",
   letterboxdUsername: "",
   obsidianVaultPath: "",
   travelProjection: "equirectangular",
-  prayerMethod: "Dubai",
+  prayerMethod: "MuslimWorldLeague",
   disabledModules: [],
   moduleOrder: [],
   showTicker: true,

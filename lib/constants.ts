@@ -9,9 +9,9 @@ import {
 export type Coords = { lat: number; lon: number; tz: string };
 
 export const DEFAULT_COORDS: Coords = {
-  lat: 25.3573,
-  lon: 55.4033,
-  tz: "Asia/Dubai",
+  lat: 51.5074,
+  lon: -0.1278,
+  tz: "Europe/London",
 };
 
 // ── Font families ───────────────────────────────────────────────────────────
