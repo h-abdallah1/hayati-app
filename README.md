@@ -81,6 +81,7 @@ All external integrations (Hevy, Letterboxd, GitHub, weather, SteamGridDB, calen
 | [Open Library](https://openlibrary.org) | Book cover art | None — public CDN |
 | [Ollama](https://ollama.com) | On-device AI chat | Local — no key needed |
 | Open-Meteo | Weather | None — free, no key |
+| [Obsidian](https://obsidian.md) | Notes vault browser and graph view | Local vault path (in-app settings) |
 | iCal feeds | Calendar events | Feed URL (in-app settings) |
 | RSS feeds | News | Feed URL (in-app settings) |
 
