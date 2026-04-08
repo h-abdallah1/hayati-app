@@ -1,37 +1,88 @@
-# hayati
+# hayati — حياتي
 
-A personal life dashboard. Hayati (حياتي) means "my life" in Arabic.
+> A personal life dashboard. *Hayati* means "my life" in Arabic.
 
-It brings together the things you track day-to-day — workouts, films, books, games, notes, prayer times, news, travel — into a single local-first app with a clean, dark-by-default UI and animated backgrounds.
+A self-hosted, local-first dashboard that aggregates the things you track every day — workouts, films, books, games, notes, prayer times, news, and travel — into one place. No cloud account required. Your data stays on your machine.
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square) ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square) ![SQLite](https://img.shields.io/badge/SQLite-local-003b57?style=flat-square)
+
+---
+
+## What it looks like
+
+<!-- Add screenshots here -->
 
 ---
 
 ## Pages
 
-| Page | What it does |
-|------|-------------|
-| **Dashboard** | Customisable widget grid — weather, clock, GitHub heatmap, prayer times, AI chat, Pomodoro timer, and more |
-| **Overview** | Year-at-a-glance: activity heatmaps for gym, notes, films, and GitHub; goals progress; reading and gaming logs |
-| **Gym** | Full workout analytics from Hevy — volume, PRs, streaks, exercise breakdowns, year heatmap |
-| **Films** | Letterboxd diary with poster grid, timeline view, ratings, and filters |
-| **Reading** | Book log with cover art, finish dates, and Open Library integration |
-| **Gaming** | Game log with cover art via SteamGridDB, platforms, and ratings |
-| **Notes** | Obsidian vault browser — file tree, graph view, backlinks, markdown editor with auto-save |
-| **Prayer** | Daily prayer times with countdown, calculated locally using the Adhan library |
-| **Travel** | World map (flat + globe) to track visited countries |
-| **News** | RSS reader with custom feeds and full article extraction |
+### Dashboard
+Drag-and-drop widget grid powered by `react-grid-layout`. Widgets include live weather, a world clock, GitHub contribution heatmap, prayer times countdown, Pomodoro timer, Quran verse of the day, gym stats, news headlines, and an on-device AI chat panel via Ollama.
+
+### Overview
+Annual activity summary — stacked heatmaps for gym sessions, Obsidian notes, films watched, and GitHub commits, all on the same time axis. Includes goals tracker, latest books and games, and note recency breakdown by folder.
+
+### Gym
+Deep workout analytics pulled from the Hevy API — weekly volume trends, personal records per exercise, session streaks, split breakdowns, and a full year heatmap. Supports filtering by year.
+
+### Films
+Letterboxd diary parsed from the RSS feed — poster grid, timeline view, star ratings, rewatch and liked filters, and full-text search. Posters are fetched and cached automatically.
+
+### Reading
+Book log with cover art fetched from Open Library. Tracks title, author, and finish date. Grid and list views.
+
+### Gaming
+Game log with cover art fetched from SteamGridDB. Tracks platform, rating, and finish date. Grid and list views.
+
+### Notes
+Full Obsidian vault browser. Renders the file tree, a D3 force-directed graph of wiki-links between notes, backlinks panel, and a markdown editor with syntax highlighting and auto-save. Renames propagate to disk.
+
+### Prayer
+Prayer times calculated entirely offline using the Adhan.js library — no API call needed. Shows all five daily prayers with a live countdown to the next one. Supports multiple calculation methods (MWL, Dubai, Egyptian, North America, etc.) and adjusts to your configured location.
+
+### Travel
+Interactive world map (11 D3 projections available) and a 3D globe view. Click any country to mark it as visited. Visited countries sync to local storage.
+
+### News
+RSS reader with configurable feeds. Full article text is extracted server-side using `@extractus/article-extractor` and rendered in a clean reading view.
 
 ---
 
-## Features
+## Technical highlights
 
-- **Animated backgrounds** — Mesh, Aurora, Space, Night, Rain, Matrix, Fireflies, Network, Gradient
-- **Light / dark mode** with multiple accent colour themes
-- **Demo mode** — replaces all personal data with a fake persona for screenshots or sharing
-- **Local-first** — data lives in your browser and a local SQLite database; nothing is sent anywhere except your configured integrations
-- **Local AI** — optional Ollama integration for an on-device chat panel
+**Canvas-based animated backgrounds**  
+Nine background themes — Mesh orbs, Aurora, Starfield, Night city, Rain streaks, Matrix rain, Fireflies, Particle network, and Gradient — each implemented as a `requestAnimationFrame` canvas loop in its own component. Zero dependencies, runs at 60fps.
+
+**Offline prayer times**  
+Prayer times are computed entirely on the client using the Adhan library. No external API, no rate limits, works without internet.
+
+**Obsidian graph view**  
+A D3 force simulation builds a node-link graph of wiki-links across your vault in real time. Nodes size by link count; clicking a node opens the note.
+
+**Demo mode**  
+A single toggle in Settings replaces every piece of personal data — name, location, workouts, films, books, games, notes, GitHub activity, news, weather — with a consistent fictional persona. Implemented by intercepting `useGlobalSettings()` and all data hooks, so no page needs to know it exists.
+
+**Local-first persistence**  
+Settings and data are written to `localStorage` and mirrored to a local SQLite database via a small `/api/store` route using `better-sqlite3`. Nothing leaves your machine unless you configure an external integration.
+
+**Type-safe API layer**  
+All external integrations (Hevy, Letterboxd, GitHub, weather, SteamGridDB, calendar, news) are server-side Next.js route handlers. The browser never touches third-party APIs directly, and API keys never reach the client.
+
+---
+
+## Integrations
+
+| Service | What it powers | Auth |
+|---------|---------------|------|
+| [Hevy](https://hevy.com) | Workout history and analytics | API key (`.env.local`) |
+| [Letterboxd](https://letterboxd.com) | Film diary | Public RSS — just your username |
+| [GitHub](https://github.com) | Contribution heatmap | Personal access token (in-app settings) |
+| [SteamGridDB](https://www.steamgriddb.com) | Game cover art | API key (`.env.local`) |
+| [Open Library](https://openlibrary.org) | Book cover art | None — public CDN |
+| [Ollama](https://ollama.com) | On-device AI chat | Local — no key needed |
+| Open-Meteo | Weather | None — free, no key |
+| iCal feeds | Calendar events | Feed URL (in-app settings) |
+| RSS feeds | News | Feed URL (in-app settings) |
 
 ---
 
@@ -45,18 +96,11 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env.local` and fill in the values you need:
-
 ```bash
 cp .env.example .env.local
 ```
 
-| Variable | Required for | Where to get it |
-|----------|--------------|-----------------|
-| `HEVY_API_KEY` | Gym features | Hevy app → Profile → Settings → API |
-| `STEAMGRIDDB_API_KEY` | Game cover art | [steamgriddb.com/profile/preferences/api](https://www.steamgriddb.com/profile/preferences/api) |
-
-All other integrations (GitHub, Letterboxd, Obsidian, Ollama, calendar feeds, news feeds) are configured inside the app under **Settings**.
+Open `.env.local` and fill in any keys for services you want to use. Everything except Hevy and SteamGridDB works without any keys.
 
 ### 3. Run
 
@@ -64,21 +108,25 @@ All other integrations (GitHub, Letterboxd, Obsidian, Ollama, calendar feeds, ne
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) and configure your name, location, and integrations in **Settings**.
 
 ---
 
 ## Tech stack
 
-- **Framework** — Next.js 16 (App Router)
-- **Language** — TypeScript 5
-- **Storage** — localStorage + SQLite (`better-sqlite3`)
-- **Maps** — D3 geo projections, TopoJSON, react-globe.gl
-- **Prayer times** — Adhan.js (fully offline)
-- **UI** — Inline styles, JetBrains Mono + Syne fonts, Lucide icons
+| | |
+|-|-|
+| Framework | Next.js 16 — App Router, server components, API routes |
+| Language | TypeScript 5 |
+| Storage | `localStorage` + SQLite via `better-sqlite3` |
+| Maps | D3 geo projections, TopoJSON world atlas, `react-globe.gl` |
+| Graph | D3 force simulation (notes graph view) |
+| Prayer times | Adhan.js — fully offline calculation |
+| Fonts | JetBrains Mono, Syne |
+| Icons | Lucide React |
 
 ---
 
 ## Demo mode
 
-To share a screenshot or record a clip without exposing personal data, toggle **Demo mode** in Settings → General. It replaces your name, location, and all activity data with a fictional persona.
+Toggle **Demo mode** in Settings → General to replace all personal data with a fictional persona — useful for recording clips or sharing screenshots without exposing real information.
