@@ -12,14 +12,14 @@ export type LayoutTemplate = {
 const REMOVED_PANELS = new Set(["finance", "savings", "reading", "films"]);
 
 export const DEFAULT_LAYOUT: LayoutItem[] = [
-  { i: "prayer",   x: 0, y: 0,  w: 1, h: 7  },
-  { i: "quran",    x: 0, y: 7,  w: 1, h: 7  },
-  { i: "gym",      x: 0, y: 14, w: 1, h: 8  },
-  { i: "calendar", x: 1, y: 0,  w: 1, h: 22 },
-  { i: "weather",  x: 2, y: 0,  w: 1, h: 7  },
-  { i: "news",     x: 3, y: 0,  w: 1, h: 14 },
-  { i: "ascii",    x: 2, y: 7,  w: 1, h: 7  },
-  { i: "overview", x: 0, y: 22, w: 4, h: 6  },
+  { i: "overview", x: 0, y: 0, w: 4, h: 5  },
+  { i: "prayer",   x: 0, y: 5, w: 1, h: 4  },
+  { i: "calendar", x: 1, y: 5, w: 1, h: 4  },
+  { i: "news",     x: 2, y: 5, w: 2, h: 4  },
+  { i: "quran",    x: 0, y: 9, w: 1, h: 6  },
+  { i: "gym",      x: 1, y: 9, w: 1, h: 6  },
+  { i: "weather",  x: 2, y: 9, w: 1, h: 6  },
+  { i: "ascii",    x: 3, y: 9, w: 1, h: 6  },
 ];
 
 const LAYOUT_KEY = "hayati-layout";
