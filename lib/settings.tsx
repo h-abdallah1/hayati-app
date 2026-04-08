@@ -25,7 +25,7 @@ const DEFAULT_GLOBAL: GlobalSettings = {
   fullscreen: false,
   ollamaUrl: "http://localhost:11434",
   ollamaModel: "llama3.2:1b",
-  accentTheme: "blue",
+  accentTheme: "lime",
   bgStyle: "ps3",
   demoMode: true,
 };
